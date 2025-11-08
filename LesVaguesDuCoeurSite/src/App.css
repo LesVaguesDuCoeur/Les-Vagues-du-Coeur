@@ -1,0 +1,248 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  padding: 0;
+  margin: 0;
+}
+
+.App {
+  max-width: 800px;
+  margin: 2em auto;
+  background: white;
+  padding: 2em;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+h1 {
+  color: #667eea;
+  text-align: center;
+  margin-bottom: 0.5em;
+}
+
+p {
+  text-align: center;
+  color: #666;
+}
+
+input, textarea, select {
+  margin: 0.8em 0;
+  width: 100%;
+  padding: 0.8em;
+  border: 2px solid #ddd;
+  border-radius: 5px;
+  font-family: inherit;
+  font-size: 1em;
+  transition: border-color 0.3s;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+button {
+  padding: 0.8em 1.5em;
+  margin: 0.5em;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1em;
+  font-weight: bold;
+  transition: all 0.3s;
+}
+
+/* Formulaire */
+.form-section {
+  margin-bottom: 2em;
+  padding: 2em;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #667eea;
+}
+
+.form-section h2 {
+  color: #333;
+  margin-top: 0;
+}
+
+.form-section button {
+  background: #667eea;
+  color: white;
+  width: 100%;
+}
+
+.form-section button:hover {
+  background: #5568d3;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+/* Section de sauvegarde */
+.backup-section {
+  margin-top: 2em;
+  border-top: 2px solid #eee;
+  padding-top: 2em;
+}
+
+.backup-toggle {
+  width: 100%;
+  background: #f8f9fa;
+  color: #333;
+  border: 2px solid #ddd;
+  padding: 1em;
+  font-size: 1em;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: all 0.3s;
+}
+
+.backup-toggle:hover {
+  background: #e9ecef;
+  border-color: #667eea;
+}
+
+.unsynced-badge {
+  color: #dc3545;
+  font-weight: bold;
+}
+
+.backup-content {
+  margin-top: 1.5em;
+  padding: 1.5em;
+  background: #f8f9fa;
+  border-radius: 5px;
+}
+
+.backup-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1em;
+  margin-bottom: 2em;
+}
+
+.btn-sync {
+  background: #28a745;
+  color: white;
+  flex: 1;
+}
+
+.btn-sync:hover:not(:disabled) {
+  background: #218838;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+}
+
+.btn-sync:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.btn-export {
+  background: #007bff;
+  color: white;
+  flex: 1;
+}
+
+.btn-export:hover {
+  background: #0056b3;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 123, 255, 0.4);
+}
+
+.btn-clear {
+  background: #dc3545;
+  color: white;
+  flex: 1;
+}
+
+.btn-clear:hover {
+  background: #c82333;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(220, 53, 69, 0.4);
+}
+
+/* Liste des soumissions */
+.submissions-list {
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.submissions-list h3 {
+  color: #333;
+  margin-top: 0;
+  border-bottom: 2px solid #667eea;
+  padding-bottom: 0.5em;
+}
+
+.submission-item {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  padding: 1em;
+  margin-bottom: 1em;
+  border-left: 4px solid #667eea;
+}
+
+.submission-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5em;
+}
+
+.submission-header strong {
+  color: #333;
+}
+
+.status {
+  padding: 0.3em 0.8em;
+  border-radius: 20px;
+  font-size: 0.85em;
+  font-weight: bold;
+}
+
+.status.synced {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status.unsynced {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.submission-item p {
+  margin: 0.3em 0;
+  color: #666;
+  text-align: left;
+}
+
+.submission-item small {
+  color: #999;
+}
+
+.btn-delete {
+  background: #dc3545;
+  color: white;
+  padding: 0.4em 0.8em;
+  margin-top: 0.5em;
+  font-size: 0.9em;
+}
+
+.btn-delete:hover {
+  background: #c82333;
+}
+
+.no-submissions {
+  text-align: center;
+  color: #999;
+  padding: 2em;
+  font-style: italic;
+}
