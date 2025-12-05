@@ -1,0 +1,101 @@
+50. VALEURS MOBILIERES DE PLACEMENT
+
+Compte 502 « Actions propres »
+
+   Le compte 502 « Actions propres » est débité au moment du rachat par
+   une société de ses propres actions, lorsque cette opération a
+   explicitement pour objet soit la régularisation des cours de bourse,
+   soit l'attribution des titres à des salariés.
+
+Comptes 503 « Actions » et 504 « Autres titres conférant un droit de
+propriété »
+
+   Les comptes 503 « Actions » et 504 « Autres titres conférant un droit
+   de propriété » sont débités de la valeur d'acquisition des actions et
+   autres titres conférant un droit de propriété, par le crédit d'un
+   compte de tiers ou de disponibilités.
+
+Comptes 505 « Obligations et bons émis par la société et rachetés par elle »,
+506 « Obligations », 507 « Bons dnces assimilées u Trésor et bons de caisse à
+court terme » et 508 « Autres valeurs mobilières et autres créances
+assimilées»
+
+   La valeur d'acquisition des titres conférant un droit de créance est
+   inscrite dans les comptes 505 « Obligations et bons émis par la société
+   et rachetés par elle », 506 « Obligations », 507 « Bons dnces
+   assimilées u Trésor et bons de caisse à court terme » et 508 « Autres
+   valeurs mobilières et autres créances assimilées».
+
+Compte 509 « Versements restant à effectuer sur valeurs mobilières de
+placement non libérées »
+
+   Le compte 509 « Versements restant à effectuer sur valeurs mobilières
+   de placement non libérées » est crédité du montant des versements
+   restant à effectuer sur les valeurs mobilières de placement non
+   libérées par le débit des subdivisions concernées du compte 50.
+
+51. BANQUES, ETABLISSEMENTS FINANCIERS ET ASSIMILES
+
+Compte 511 « Valeurs à l'encaissement »
+
+   Le compte 511 « Valeurs à l'encaissement » est débité du montant des
+   coupons échus à encaisser, des chèques et des effets remis à
+   l'encaissement ainsi que des effets remis à l'escompte, par le crédit
+   des comptes intéressés.
+
+Compte 512 « Banques »
+
+   Pour chaque compte bancaire dont elle est titulaire, l'entité utilise
+   une subdivision distincte du compte 512 « Banques ». Aucune
+   compensation ne peut être opérée entre les comptes à solde créditeur et
+   les comptes à solde débiteur.
+
+Compte 519 « Concours bancairescourants »
+
+   Les effets financiers créés en représentation des crédits consentis à
+   l'entité, dans le cadre d'opérations de mobilisation de créances
+   commerciales ou de mobilisation de créances nées à l'étranger, sont
+   comptabilisés à des subdivisions du compte 519 « Concours bancaires
+   courants ».
+
+52. INSTRUMENTS FINANCIERS A TERME ET JETONS DETENUS
+
+Compte 521 « Instruments financiers à terme »
+
+   Le compte 521 « Instruments financiers à terme » est utilisé pour
+   comptabiliser les opérations mentionnées à la section 8 du chapitre II
+   du titre VI du livre II du présent règlement.
+
+Compte 522 « Jetons détenus »
+
+   Le compte 522 « Jetons détenus » est utilisé pour comptabiliser les
+   opérations mentionnées à larticle 619-12.
+
+Compte 523 « Jetons auto-détenus »
+
+   Le compte 523 « Jetons auto-détenus » est utilisé pour comptabiliser
+   les opérations mentionnées à larticle 619-14.
+
+Compte 524 « Jetons empruntés »
+
+   Le compte 524 « Jetons empruntés » est utilisé pour comptabiliser les
+   opérations mentionnées à larticle 619-18.
+
+53. CAISSE
+
+   Le compte 53 « Caisse » est débité du montant des espèces encaissées
+   par l'entité. Il est crédité du montant des espèces décaissées. Son
+   solde est soit débiteur soit nul.
+
+58. VIREMENTS INTERNES
+
+   Les comptes 58 « Virements internes » sont des comptes de passage
+   utilisés pour la comptabilisation pratique d'opérations au terme
+   desquelles ils sont soldés.
+
+59. DEPRECIATIONS DES COMPTES FINANCIERS
+
+   Le compte 590 « Dépréciations des valeurs mobilières de placement » est
+   crédité du montant des dépréciations des valeurs mobilières de
+   placement par le débit d'une subdivision du compte 6866 intitulée
+   « Dotations pour dépréciations des valeurs mobilières de placement ».
