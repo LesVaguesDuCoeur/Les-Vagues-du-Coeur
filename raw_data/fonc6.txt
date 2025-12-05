@@ -1,0 +1,256 @@
+60. ACHATS (SAUF 603)
+
+   Le compte 60 « Achats » enregistre, au débit, au cours de l'exercice :
+     * le montant des factures d'achats ;
+     * le prix d'achat, hors taxes récupérables, des marchandises achetées
+       au comptant.
+
+   Le compte 60 « Achats » est débité :
+     * pour les achats stockés : du montant des factures fournisseurs par
+       le crédit du compte 401 « Fournisseurs » ;
+     * pour les achats non stockés : du montant de l'achat par le crédit
+       du compte de trésorerie ou de tiers intéressé.
+
+   Les entités peuvent utiliser le compte 609 « Rabais, remises et
+   ristournes obtenus sur achats » en cours d'exercice. Ce compte est
+   crédité par le débit du compte 401 « Fournisseurs ». Il est soldé en
+   fin d'exercice, par le crédit des comptes d'achats intéressés.
+
+603. VARIATION DES STOCKS (APPROVISIONNEMENTS ET MARCHANDISES)
+
+   Le compte 603 « Variation des stocks (approvisionnements et
+   marchandises) » est débité de la valeur du stock initial par le crédit
+   des comptes de stocks 31, 32 et 37, lors de l'inventaire permanent ou
+   intermittent.
+
+   Il est crédité de la valeur du stock final par le débit des comptes de
+   stocks 31, 32 et 37, lors de l'inventaire permanent ou intermittent.
+
+   Le solde du compte 603 « Variation des stocks (approvisionnements et
+   marchandises) » représente la variation globale de la valeur des stocks
+   d'approvisionnements et de marchandises entre le début et la fin de
+   l'exercice.
+
+61. SERVICES EXTERIEURS
+
+   Les comptes 61 « Services extérieurs » enregistrent le montant des
+   factures et, s'il y a lieu, des charges de personnel extérieur à
+   l'entité.
+
+   Le compte 612 « Redevances de crédit-bail » enregistre, pour leur
+   montant hors taxes, les redevances dues en exécution d'un contrat de
+   crédit-bail.
+
+   Les comptes 613 « Locations » et 614 « Charges locatives et de
+   copropriété » sont utilisés lorsque l'entité n'est pas propriétaire de
+   locaux ou de matériel, ou lorsqu'elle supporte des charges de
+   copropriété.
+
+   Le compte 615 « Entretien et réparations » enregistre les frais
+   d'entretien et de réparation des biens mobiliers et immobiliers.
+
+   Le compte 616 « Primes d'assurances » enregistre le montant des primes
+   d'assurances.
+
+   Le compte 619 « Rabais, remises et ristournes obtenus sur services
+   extérieurs » enregistre les rabais, remises et ristournes obtenus sur
+   services extérieurs hors facture.
+
+62. AUTRES SERVICES EXTERIEURS
+
+   Les comptes 62 « Autres services extérieurs » enregistrent le montant
+   des factures et, s'il y a lieu, des charges de personnel extérieur à
+   l'entité non ventilées au compte 61.
+
+   Le compte 621 « Personnel extérieur à l'entité » est débité du montant
+   des rémunérations versées au personnel intérimaire, occasionnel ou
+   détaché ou prêté à l'entité.
+
+   Le compte 622 « Rémunérations d'intermédiaires et honoraires »
+   enregistre les honoraires et commissions, frais d'actes et de
+   contentieux, etc.
+
+   Le compte 623 « Publicité, publications, relations publiques »
+   enregistre les frais de publicité, de publications et de relations
+   publiques.
+
+   Le compte 624 « Transports de biens et transports collectifs du
+   personnel » enregistre les frais de transport sur achats et sur ventes
+   lorsque ceux-ci sont à la charge de l'entité.
+
+   Le compte 625 « Déplacements, missions et réceptions » enregistre les
+   frais de voyages et de déplacements ainsi que les frais de réception.
+
+   Le compte 626 « Frais postaux et de télécommunications » enregistre les
+   frais de poste, de téléphone, de télex, etc.
+
+   Le compte 627 « Services bancaires et assimilés » enregistre les frais
+   sur titres, commissions et frais sur émission d'emprunts, frais de
+   location de coffres, commissions sur cartes de crédit, etc.
+
+   Le compte 629 « Rabais, remises et ristournes obtenus sur autres
+   services extérieurs » enregistre les rabais, remises et ristournes
+   obtenus sur autres services extérieurs hors facture.
+
+63. IMPOTS, TAXES ET VERSEMENTS ASSIMILES
+
+   Le compte 63 « Impôts, taxes et versements assimilés » enregistre le
+   montant des impôts, taxes et versements assimilés à la charge de
+   l'entité.
+
+   Les subventions d'exploitation reçues sont enregistrées au crédit du
+   compte 74 « Subventions d'exploitation ». Elles peuvent être
+   enregistrées au crédit d'une subdivision du compte 63 si elles ont pour
+   objet de compenser des charges enregistrées à ce compte.
+
+   Le compte 631 « Impôts, taxes et versements assimilés sur rémunérations
+   (administrations des impôts) » enregistre notamment la taxe sur les
+   salaires, la taxe d'apprentissage, la participation des employeurs au
+   développement de la formation professionnelle continue et à l'effort de
+   construction.
+
+   Le compte 635 « Autres impôts, taxes et versements assimilés
+   (administrations des impôts) » enregistre notamment les impôts directs
+   et taxes assimilées, les impôts indirects, les droits d'enregistrement,
+   etc.
+
+   Le compte 637 « Autres impôts, taxes et versements assimilés (autres
+   organismes) » enregistre notamment les taxes perçues par les organismes
+   de sécurité sociale, les chambres consulaires, les organismes
+   professionnels, etc.
+
+64. CHARGES DE PERSONNEL
+
+   Le compte 64 « Charges de personnel » enregistre l'ensemble des
+   rémunérations du personnel et des charges sociales y afférentes.
+
+   Le compte 641 « Rémunérations du personnel » enregistre les salaires,
+   appointements, congés payés, primes, gratifications, indemnités et
+   avantages divers, ainsi que le supplément familial.
+
+   Le compte 644 « Rémunérations du travail de l'exploitant » est utilisé
+   dans les entreprises individuelles. Il est débité par le crédit du
+   compte 108 « Compte de l'exploitant ».
+
+   Le compte 645 « Charges de sécurité sociale et de prévoyance »
+   enregistre les cotisations de sécurité sociale et de prévoyance à la
+   charge de l'entité.
+
+   Le compte 646 « Cotisations sociales personnelles de l'exploitant » est
+   utilisé dans les entreprises individuelles. Il est débité par le crédit
+   du compte 438 « Organismes sociaux - Comptes de l'exploitant ».
+
+65. AUTRES CHARGES DE GESTION COURANTE
+
+   Le compte 65 « Autres charges de gestion courante » enregistre les
+   charges de gestion courante qui ne peuvent être classées dans les
+   comptes 60 à 64.
+
+   Le compte 651 « Redevances pour concessions, brevets, licences,
+   marques, procédés, logiciels, droits et valeurs similaires » enregistre
+   le montant des redevances versées à ce titre.
+
+   Le compte 653 « Jetons de présence » enregistre le montant des jetons
+   de présence versés aux administrateurs.
+
+   Le compte 654 « Pertes sur créances irrécouvrables » est débité du
+   montant des créances devenues irrécouvrables dans l'exercice.
+
+   Le compte 655 « Quote-part de résultat sur opérations faites en commun »
+   enregistre la quote-part de résultat (perte) transférée par l'entité à
+   des tiers dans le cadre d'une société en participation ou d'une société
+   de fait, ou la quote-part de résultat (perte) supportée par l'entité
+   dans le cadre d'une société en participation ou d'une société de fait.
+
+   Le compte 658 « Charges diverses de gestion courante » enregistre les
+   charges diverses de gestion courante non enregistrées dans les comptes
+   651 à 655.
+
+66. CHARGES FINANCIERES
+
+   Le compte 66 « Charges financières » enregistre les charges financières
+   de l'entité.
+
+   Le compte 661 « Charges d'intérêts » enregistre les intérêts des
+   emprunts et dettes assimilées, les intérêts des comptes courants et des
+   dépôts créditeurs, les intérêts bancaires et sur opérations de
+   financement, etc.
+
+   Le compte 664 « Pertes sur créances liées à des participations »
+   enregistre les pertes sur créances rattachées à des participations.
+
+   Le compte 665 « Escomptes accordés » enregistre le montant des
+   escomptes accordés par l'entité à ses clients.
+
+   Le compte 666 « Pertes de change » enregistre les pertes de change
+   subies par l'entité au cours de l'exercice.
+
+   Le compte 667 « Charges nettes sur cessions de valeurs mobilières de
+   placement » enregistre les charges nettes sur cessions de valeurs
+   mobilières de placement.
+
+   Le compte 668 « Autres charges financières » enregistre les charges
+   financières non enregistrées dans les comptes 661 à 667.
+
+67. CHARGES EXCEPTIONNELLES
+
+   Le compte 67 « Charges exceptionnelles » enregistre les charges
+   exceptionnelles de l'entité.
+
+   Le compte 671 « Charges exceptionnelles sur opérations de gestion »
+   enregistre les charges exceptionnelles sur opérations de gestion,
+   notamment les pénalités sur marchés, les dédits payés sur achats et sur
+   ventes, les créances devenues irrécouvrables dans l'exercice, etc.
+
+   Le compte 672 « Charges sur exercices antérieurs (à classer par nature)
+   » enregistre les charges sur exercices antérieurs.
+
+   Le compte 675 « Valeurs comptables des éléments d'actif cédés »
+   enregistre la valeur comptable des éléments d'actif cédés.
+
+   Le compte 678 « Autres charges exceptionnelles » enregistre les charges
+   exceptionnelles non enregistrées dans les comptes 671 à 675.
+
+68. DOTATIONS AUX AMORTISSEMENTS, AUX DEPRECIATIONS ET AUX PROVISIONS
+
+   Le compte 68 « Dotations aux amortissements, aux dépréciations et aux
+   provisions » enregistre les dotations aux amortissements, aux
+   dépréciations et aux provisions de l'exercice.
+
+   Le compte 681 « Dotations aux amortissements, aux dépréciations et aux
+   provisions - Charges d'exploitation » enregistre les dotations aux
+   amortissements, aux dépréciations et aux provisions afférentes à
+   l'exploitation.
+
+   Le compte 686 « Dotations aux amortissements, aux dépréciations et aux
+   provisions - Charges financières » enregistre les dotations aux
+   amortissements, aux dépréciations et aux provisions afférentes à
+   l'activité financière.
+
+   Le compte 687 « Dotations aux amortissements, aux dépréciations et aux
+   provisions - Charges exceptionnelles » enregistre les dotations aux
+   amortissements, aux dépréciations et aux provisions afférentes à
+   l'activité exceptionnelle.
+
+69. PARTICIPATION DES SALARIES - IMPOTS SUR LES BENEFICES ET ASSIMILES
+
+   Le compte 69 « Participation des salariés - Impôts sur les bénéfices et
+   assimilés » enregistre la participation des salariés aux résultats de
+   l'entreprise ainsi que l'impôt sur les bénéfices.
+
+   Le compte 691 « Participation des salariés aux résultats » enregistre
+   le montant de la participation des salariés aux résultats de
+   l'entreprise.
+
+   Le compte 695 « Impôts sur les bénéfices » enregistre le montant de
+   l'impôt sur les bénéfices dû par l'entité.
+
+   Le compte 696 « Supplément d'impôt sur les sociétés lié aux
+   distributions » enregistre le montant du supplément d'impôt sur les
+   sociétés dû par l'entité.
+
+   Le compte 698 « Intégration fiscale » enregistre les charges et produits
+   liés à l'intégration fiscale.
+
+   Le compte 699 « Produits - Report en arrière des déficits » enregistre
+   le produit résultant du report en arrière des déficits.
