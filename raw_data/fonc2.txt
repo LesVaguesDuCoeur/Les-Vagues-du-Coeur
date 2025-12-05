@@ -1,0 +1,290 @@
+20. IMMOBILISATIONS INCORPORELLES ET FRAIS D'ETABLISSEMENT
+
+Compte 201 « Frais d'établissement »
+
+   Le compte 201 « Frais d'établissement » enregistre les frais
+   d'établissement soit directement, soit par l'intermédiaire du compte 72
+   « Production immobilisée ».
+
+Compte 203 « Frais de développement »
+
+   Le compte 203 « Frais de développement » enregistre les frais de
+   développement qui peuvent être inscrits dans les immobilisations
+   incorporelles. Il est débité par le crédit du compte 72 « Production
+   immobilisée ».
+
+Compte 205 « Concessions et droits similaires, brevets, licences, marques,
+procédés, solutions informatiques, droits et valeurs similaires »
+
+   Lorsque la prise de brevet est consécutive à des recherches liées à la
+   réalisation de projets, le compte 205 « Concessions et droits
+   similaires, brevets, licences, marques, procédés, solutions
+   informatiques, droits et valeurs similaires » est débité du montant
+   retenu comme valeur d'entrée du brevet par le crédit du compte 203.
+
+   Le compte 205 enregistre les dépenses faites pour l'obtention de
+   l'avantage que constitue la protection accordée, sous certaines
+   conditions, au titulaire d'une concession, à l'inventeur, à l'auteur ou
+   au bénéficiaire du droit d'exploitation d'un brevet, d'une licence,
+   d'une marque, d'un procédé, de droits de propriété littéraire ou
+   artistique.
+
+   Le compte 205 enregistre également les dépenses d'acquisition ou de
+   création de solutions informatiques qui peuvent être inscrites en
+   immobilisations incorporelles.
+
+Compte 206 « Droit au bail »
+
+   Le compte 206 « Droit au bail » enregistre le montant versé ou dû au
+   locataire précédent en considération du transfert à l'acheteur des
+   droits résultant tant des conventions que de la législation sur la
+   propriété commerciale.
+
+Compte 207 « Fonds commercial »
+
+   Le compte 207 « Fonds commercial » enregistre l'acquisition des
+   éléments incorporels du fonds de commerce acquis qui ne font pas
+   l'objet d'une évaluation et d'une comptabilisation séparées au bilan et
+   qui concourent au maintien ou au développement du potentiel d'activité
+   de l'entité.
+
+21. IMMOBILISATIONS CORPORELLES
+
+Compte 211 « Terrains »
+
+   Le compte 211 enregistre la valeur des terrains. Sont distingués :
+     * les terrains nus qui ne supportent pas de construction ;
+     * les terrains aménagés qui sont viabilisés ;
+     * les sous-sols et les sur-sols. Ce compte est utilisé lorsque
+       l'entité n'est pas propriétaire des trois éléments rattachables à
+       une même parcelle de terrain : sol, sous-sol, sur-sol. Ainsi, le
+       compte sur-sol enregistre la valeur du droit de construction ou
+       d'utilisation de l'espace situé au-dessus d'un sol dont l'entité
+       n'est pas propriétaire ;
+     * les terrains de gisement tels que les carrières ;
+     * les terrains bâtis qui supportent une construction propre ;
+     * les terrains bâtis qui supportent une construction d'autrui.
+
+Compte 212 « Agencements et aménagements de terrains »
+
+   Les dépenses faites en vue de l'aménagement des terrains, par exemple :
+   clôtures, mouvements de terres, sont inscrites sous le compte 212
+   « Agencements et aménagements de terrains ». Ce compte comprend les
+   mêmes subdivisions que le compte 211.
+
+Compte 213 « Constructions »
+
+   Le compte 213 « Constructions » comprend :
+     * les bâtiments ;
+     * les installations, agencements, aménagements ;
+     * les ouvrages d'infrastructure.
+
+Compte 214 « Constructions sur sol d'autrui »
+
+   Le compte 214 enregistre la valeur des constructions édifiées sur le
+   sol d'autrui. Il comprend les mêmes subdivisions que le compte 213.
+
+Compte 215 « Installations techniques, matériels et outillages industriels »
+
+   Sont inscrits au compte 215 « Installations techniques, matériels et
+   outillages industriels » les installations complexes spécialisées, les
+   installations à caractère spécifique, le matériel industriel,
+   l'outillage industriel ainsi que les agencements et aménagements
+   relatifs aux matériels et outillages industriels.
+
+Compte 218 « Autres immobilisations corporelles »
+
+   Sont notamment inscrits au compte 218 « Autres immobilisations
+   corporelles » le matériel de transport, le matériel de bureau et le
+   matériel informatique, le mobilier et les emballages récupérables.
+
+22. IMMOBILISATIONS MISES EN CONCESSION
+
+   Les immobilisations incorporelles ou corporelles mises en concession
+   par le concédant ou par le concessionnaire sont inscrites au compte
+   22 ; les immobilisations corporelles sont ventilées dans les mêmes
+   conditions que celles inscrites au compte 21.
+
+   Le compte 229 « Droits du concédant » enregistre la contrepartie de la
+   valeur des biens mis gratuitement dans la concession par le concédant.
+
+23. IMMOBILISATIONS EN COURS, AVANCES ET ACOMPTES
+
+   Le compte 23 « Immobilisations en cours, avances et acomptes » a pour
+   objet de faire apparaître la valeur des immobilisations non terminées à
+   la fin de chaque exercice.
+
+   Du point de vue de leur origine, les immobilisations inscrites aux
+   comptes 231 et 232 se répartissent en deux groupes :
+     * celles qui sont créées par les moyens propres de l'entité ;
+     * celles qui résultent des travaux de plus ou moins longue durée
+       confiés à des tiers.
+
+   Le coût des immobilisations créées par l'entité est porté au débit du
+   compte 231 « Immobilisations corporelles en cours » ou à celui du
+   compte 232 « Immobilisations incorporelles en cours » par le crédit du
+   compte 72 « Production immobilisée ».
+
+   Lorsque les travaux sont confiés à des tiers, le compte 237 ou le
+   compte 238 sont débités des avances à la commande et des acomptes
+   représentant les règlements partiels effectués par l'entité au fur et à
+   mesure de l'avancement des travaux.
+
+   Le coût d'une immobilisation est viré du compte 23 au compte 20 ou au
+   compte 21 lorsque l'immobilisation est terminée.
+
+   Les avances et acomptes versés par l'entité à des tiers pour des
+   opérations en cours sont portés :
+     * au compte 237 lorsqu'ils ont pour objet l'acquisition d'une
+       immobilisation incorporelle ;
+     * au compte 238 lorsqu'ils ont pour objet l'acquisition d'une
+       immobilisation corporelle.
+
+   En cours d'exercice, les entités ont la faculté de comptabiliser tous
+   les avances et acomptes visés ci-dessus dans le compte 4091
+   « Fournisseurs - Avances et acomptes versés sur commandes », mais en
+   fin d'exercice, elles virent au compte 237 ou 238 les avances et
+   acomptes concernant les commandes d'immobilisations.
+
+   Les avances et les acomptes peuvent être enregistrés séparément dans
+   des subdivisions appropriées des comptes 237 et 238.
+
+26. PARTICIPATIONS ET CREANCES RATTACHEES A DES PARTICIPATIONS
+
+Compte 261 « Titres de participation »
+
+   Le compte 261 « Titres de participation » est débité de la valeur
+   d'apport ou du coût d'acquisition, par le crédit, suivant le cas :
+     * du compte 101 « Capital » ou du compte 456 « Associés - Opérations
+       sur le capital » ;
+     * du compte 404 « Fournisseurs d'immobilisations » ou du compte 269
+       « Versements restant à effectuer sur titres de participation non
+       libérés » ou des comptes financiers.
+
+   Il est crédité, en cas de cession des titres, par le débit du compte
+   6671 « Valeurs comptables des immobilisations financières cédées » pour
+   la valeur comptable des titres cédés.
+
+Compte 262 « Titres évalués par équivalence »
+
+   Le compte 262 « Titres évalués par équivalence » regroupe les titres
+   des sociétés contrôlées de manière exclusive évalués par équivalence.
+
+Compte 266 « Autres formes de participation »
+
+   Le compte 266 « Autres formes de participation » est débité du montant
+   de la souscription ou de l'acquisition des parts d'un GIE Si le GIE n'a
+   pas de capital, le compte 266 est débité pour mémoire.
+
+Compte 267 « Créances rattachées à des participations »
+
+   Le compte 267 « Créances rattachées à des participations » regroupe les
+   créances nées à l'occasion de prêts octroyés à des entités dans
+   lesquelles le prêteur détient une participation.
+
+   Les avances à un GIE qui ne sont pas réalisables sont enregistrées au
+   débit d'une subdivision du compte 267 intitulée « Avances
+   consolidables ».
+
+   Dans le cas où la souscription à une partie du capital d'une société
+   entraîne ultérieurement, pour le souscripteur, des versements
+   obligatoires de fonds supplémentaires qui ne sont pas inscrits au
+   capital de cette société, lesdits versements sont enregistrés dans une
+   subdivision du compte 267 intitulée « Versements représentatifs
+   d'apports non capitalisés - appel de fonds ». Il en est ainsi, par
+   exemple, en matière immobilière.
+
+compte 268 « Créances rattachées à des sociétés en participation »
+
+   Le compte 268 « Créances rattachées à des sociétés en participation »
+   est débité par le crédit du compte 458 « Associés - Opérations faites
+   en commun et en GIE », des droits que l'entité coparticipante non
+   gérante, détient sur les biens acquis ou créés par le gérant de la
+   société en participation.
+
+   Le compte 268 est crédité par le débit du compte 458 lors de la
+   consommation des biens immobilisés.
+
+   Les intérêts courus à la fin de l'exercice sont inscrits dans des
+   subdivisions des comptes 267 et 268.
+
+   Le compte 269 « Versements restant à effectuer sur les titres de
+   participation non libérés » est crédité du montant des versements
+   restant à effectuer sur les titres de participation non libérés par le
+   débit du compte 261 « Titres de participation ».
+
+27. AUTRES IMMOBILISATIONS FINANCIERES
+
+   Les titres conférant un droit de propriété donnés en nantissement ou
+   faisant l'objet d'un blocage temporaire supérieur à un an sont inscrits
+   sous le compte 271 « Titres immobilisés autres que les titres
+   immobilisés de l'activité de portefeuille (droit de propriété) ».
+
+   Le compte 279 « Versements restant à effectuer sur titres immobilisés
+   non libérés » est crédité du montant des versements restant à effectuer
+   sur les titres immobilisés non libérés, par le débit du compte 271.
+
+   Le compte 271 et le compte 272 « Titres immobilisés (droit de
+   créance) » sont crédités, en cas de cession, par le débit du compte
+   6671 « Valeurs comptables des immobilisations financières cédées » pour
+   la valeur comptable des titres cédés. Simultanément, le compte 462
+   « Créances sur cessions d'immobilisations » ou un compte de trésorerie
+   sont débités par le crédit du compte 7671 « Produits des cessions
+   d'immobilisations financières » pour le prix de cession.
+
+   Lorsqu'une créance à immobiliser est acquise à un coût différent de sa
+   valeur nominale, cette dernière peut néanmoins être inscrite dans la
+   subdivision du compte 27 intéressée, en enregistrant l'écart entre la
+   valeur nominale et le coût dans un compte à régulariser selon les
+   conditions contractuelles.
+
+   Les sociétés qui achètent leurs actions inscrivent ces titres au compte
+   2771 « Actions propres ou parts propres ».
+
+   Les titres rachetés explicitement en vue de leur annulation sont
+   inscrits au compte 2772 « Actions propres ou parts propres en voie
+   d'annulation ». Compte tenu de la concomitance entre la réduction de
+   capital et le transfert de propriété des actions du patrimoine des
+   actionnaires dans celui de la société, cette inscription est effectuée
+   pour mémoire. En toute hypothèse, ces titres auront disparu de l'actif
+   à la clôture de l'exercice. L'opération d'annulation équivaut à un
+   partage partiel de l'actif social au profit des vendeurs des actions
+   rachetées. Si le prix de rachat est inférieur à la valeur nominale
+   globale des actions rachetées, le montant de la réduction de capital
+   est néanmoins égal à cette valeur nominale globale puisque les actions
+   rachetées sont annulées. La différence est inscrite dans un compte
+   analogue à celui des primes d'émission ou d'apport. Si le prix de
+   rachat est supérieur à la valeur nominale des actions rachetées, le
+   montant de la réduction de capital est égal à cette dernière et
+   l'excédent est imputé sur un compte distribuable de situation nette.
+
+28. AMORTISSEMENTS DES IMMOBILISATIONS
+
+   Les comptes d'amortissements des immobilisations sont crédités par le
+   débit du compte 681 « Dotations aux amortissements, dépréciations et
+   provisions (à inscrire dans les charges d'exploitation) », du compte
+   686 « Dotations aux amortissements, aux dépréciations et aux provisions
+   (à inscrire dans les charges financières) », ou du compte 687
+   « Dotations aux amortissements, aux dépréciations et aux provisions »
+   (à inscrire dans les charges exceptionnelles) ».
+
+29. DEPRECIATIONS DES IMMOBILISATIONS
+
+   Lors de la constitution de dépréciations ou de l'augmentation de
+   dépréciations déjà constituées, le compte de dépréciations concerné est
+   crédité par le débit du compte 681 « Dotations aux amortissements, aux
+   dépréciations et aux provisions (à inscrire dans les charges
+   d'exploitation) », du compte 686 « Dotations aux amortissements, aux
+   dépréciations et aux provisions (à inscrire dans les charges
+   financières) », ou du compte 687 « Dotations aux amortissements, aux
+   dépréciations et aux provisions (à inscrire dans les charges
+   exceptionnelles) ».
+
+   Lors de l'annulation d'une dépréciation ou d'une provision devenue sans
+   objet ou de leur diminution, le compte de dépréciation ou de provision
+   est débité par le crédit des subdivisions appropriées du compte 78
+   « Reprises sur amortissements, dépréciations et provisions.
+
+   A la date de cession de l'immobilisation, la dépréciation
+   antérieurement constituée est soldée par le crédit d'une subdivision
+   appropriée du compte 78.

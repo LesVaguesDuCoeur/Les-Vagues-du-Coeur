@@ -1,0 +1,362 @@
+10. CAPITAL ET RESERVES
+
+   Selon la forme juridique sous laquelle s'exerce l'activité de l'entité,
+   les apports et les bénéfices accumulés sont enregistrés dans les
+   conditions suivantes :
+
+1- Comptes à l'usage de l'exploitant individuel.
+
+Le compte 101 « Capital »
+
+   Le compte 101 « Capital » enregistre à son crédit :
+     * la valeur des apports de l'entrepreneur au début ou en cours
+       d'activité ;
+     * le bénéfice de l'exercice précédent par le débit du compte 12
+       « Résultat de l'exercice ».
+
+   Il enregistre à son débit :
+     * les prélèvements de toutes natures ;
+     * la perte de l'exercice précédent par le crédit du compte 12.
+
+Le compte 108 « Compte de l'exploitant »
+
+   Les apports ou les retraits personnels de l'exploitant et, le cas
+   échéant, de sa famille sont enregistrés en cours d'exercice dans le
+   compte 108 « Compte de l'exploitant ». En fin d'exercice, le solde de
+   ce compte est viré au compte 101 « Capital ».
+
+2- Comptes à l'usage des sociétés.
+
+Le compte 101 « Capital »
+
+   Le compte 101 « Capital » enregistre à son crédit le montant du capital
+   figurant dans l'acte de société. Il retrace l'évolution de ce montant
+   au cours de la vie de la société suivant les décisions des organes
+   compétents.
+
+   Il est crédité lors des augmentations de capital :
+     * du montant des apports en espèces ou en nature effectués par les
+       associés, sous déduction des primes liées au capital ;
+     * du montant des incorporations de réserves.
+
+   Il est débité des réductions de capital, quelle qu'en soit la cause par
+   exemple, absorption de pertes ou remboursement aux associés.
+
+   Le compte 1018 « Capital souscrit soumis à des réglementations
+   particulières » enregistre à son crédit le montant du capital provenant
+   d'opérations particulières qui sont isolées en application de
+   dispositions législatives et réglementaires. Ce compte est subdivisé
+   autant que de besoin.
+
+Le compte 104 « Primes liées au capital »
+
+   Le compte 104 « Primes liées au capital » enregistre les primes
+   d'émission, de fusion, d'apport, de conversion d'obligations en
+   actions.
+
+   A la souscription, la société émettrice de bons de souscription
+   d'actions enregistre la contrepartie de la valeur des bons au compte
+   104. Cette affectation est maintenue en cas de péremption des bons.
+
+   Le compte 104 enregistre également le montant du droit d'entrée dans
+   les sociétés coopératives.
+
+Le compte 106 « Réserves »
+
+   Les réserves à inscrire au compte 106 « Réserves » sont des bénéfices
+   affectés durablement à l'entité jusqu'à décision contraire des organes
+   compétents. Ce compte est crédité, lors de l'affectation des bénéfices,
+   des montants destinés :
+     * à la réserve légale ;
+     * aux réserves indisponibles, par exemple : réserves pour actions
+       propres et parts propres ;
+     * aux réserves statutaires ou contractuelles ;
+     * aux réserves réglementées ;
+     * aux autres réserves.
+
+   Le compte 106 est débité des prélèvements sur les réserves concernées
+   pour les incorporer au capital, les distribuer aux associés et amortir
+   les pertes.
+
+Le compte 107 « Écart d'équivalence »
+
+   Le compte 107 « Écart d'équivalence » enregistre l'écart constaté
+   lorsque la valeur globale des titres évalués par équivalence est
+   supérieure à leur coût d'acquisition.
+
+Le compte 109 « Actionnaires : capital souscrit - non appelé »
+
+   Le compte 109 « Actionnaires : capital souscrit - non appelé » est
+   débité en contrepartie de la subdivision du compte 101 intitulée
+   « Capital souscrit - non appelé ».
+
+3- Comptes à l'usage de toutes les entités.
+
+Le compte 105 « Écarts de réévaluation »
+
+   Le compte 105 « Écarts de réévaluation » enregistre les écarts
+   constatés à l'occasion d'opérations de réévaluation et qui peuvent être
+   incorporés en tout ou partie au capital. Il est subdivisé autant que de
+   besoin.
+
+11. REPORT A NOUVEAU
+
+   Le compte 11 « Report à nouveau » peut être subdivisé afin de
+   distinguer le report à nouveau bénéficiaire au compte 110 « Report à
+   nouveau - solde créditeur » et le report à nouveau déficitaire au
+   compte 119 « Report à nouveau - solde débiteur ».
+
+12. RESULTAT DE L'EXERCICE
+
+   Le compte 12 « Résultat de l'exercice » enregistre pour solde les
+   comptes de charges et les comptes de produits de l'exercice.
+
+   Le solde créditeur du compte 12 représente un bénéfice, les produits
+   étant supérieurs aux charges.
+
+   Le solde débiteur du compte 12 représente une perte, les charges étant
+   supérieures aux produits.
+
+   Le compte 12 est soldé après décision d'affectation du résultat. Dans
+   les sociétés, les montants non distribués et non affectés à un compte
+   de réserves sont virés au compte 11 « Report à nouveau » : au compte
+   110, en cas de report bénéficiaire, et au compte 119, en cas de report
+   déficitaire, si ces comptes sont ouverts. A l'ouverture des comptes de
+   l'exercice suivant, les entités ont la possibilité d'utiliser un compte
+   spécial 88 « Résultat en instance d'affectation ». Dans les entreprises
+   individuelles, le solde du compte 12 est viré au compte 101
+   « Capital ».
+
+   Les entités peuvent utiliser le compte 120 « Résultat de l'exercice -
+   bénéfice » pour enregistrer le bénéfice et le compte 129 « Résultat de
+   l'exercice - perte » pour enregistrer la perte.
+
+   Le compte 1209 « Acomptes sur dividendes » enregistre les acomptes de
+   dividendes versés avant l'approbation des comptes de l'exercice dans
+   les conditions définies à l'article L.232-12 du code de commerce. Il
+   est débité par le crédit d'une subdivision du compte 457 « Associés -
+   Dividendes à payer ». Le compte 1209 est soldé au cours de l'exercice
+   suivant après décision des associés sur l'affectation des résultats.
+
+13. SUBVENTIONS D'INVESTISSEMENT
+
+   Le compte 131 « Subventions d'équipement octroyées » est crédité de la
+   subvention par le débit d'un compte de tiers ou d'un compte financier.
+
+   Le compte 139 « Subventions d'investissement inscrites au compte de
+   résultat » est débité par le crédit du compte 747 « Quote-part des
+   subventions d'investissement virée au résultat de l'exercice ».
+
+   Les comptes 131 et 139 sont soldés l'un par l'autre, lorsque le crédit
+   du premier est égal au débit du second.
+
+14. PROVISIONS REGLEMENTEES
+
+   Le fonctionnement des comptes de provisions réglementées est identique
+   à celui des comptes de provisions décrit ci-dessous.
+
+   Le montant de la dotation de l'exercice aux comptes de provisions
+   réglementées est enregistré par le débit de la subdivision
+   correspondante du compte 68 « Dotations aux amortissements, aux
+   dépréciations et aux provisions » au crédit de l'un des comptes
+   suivants : 143 « Provisions réglementées pour hausse des prix », 145
+   « Amortissements dérogatoires » et 148 « Autres provisions
+   réglementées ».
+
+   Les subdivisions concernées du compte 78 « Reprises sur amortissements,
+   dépréciations et provisions » enregistrent à leur crédit les reprises
+   sur provisions réglementées par le débit de l'un des comptes 143 à 148.
+
+15. PROVISIONS
+
+   Lors de la constitution d'une provision, le compte de provisions est
+   crédité par le débit :
+     * du compte 681 « Dotations aux amortissements, aux dépréciations et
+       aux provisions », lorsqu'elle concerne l'exploitation normale et
+       courante de l'entité ;
+     * du compte 686 « Dotations aux amortissements, aux dépréciations et
+       aux provisions » lorsqu'elle affecte la gestion financière de
+       l'entité ;
+     * du compte 687 « Dotations aux amortissements, aux dépréciations et
+       aux provisions » lorsqu'elle se rapporte au résultat exceptionnel.
+
+   Il est réajusté à la fin de chaque exercice par :
+     * le débit des comptes de dotations correspondants 681, 686 ou 687,
+       lorsque le montant de la provision est augmenté ;
+     * le crédit du compte 781 « Reprises sur amortissements,
+       dépréciations et provisions (à inscrire dans les produits
+       d'exploitation) », du compte 786 « Reprises sur dépréciations et
+       provisions (à inscrire dans les produits financiers) » ou du compte
+       787 « Reprises sur dépréciations et provisions (à inscrire dans les
+       produits exceptionnels) », lorsque le montant de la dépréciation
+       doit être diminué ou annulé, la provision étant devenue, en tout ou
+       partie, sans objet.
+
+   Lors de la réalisation du risque ou de la survenance de la charge, la
+   provision antérieurement constituée est soldée par le crédit des
+   comptes 781, 786 ou 787. Corrélativement, la charge intervenue est
+   inscrite au compte intéressé de la classe 6.
+
+16. EMPRUNTS ET DETTES ASSIMILEES
+
+   Le compte 16 « Emprunts et dettes assimilées » enregistre d'une part
+   les emprunts, d'autre part les dettes financières assimilées à des
+   emprunts, à l'exception de celles enregistrées au compte 17 « Dettes
+   rattachées à des participations ».
+
+   Les comptes 161 « Emprunts obligataires convertibles », 163 « Autres
+   emprunts obligataires », 164 « Emprunts auprès des établissements de
+   crédit », 165 « Dépôts et cautionnements reçus », 166 « Participation
+   des salariés aux résultats », 167 « Emprunts et dettes assorties de
+   conditions particulières » et 168 « Autres emprunts et dettes
+   assimilées » peuvent être subdivisés pour identifier :
+     * les emprunts et dettes assimilées contractés en France et à
+       l'étranger, en euros ou en devises ;
+     * la partie des emprunts et dettes assimilées dont les échéances sont
+       à long terme, à moyen terme ou à court terme.
+
+   Les intérêts courus sur emprunts et dettes sont inscrits dans une
+   subdivision du compte des emprunts ou des dettes auxquels les intérêts
+   courus se rapportent.
+
+   Les entités peuvent également subdiviser les comptes d'emprunts pour
+   identifier les emprunts contractés auprès d'entités liées ou avec
+   lesquelles elles ont un lien de participation.
+
+   Les emprunts obligataires dont le remboursement est assorti de primes
+   sont comptabilisés au crédit des comptes 161 ou 163 pour leur valeur
+   totale, primes de remboursement incluses. La contrepartie de ces primes
+   est enregistrée au débit du compte 169 « Primes de remboursement des
+   emprunts ».
+
+   La dotation de l'exercice est inscrite au débit du compte 6861
+   « Dotations aux amortissements des primes de remboursement des
+   emprunts » au crédit du compte 169.
+
+   A la souscription, l'émetteur d'obligations avec bons de souscription
+   d'obligations enregistre l'emprunt obligataire au compte 163 « Autres
+   emprunts obligataires » pour sa valeur de remboursement. La différence
+   entre la valeur de remboursement et la valeur actuelle de l'emprunt est
+   enregistrée au compte 169 « Primes de remboursement des emprunts ».
+
+   La différence entre le prix d'émission des obligations avec bons de
+   souscription d'obligations et la valeur actuelle de l'emprunt
+   obligataire est enregistrée en produits constatés d'avance au titre des
+   bons.
+
+   Lorsqu'il s'agit d'obligations avec bons de souscription d'action,
+   l'emprunt obligataire est comptabilisé selon les règles générales. La
+   contrepartie des bons n'est pas constatée.
+
+   Les concours bancaires courants ne sont pas inscrits dans le compte 164
+   « Emprunts auprès des établissements de crédit ». Ils sont enregistrés
+   dans un compte spécifique : 519 « Concours bancaires courants ».
+
+Compte 166 « Participation des salariés aux résultats »
+
+   Le compte 166 « Participation des salariés aux résultats » enregistre
+   les fonds non employés et les sommes relatives à la création d'un fonds
+   de participation. La subdivision du compte 166 intitulée « Comptes
+   bloqués » est créditée par le débit du compte 424 « Participation des
+   salariés aux résultats » du montant des fonds qui n'ont pas pu être
+   utilisés par suite d'absence d'accord entre employeurs et salariés.
+
+Compte 167 « Emprunts et dettes assortis de conditions particulières »
+
+   Le compte 167 « Emprunts et dettes assortis de conditions
+   particulières » regroupe les emprunts et dettes assortis de conditions
+   particulières. Le montant des émissions de titres participatifs est
+   enregistré au compte 1671. Les avances conditionnées de l'Etat sont
+   enregistrées au compte 1674. Les emprunts participatifs sont
+   enregistrés au compte 1675.
+
+   Le compte 1685 « Rentes viagères capitalisées » enregistre à son crédit
+   la contrepartie du bien meuble ou immeuble acquis contre paiement de
+   rentes viagères. Il est apuré par le paiement des arrérages au
+   crédirentier.
+
+   Les arrérages à verser qui excèdent le capital sont inscrits au crédit
+   du compte 1685 et constituent des charges financières. Inversement, le
+   décès du crédirentier peut être générateur d'un produit financier.
+
+17. DETTES RATTACHEES A DES PARTICIPATIONS
+
+   Les droits des coparticipants, non gérants, sur les immobilisations
+   acquises ou créées dans le cadre d'une société en participation sont
+   enregistrés, dans la comptabilité du gérant, propriétaire des biens, au
+   crédit du compte 178 « Dettes rattachées à des sociétés en
+   participation » par le débit du compte 458 « Associés - Opérations
+   faites en commun et en GIE ».
+
+   Le compte 178 est débité par le crédit du compte 458 pour constater la
+   consommation des biens immobilisés.
+
+18. COMPTES DE LIAISON DES ETABLISSEMENTS ET SOCIETES EN PARTICIPATION
+
+   1- Le compte 18 « Comptes de liaison des établissements et sociétés en
+   participation » est utilisé pour comptabiliser des cessions entre
+   établissements, succursales, usines ou ateliers d'une même entité qui
+   tiennent des comptabilités autonomes.
+
+   a) Lorsque les cessions concernent des éléments dont la valeur se
+   trouve directement dans un des comptes de la comptabilité générale de
+   l'établissement cédant, elles sont comptabilisées :
+     * par l'établissement qui fournit, au crédit du compte intéressé de
+       la comptabilité générale par le débit du compte de liaison 181
+       « Comptes de liaison des établissements » ouvert au nom de
+       l'établissement client ;
+     * par l'établissement qui reçoit, au débit du compte correspondant de
+       la comptabilité générale, par le crédit du compte de liaison 181
+       ouvert au nom de l'établissement fournisseur.
+
+   b) Lorsque les cessions concernent des produits et des services dont le
+   coût de revient, ne peut être déterminé qu'en comptabilité analytique
+   ou que par des calculs statistiques, les établissements intéressés
+   ouvrent les comptes 186 « Biens et prestations de services échangés
+   entre établissements - charges » ou 187 « Biens et prestations de
+   services échangés entre établissements - produits » qui sont subdivisés
+   suivant les besoins.
+
+   Les cessions sont comptabilisées :
+     * par l'établissement qui fournit, au crédit du compte 187 par le
+       débit du compte de liaison 181 ouvert au nom de l'établissement
+       client ;
+     * par l'établissement qui reçoit, au débit du compte 186 par le
+       crédit du compte de liaison 181 ouvert au nom de l'établissement
+       fournisseur.
+
+   Les entités peuvent évaluer les cessions internes soit au coût du
+   produit cédé ou du service fourni, soit pour une valeur différente de
+   ce coût. Mais dans ce dernier cas les stocks de produits fabriqués par
+   l'établissement cessionnaire avec des éléments fournis par
+   l'établissement cédant sont évalués au coût de production pour
+   l'entité, abstraction faite du résultat fictif inclus dans le prix de
+   cession de ces éléments.
+
+   Le compte de résultat de chaque établissement s'obtient par la
+   totalisation des divers postes des comptes de charges et de produits et
+   des comptes 186 et 187 « Biens et prestations de services échangés
+   entre établissements » (charges et produits).
+
+   Pour l'ensemble de l'entité, les comptes 186 et 187 présentent des
+   soldes qui s'annulent : les sommes portées au crédit du compte 187 par
+   les établissements fournisseurs et les sommes inscrites au débit du
+   compte 186 par les établissements clients s'équilibrent entre eux.
+
+   C) Les entités peuvent utiliser une méthode de comptabilisation
+   différente de celle qui est décrite aux paragraphes a) et b) ci-dessus.
+
+   Lorsque chacun de leurs établissements tient une comptabilité
+   analytique distincte dans le cadre d'une comptabilité générale unique
+   pour l'ensemble des établissements, le compte 18 n'est pas utilisé. Les
+   cessions internes sont enregistrées en comptabilité analytique ; la
+   comptabilité générale n'enregistre que les opérations faites avec les
+   tiers.
+
+   2- Le compte 18 est également utilisé pour les opérations réalisées par
+   l'intermédiaire d'une société en participation.
+
+   Le regroupements des comptes de la société en participation dans la
+   comptabilité du gérant responsable de la gestion des opérations peut
+   s'effectuer par le compte 188 « Comptes de liaison des sociétés en
+   participation ».
