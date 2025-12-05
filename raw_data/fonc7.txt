@@ -1,0 +1,159 @@
+70. VENTES DE PRODUITS FABRIQUES, PRESTATIONS DE SERVICES, MARCHANDISES
+
+   Le compte 70 « Ventes de produits fabriqués, prestations de services,
+   marchandises » est crédité du montant des ventes de produits fabriqués,
+   de prestations de services et de marchandises, hors taxes récupérables,
+   par le débit du compte 41 « Clients » ou d'un compte de trésorerie.
+
+   Les entités peuvent utiliser le compte 709 « Rabais, remises et
+   ristournes accordés par l'entreprise » en cours d'exercice. Ce compte
+   est débité par le crédit du compte 41 « Clients ». Il est soldé en fin
+   d'exercice, par le débit des comptes de ventes intéressés.
+
+71. PRODUCTION STOCKEE (OU DESTOCKAGE)
+
+   Le compte 71 « Production stockée (ou déstockage) » est crédité de la
+   valeur du stock final des produits en-cours et des produits finis par
+   le débit des comptes de stocks 33, 34 et 35, lors de l'inventaire
+   permanent ou intermittent.
+
+   Il est débité de la valeur du stock initial des produits en-cours et
+   des produits finis par le crédit des comptes de stocks 33, 34 et 35,
+   lors de l'inventaire permanent ou intermittent.
+
+   Le solde du compte 71 « Production stockée (ou déstockage) »
+   représente la variation globale de la valeur des stocks de produits
+   en-cours et de produits finis entre le début et la fin de l'exercice.
+
+72. PRODUCTION IMMOBILISEE
+
+   Le compte 72 « Production immobilisée » est crédité du coût des travaux
+   faits par l'entité pour elle-même par le débit du compte
+   d'immobilisation concerné (classe 2).
+
+74. SUBVENTIONS D'EXPLOITATION
+
+   Le compte 74 « Subventions d'exploitation » est crédité du montant des
+   subventions d'exploitation acquises par l'entité par le débit d'un
+   compte de tiers ou de trésorerie.
+
+75. AUTRES PRODUITS DE GESTION COURANTE
+
+   Le compte 75 « Autres produits de gestion courante » est crédité des
+   produits de gestion courante qui ne peuvent être classés dans les
+   comptes 70 à 74.
+
+   Le compte 751 « Redevances pour concessions, brevets, licences,
+   marques, procédés, logiciels, droits et valeurs similaires » est
+   crédité du montant des redevances perçues à ce titre.
+
+   Le compte 753 « Jetons de présence et rémunérations d'administrateurs,
+   gérants, ... » est crédité du montant des jetons de présence et
+   rémunérations perçus par l'entité en qualité d'administrateur, de
+   gérant, etc. d'une autre entité.
+
+   Le compte 754 « Ristournes perçues des coopératives (provenant des
+   excédents) » est crédité du montant des ristournes perçues des
+   coopératives.
+
+   Le compte 755 « Quote-part de résultat sur opérations faites en commun »
+   enregistre la quote-part de résultat (bénéfice) transférée par des
+   tiers à l'entité dans le cadre d'une société en participation ou d'une
+   société de fait, ou la quote-part de résultat (bénéfice) revenant à
+   l'entité dans le cadre d'une société en participation ou d'une société
+   de fait.
+
+   Le compte 758 « Produits divers de gestion courante » est crédité des
+   produits divers de gestion courante non enregistrés dans les comptes
+   751 à 755.
+
+76. PRODUITS FINANCIERS
+
+   Le compte 76 « Produits financiers » est crédité des produits
+   financiers de l'entité.
+
+   Le compte 761 « Produits de participations » est crédité des dividendes
+   et autres produits de participations.
+
+   Le compte 762 « Produits des autres immobilisations financières » est
+   crédité des produits des autres immobilisations financières.
+
+   Le compte 763 « Revenus des autres créances » est crédité des revenus
+   des autres créances.
+
+   Le compte 764 « Revenus des valeurs mobilières de placement » est
+   crédité des revenus des valeurs mobilières de placement.
+
+   Le compte 765 « Escomptes obtenus » est crédité du montant des
+   escomptes obtenus par l'entité de ses fournisseurs.
+
+   Le compte 766 « Gains de change » est crédité des gains de change
+   réalisés par l'entité au cours de l'exercice.
+
+   Le compte 767 « Produits nets sur cessions de valeurs mobilières de
+   placement » est crédité des produits nets sur cessions de valeurs
+   mobilières de placement.
+
+   Le compte 768 « Autres produits financiers » est crédité des produits
+   financiers non enregistrés dans les comptes 761 à 767.
+
+77. PRODUITS EXCEPTIONNELS
+
+   Le compte 77 « Produits exceptionnels » est crédité des produits
+   exceptionnels de l'entité.
+
+   Le compte 771 « Produits exceptionnels sur opérations de gestion » est
+   crédité des produits exceptionnels sur opérations de gestion, notamment
+   les pénalités sur marchés, les dédits perçus sur achats et sur ventes,
+   les créances recouvrées après passage en pertes, etc.
+
+   Le compte 772 « Produits sur exercices antérieurs (à classer par
+   nature) » est crédité des produits sur exercices antérieurs.
+
+   Le compte 775 « Produits des cessions d'éléments d'actif » est crédité
+   du prix de cession des éléments d'actif cédés.
+
+   Le compte 777 « Quote-part des subventions d'investissement virée au
+   résultat de l'exercice » est crédité du montant de la quote-part des
+   subventions d'investissement virée au résultat de l'exercice par le
+   débit du compte 139 « Subventions d'investissement inscrites au compte
+   de résultat ».
+
+   Le compte 778 « Autres produits exceptionnels » est crédité des
+   produits exceptionnels non enregistrés dans les comptes 771 à 777.
+
+78. REPRISES SUR AMORTISSEMENTS, DEPRECIATIONS ET PROVISIONS
+
+   Le compte 78 « Reprises sur amortissements, dépréciations et provisions
+   » est crédité du montant des reprises sur amortissements, dépréciations
+   et provisions de l'exercice.
+
+   Le compte 781 « Reprises sur amortissements, dépréciations et
+   provisions - Produits d'exploitation » est crédité du montant des
+   reprises sur amortissements, dépréciations et provisions afférentes à
+   l'exploitation.
+
+   Le compte 786 « Reprises sur amortissements, dépréciations et
+   provisions - Produits financiers » est crédité du montant des reprises
+   sur amortissements, dépréciations et provisions afférentes à l'activité
+   financière.
+
+   Le compte 787 « Reprises sur amortissements, dépréciations et
+   provisions - Produits exceptionnels » est crédité du montant des
+   reprises sur amortissements, dépréciations et provisions afférentes à
+   l'activité exceptionnelle.
+
+79. TRANSFERTS DE CHARGES
+
+   Le compte 79 « Transferts de charges » est crédité du montant des
+   charges transférées par l'entité par le débit du compte concerné
+   (compte de bilan ou de gestion).
+
+   Le compte 791 « Transferts de charges d'exploitation » est crédité du
+   montant des charges d'exploitation transférées.
+
+   Le compte 796 « Transferts de charges financières » est crédité du
+   montant des charges financières transférées.
+
+   Le compte 797 « Transferts de charges exceptionnelles » est crédité du
+   montant des charges exceptionnelles transférées.
