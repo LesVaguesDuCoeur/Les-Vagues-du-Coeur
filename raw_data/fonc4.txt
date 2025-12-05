@@ -1,0 +1,389 @@
+40. FOURNISSEURS ET COMPTES RATTACHES
+
+   Le compte 40 « Fournisseurs et comptes rattachés » enregistre les
+   dettes et avances de fonds liées à l'acquisition de biens ou de
+   services.
+
+Compte 401 « Fournisseurs »
+
+   Le compte 401 « Fournisseurs » est crédité du montant des factures
+   d'achats de biens ou de prestations de services par le débit :
+     * des comptes concernés de la classe 6 pour le montant hors taxes
+       récupérables par l'entité ;
+     * du compte 4096 « Fournisseurs - Créances pour emballages et
+       matériel à rendre » ;
+     * du compte 4456 « Taxes sur le chiffre d'affaires déductibles » pour
+       le montant des taxes récupérables par l'entité.
+
+   Le compte 401 est débité par le crédit :
+     * d'un compte de trésorerie lors des règlements effectués par
+       l'entité à ses fournisseurs ;
+     * d'un compte de la classe 6 pour le montant des factures d'avoir
+       reçues à l'occasion de retour de marchandises au fournisseur ;
+     * d'un compte 403 « Fournisseurs - Effets à payer » lors de
+       l'acceptation d'une lettre de change ou de la remise d'un billet à
+       ordre ;
+     * du compte 609 « Rabais, remises et ristournes obtenus sur achats »
+       pour le montant des rabais, remises et ristournes obtenus hors
+       factures ;
+     * du compte 409 « Fournisseurs débiteurs » pour le montant des
+       avances et acomptes versés sur commandes d'exploitation, pour solde
+       de ce dernier.
+
+Compte 404 « Fournisseurs d'immobilisations »
+
+   Le compte 404 « Fournisseurs d'immobilisations » est débité par le
+   crédit, notamment :
+     * d'un compte de trésorerie lors des règlements effectués par
+       l'entité à ses fournisseurs ;
+     * du compte 405 « Fournisseurs d'immobilisations - Effets à payer »
+       lors de l'acceptation d'une lettre de change ou de remise d'un
+       billet à ordre.
+
+Compte 408 « Fournisseurs - Factures non parvenues »
+
+   Le compte 408 « Fournisseurs - Factures non parvenues » est crédité, à
+   la clôture de la période comptable, du montant, taxes comprises, des
+   factures imputables à la période close mais non encore parvenues, dont
+   le montant est suffisamment connu et évaluable, par le débit des
+   comptes concernés des classes 4 et 6.
+
+Compte 409 « Fournisseurs débiteurs »
+
+   Le compte 4091 « Fournisseurs - Avances et acomptes versés sur
+   commandes » est crédité par le débit du compte 401 et éventuellement du
+   compte 404 après réception de la facture par l'entité.
+
+   Le compte 4096 « Fournisseurs - Créances pour emballages et matériel à
+   rendre » est débité par le crédit du compte 401 lors de la consignation
+   par les fournisseurs à l'entité d'emballages ou de matériel, pour le
+   montant de la consignation.
+
+41. CLIENTS ET COMPTES RATTACHES
+
+   Les créances liées à la vente de biens ou services rattachés au cycle
+   d'exploitation de l'entité sont enregistrées au compte 41 « Clients et
+   comptes rattachés ».
+
+Compte 411 « Clients »
+
+   Le compte 411 « Clients » est débité du montant des factures de ventes
+   de biens ou de prestations de services par le crédit :
+     * de l'une des subdivisions du compte 70 « Ventes de produits
+       fabriqués, prestations de services, marchandises » pour le montant
+       hors taxes collectées ;
+     * du compte 4196 « Clients - Dettes pour emballages et matériel
+       consignés » ;
+     * du compte 4457 « Taxes sur le chiffre d'affaires collectées ».
+
+   Le compte 411 est crédité par le débit :
+     * d'un compte de trésorerie lors des règlements reçus des clients ;
+     * de l'une des subdivisions du compte 70 pour le montant des factures
+       d'avoir établies par l'entité lors du retour de marchandises par
+       les clients ;
+     * du compte 413 « Clients - Effets à recevoir » lors de l'acceptation
+       par les clients d'une lettre de change ou de la réception d'un
+       billet à ordre ;
+     * du compte 709 « Rabais, remises et ristournes accordées » pour le
+       montant des réductions sur ventes accordées aux clients hors
+       factures ;
+     * du compte 4191 « Clients - Avances et acomptes reçus sur
+       commandes » pour solde de ce dernier.
+
+   Le compte 4117 « Clients - Retenues de garantie » est débité, le cas
+   échéant, du montant des retenues effectuées par les clients sur le prix
+   convenu, jusqu'à l'échéance du terme de garantie prévu ; en
+   contrepartie, le compte du client est crédité.
+
+Compte 416 « Clients douteux ou litigieux »
+
+   Le compte 416 « Clients douteux ou litigieux » est débité par le crédit
+   du compte 411 pour le montant total des créances que l'entité possède à
+   l'encontre de clients dont la solvabilité apparaît douteuse ou avec
+   lesquels l'entité est en litige.
+
+Compte 413 « Clients - Effets à recevoir »
+
+   Le compte 413 est débité par le crédit du compte 411 au moment de
+   l'entrée des effets en portefeuille. Ce compte est crédité, à
+   l'échéance de l'effet ou à la date de l'escompte, par le débit :
+     * d'un compte de trésorerie ;
+     * de la subdivision du compte 661 intitulée « Intérêts bancaires et
+       sur opérations de financement (escompte, ...) ».
+
+Compte 418 « Clients - Produits non encore facturés »
+
+   Le compte 418 « Clients - Produits non encore facturés » est débité, à
+   la clôture de la période comptable, du montant, taxes comprises, des
+   créances imputables à la période close et pour lesquelles les pièces
+   justificatives n'ont pas encore été établies, par le crédit des comptes
+   concernés des classes 4 et 7.
+
+Compte 419 « Clients créditeurs »
+
+   Le compte 4191 « Clients - Avances et acomptes reçus sur commandes »
+   enregistre les avances et acomptes reçus par l'entité sur les commandes
+   à livrer, les travaux à exécuter ou les services à rendre.
+
+   Le compte 4196 « Clients - Dettes pour emballages et matériel
+   consignés » est crédité des sommes facturées par l'entité à ses clients
+   au titre des consignations d'emballages ou de matériel par le débit du
+   compte 411.
+
+42. PERSONNEL ET COMPTES RATTACHES
+
+Compte 421 « Personnel - Rémunérations dues »
+
+   A la date d'établissement du bulletin de salaire, le compte 421
+   « Personnel - Rémunérations dues » est crédité des rémunérations brutes
+   à payer au personnel par le débit des comptes de charges intéressés.
+
+   Il est débité :
+     * du montant des avances et acomptes versés au personnel par le
+       crédit du compte 425 « Personnel - Avances et acomptes et autres
+       comptes débiteurs » ;
+     * du montant des oppositions notifiées à l'entité à l'encontre des
+       membres de son personnel par le crédit du compte 427 « Personnel -
+       Oppositions » ;
+     * de la quote-part des charges sociales incombant au personnel par le
+       crédit du compte 43 « Sécurité sociale et autres organismes
+       sociaux » ;
+     * du montant de prélèvement à la source par le crédit d'une
+       subdivision du compte 442 « Contributions, impôts et taxes
+       recouvrés pour le compte de l'Etat » ;
+     * du montant des règlements effectués au personnel par le crédit d'un
+       compte de trésorerie.
+
+Compte 422 « Comité social et économique »
+
+   Le compte 422 « Comité social et économique » est crédité du montant
+   des sommes mises à la disposition du comité social et économique ou
+   autres, par le débit d'une subdivision du compte 647 intitulée
+   « Versements au comité social et économique ». Il est débité du montant
+   des versements effectués à ce comité par le crédit d'un compte de
+   trésorerie.
+
+Compte 424 « Participation des salariés aux résultats »
+
+   Le compte 424 « Participation des salariés aux résultats » enregistre
+   le montant des sommes attribuées aux salariés au titre de la
+   participation aux résultats.
+
+Compte 425 « Personnel - Avances et acomptes et autres comptes débiteurs »
+
+   Le compte 425 « Personnel - Avances et acomptes et autres comptes
+   débiteurs » est débité du montant des avances et acomptes versés au
+   personnel et des autres opérations débitrices liées aux charges de
+   personnel, par le crédit d'un compte de trésorerie. Il est crédité,
+   pour solde, par le débit du compte 421.
+
+Compte 426 « Personnel - Dépôts »
+
+   Le compte 426 « Personnel - Dépôts » est crédité du montant des sommes
+   confiées en dépôt à l'entité par les membres de son personnel, par le
+   débit d'un compte de trésorerie.
+
+Compte 427 « Personnel - Oppositions »
+
+   Le compte 427 « Personnel - Oppositions » est crédité du montant des
+   sommes faisant l'objet d'oppositions obtenues par des tiers à
+   l'encontre de membres du personnel de l'entité, par le débit du compte
+   421 « Personnel - Rémunérations dues ».
+
+Compte 428 « Personnel - Charges à payer »
+
+   A la fin de l'exercice, au moment des écritures d'inventaire, l'entité
+   crédite les subdivisions du compte 428 « Personnel - Charges à payer »
+   correspondant notamment au montant des dettes potentielles relatives
+   aux congés à payer et à la participation des salariés aux résultats par
+   le débit de la subdivision du compte 641 intitulée « Congés payés » et
+   du compte 691 « Participation des salariés aux résultats ».
+
+43. SECURITE SOCIALE ET AUTRES ORGANISMES SOCIAUX
+
+   Les comptes 431 »Sécurité sociale » et 437 « Autres organismes
+   sociaux » sont crédités respectivement du montant :
+     * des sommes dues par l'entité à la Sécurité sociale ainsi qu'aux
+       différents organismes sociaux au titre des cotisations patronales
+       d'assurances sociales, d'allocations familiales, d'accidents du
+       travail, de retraites du personnel par le débit des comptes de
+       charges par nature intéressés ;
+     * des sommes à régler aux organismes susvisés pour le compte du
+       personnel par le débit du compte 421 « Personnel - Rémunérations
+       dues ».
+
+   Ils sont débités des règlements effectués à ces organismes par le
+   crédit d'un compte de trésorerie.
+
+   Dans l'hypothèse où, conformément aux dispositions de certains accords
+   de salaires, conventions collectives ou contrats de travail
+   individuels, l'entité a réglé à ses employés tout ou partie de leur
+   rémunération en cas de maladie, d'accident ou de maternité, le compte
+   439 « Organismes sociaux - Produits à recevoir » est débité du montant
+   des diverses prestations qu'elle a ainsi avancées à ses salariés pour
+   le compte de la Sécurité sociale et des autres organismes sociaux par
+   le crédit du compte 649 « Remboursement de charges de personnel ».
+
+44. ETAT ET AUTRES COLLECTIVITES PUBLIQUES
+
+   Les opérations à inscrire au compte 44 « Etat et autres collectivités
+   publiques » sont celles qui sont faites avec l'Etat, les collectivités
+   publiques et les organismes internationaux à caractère officiel,
+   considérés en tant que puissance publique.
+
+Compte 441 « Etat - Subventions à recevoir »
+
+   En fin d'exercice, lorsque des subventions et aides accordées à
+   l'entité n'ont pas encore été perçues, le compte 441 « Etat -
+   Subventions à recevoir » est débité.
+
+Compte 442 « Contributions, impôts et taxes recouvrés pour le compte de
+l'Etat »
+
+   Le compte 442 « Contributions, impôts et taxes recouvrés pour le compte
+   de l'Etat » est crédité des retenues effectuées par l'entité pour le
+   compte de l'Etat sur des sommes dues à des tiers par le débit de leurs
+   comptes.
+
+Compte 444 « État - Impôts sur les bénéfices »
+
+   Le compte 444 « État - Impôts sur les bénéfices » est crédité du
+   montant des impôts sur les bénéfices dus à l'État par le débit du
+   compte 695 « Impôts sur les bénéfices ».
+
+Compte 445 « Etat - Taxes sur le chiffre d'affaires »
+
+   Le compte 445 « Etat - Taxes sur le chiffre d'affaires » reçoit d'une
+   part le montant des taxes collectées pour le compte de l'Etat, et,
+   d'autre part, le montant des taxes à récupérer.
+
+Compte 446 « Obligations cautionnées »
+
+   Le compte 446 « Obligations cautionnées » est crédité du montant des
+   obligations cautionnées souscrites en règlement des taxes par le
+   débit.
+
+Compte 447 « Autres impôts, taxes et versements assimilés »
+
+   Le compte 447 « Autres impôts, taxes et versements assimilés » est
+   crédité du montant de tous les autres impôts et taxes dus par l'entité
+   par le débit des comptes de charges intéressés.
+
+45. GROUPE ET ASSOCIES
+
+Compte 451 « Groupe »
+
+   Le compte 451 « Groupe » enregistre à son débit le montant des fonds
+   avancés directement ou indirectement de façon temporaire par l'entité
+   aux sociétés du groupe, et à son crédit le montant des fonds mis
+   directement ou indirectement à disposition de l'entité par les sociétés
+   du groupe.
+
+Compte 455 « Associés - Comptes courants »
+
+   Le compte 455 « Associés - Comptes courants » enregistre à son crédit
+   le montant des fonds mis ou laissés temporairement à la disposition de
+   l'entité par les associés.
+
+Compte 456 « Associés - Opérations sur le capital »
+
+   Le compte 456 « Associés - Opérations sur le capital » est subdivisé
+   afin d'enregistrer distinctement les opérations relatives à la création
+   de l'entité ou à la modification de son capital.
+
+Compte 457 « Associés - Dividendes à payer »
+
+   Le compte 457 « Associés - Dividendes à payer » est crédité du montant
+   des dividendes dont la distribution a été décidée par les organes
+   compétents.
+
+Compte 458 « Associés - Opérations faites en commun et en GIE »
+
+   Le compte 458 « Associés - Opérations faites en commun et en GIE »
+   enregistre les opérations faites par l'intermédiaire d'une société en
+   participation ou d'un GIE.
+
+46. DEBITEURS DIVERS ET CREDITEURS DIVERS
+
+Compte 462 « Créances sur cessions d'immobilisations »
+
+   Lors de la cession d'immobilisations incorporelles et corporelles, le
+   compte 462 « Créances sur cessions d'immobilisations » est débité du
+   prix de cession des éléments cédés, par le crédit du compte 757
+   « Produits des cessions d'immobilisations incorporelles et
+   corporelles ».
+
+Compte 465 « Créances sur cessions de valeurs mobilières de placement »
+
+   Lors de la cession de valeurs mobilières de placement, le compte 465
+   « Créances sur cessions de valeurs mobilières de placement » est
+   débité.
+
+Compte 464 « Dettes sur acquisitions de valeurs mobilières de placement »
+
+   Le compte 464 « Dettes sur acquisitions de valeurs mobilières de
+   placement » enregistre à son crédit le montant des dettes relatives à
+   l'acquisition de valeurs mobilières de placement.
+
+47. COMPTES TRANSITOIRES OU D'ATTENTE
+
+   Les opérations qui ne peuvent pas être imputées de façon certaine à un
+   compte déterminé au moment où elles sont enregistrées ou qui exigent
+   une information complémentaire, sont inscrites provisoirement dans les
+   subdivisions 471 à 473 du compte 47 « Comptes transitoires ou
+   d'attente ».
+
+Compte 474 « Différences dévaluation Actif »
+
+   Les comptes 474 « Différences dévaluation Actif » enregistrent les
+   différences dévaluation négatives.
+
+Compte 475 « Différences dévaluation Passif »
+
+   Le compte 475 « Différences dévaluation Passif » enregistrent les
+   différences dévaluation positives.
+
+Compte 476 « Différence de conversion - Actif »
+
+   Le compte 476 est débité des pertes latentes constatées par le crédit
+   de comptes de créances ou de comptes de dettes.
+
+Compte 477 « Différence de conversion - Passif »
+
+   Le compte 477 est crédité des gains latents constatés par le débit de
+   comptes de créances ou de comptes de dettes.
+
+48. COMPTES DE REGULARISATION
+
+Compte 481 « Frais démission des emprunts »
+
+   Le compte 481 « Frais démission des emprunts » enregistre à son débit
+   les frais démission des emprunts.
+
+Compte 486 « Charges constatées d'avance »
+
+   Le compte 486 « Charges constatées d'avance » enregistre les charges
+   qui correspondent à des achats de biens et de services dont la
+   fourniture ou la prestation interviendra ultérieurement.
+
+Compte 487 « Produits constatés d'avance »
+
+   Le compte 487 « Produits constatés d'avance » enregistre les produits
+   perçus ou comptabilisés avant que les prestations ou les fournitures
+   les justifiant aient été effectuées ou fournies.
+
+Compte 488 « Comptes de répartition périodique des charges et des produits »
+
+   Le compte 488 « Comptes de répartition périodique des charges et des
+   produits » enregistre les charges et les produits dont le montant peut
+   être connu ou fixé d'avance avec une précision suffisante et qu'on
+   décide de répartir par fractions égales entre les périodes comptables
+   de l'exercice.
+
+49. DEPRECIATIONS DES COMPTES DE TIERS
+
+   Ces comptes sont crédités, en fin d'exercice :
+     * par le débit du compte 6817 « Dotations pour dépréciations des
+       actifs circulants » (autres que valeurs mobilières de placement) ;
+     * ou par le débit du compte 6876 « Dotations pour dépréciations
+       exceptionnelles ».
