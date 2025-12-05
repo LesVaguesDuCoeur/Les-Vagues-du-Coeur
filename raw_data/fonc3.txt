@@ -1,0 +1,65 @@
+31. MATIERES PREMIERES ET FOURNITURES
+
+   Les comptes 31 « Matières premières et fournitures », 32 « Autres
+   approvisionnements » et 37 « Stocks de marchandises » sont crédités du
+   montant du stock initial par le débit des comptes 6031 « Variation des
+   stocks de matières premières et fournitures », 6032 « Variation des
+   stocks des autres approvisionnements », 6037 « Variation des stocks de
+   marchandises ».
+
+   Après avoir procédé à l'inventaire extra-comptable, c'est-à-dire au
+   recensement et à l'évaluation des existants en stocks :
+     * les comptes 31, 32 et 37 sont débités du montant du stock final par
+       le crédit des comptes 6031, 6032 et 6037 ;
+
+32. AUTRES APPROVISIONNEMENTS
+
+   Le fonctionnement est identique à celui du compte 31.
+
+33. EN-COURS DE PRODUCTION DE BIENS
+
+   Les comptes 33 « En-cours de production de biens », 34 « En-cours de
+   production de services » et 35 « Stocks de produits » sont crédités du
+   montant du stock initial par le débit des comptes 7133 « Variation des
+   en-cours de production de biens », 7134 « Variation des en-cours de
+   production de services », 7135 « Variation des stocks de produits ».
+
+   Après avoir procédé à l'inventaire extra-comptable, c'est-à-dire au
+   recensement et à l'évaluation des existants en stocks :
+     * les comptes 33, 34 et 35 sont débités du montant du stock final par
+       le crédit des comptes 7133, 7134 et 7135.
+
+34. EN-COURS DE PRODUCTION DE SERVICES
+
+   Le fonctionnement est identique à celui du compte 33.
+
+35. STOCKS DE PRODUITS
+
+   Le fonctionnement est identique à celui du compte 33.
+
+36. STOCKS PROVENANT D'IMMOBILISATIONS
+
+   Le compte 36 « Stocks provenant d'immobilisations » peut enregistrer en
+   cours d'exercice les entrées en stocks d'éléments démontés ou récupérés
+   sur des immobilisations corporelles. Il est débité par le crédit du
+   compte 21 « Immobilisations corporelles ». En fin d'exercice, le compte
+   36 est soldé par le débit du compte 603 « Variation des stocks
+   d'approvisionnements et marchandises ». Si des éléments de stocks visés
+   ci-dessus subsistent à cette date, ils sont inscrits au débit des
+   comptes appropriés de la classe 3 par le crédit du compte 603.
+
+37. STOCKS DE MARCHANDISES
+
+   Le fonctionnement est identique à celui du compte 31.
+
+39. DEPRECIATIONS DES STOCKS ET EN-COURS
+
+   Les subdivisions du compte 39 « Dépréciations des stocks et en-cours »
+   sont créditées par les subdivisions concernées du compte 68 « Dotations
+   aux amortissements, aux dépréciations et aux provisions » du montant
+   des dépréciations, ou de leur augmentation, affectant les stocks et
+   en-cours.
+
+   Elles sont débitées par le crédit des subdivisions concernées du compte
+   78 « Reprises sur amortissements, dépréciations et provisions » du
+   montant des provisions ou de leur quote-part devenues sans objet.
