@@ -1,0 +1,200 @@
+:root {
+    --bg-color: #121212;
+    --card-bg: #1e1e1e;
+    --text-color: #ffffff;
+    --primary-color: #3b82f6;
+    --danger-color: #ef4444;
+    --success-color: #10b981;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Modal */
+.modal {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+.modal-content {
+    background: var(--card-bg);
+    padding: 2rem;
+    border-radius: 8px;
+    text-align: center;
+}
+.modal-content input {
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid #555;
+    background: #333;
+    color: white;
+    margin-right: 10px;
+}
+.modal-content button {
+    padding: 10px 20px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+/* Main Layout */
+.container {
+    display: flex;
+    height: 100%;
+}
+.hidden {
+    display: none;
+}
+
+/* Video Section */
+.video-section {
+    flex: 3;
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    border-right: 1px solid #333;
+}
+
+#video-grid {
+    flex-grow: 1;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+    align-content: center;
+}
+
+.video-wrapper {
+    position: relative;
+    background: #000;
+    border-radius: 8px;
+    overflow: hidden;
+    aspect-ratio: 16/9;
+}
+
+video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.video-label {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    background: rgba(0,0,0,0.6);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+}
+
+/* Controls */
+.controls {
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    background: var(--card-bg);
+    margin-top: 1rem;
+    border-radius: 8px;
+}
+.control-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    background: var(--success-color);
+    color: white;
+}
+.control-btn.inactive {
+    background: var(--danger-color);
+}
+
+/* Chat Section */
+.chat-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--card-bg);
+    min-width: 300px;
+}
+
+.chat-header {
+    padding: 1rem;
+    background: #252525;
+    font-weight: bold;
+    border-bottom: 1px solid #333;
+}
+
+#chat-messages {
+    flex-grow: 1;
+    padding: 1rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.message {
+    background: #333;
+    padding: 8px;
+    border-radius: 4px;
+}
+.message .meta {
+    font-size: 0.75rem;
+    color: #aaa;
+    margin-bottom: 4px;
+}
+
+.chat-input-area {
+    padding: 1rem;
+    display: flex;
+    gap: 0.5rem;
+    border-top: 1px solid #333;
+}
+.chat-input-area input {
+    flex-grow: 1;
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #555;
+    background: #222;
+    color: white;
+}
+.chat-input-area button {
+    padding: 8px 16px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column;
+    }
+    .video-section {
+        flex: 2;
+        border-right: none;
+        border-bottom: 1px solid #333;
+    }
+    .chat-section {
+        flex: 1;
+    }
+}
