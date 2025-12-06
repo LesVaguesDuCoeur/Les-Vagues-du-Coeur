@@ -1,12 +1,20 @@
-const socket = io();
+let socket;
 
-socket.on('connect', () => {
-    console.log('Socket connected!', socket.id);
-});
+try {
+    socket = io();
 
-socket.on('connect_error', (err) => {
-    console.error('Socket connection error:', err);
-});
+    socket.on('connect', () => {
+        console.log('Socket connected!', socket.id);
+    });
+
+    socket.on('connect_error', (err) => {
+        console.error('Socket connection error:', err);
+        // Optional: Show error to user if connection persists in failing
+    });
+} catch (error) {
+    console.error("Socket.io failed to initialize:", error);
+    alert("Erreur de chargement du système de connexion. Vérifiez votre connexion internet et rafraîchissez la page.");
+}
 
 // DOM Elements
 const loginModal = document.getElementById('login-modal');
@@ -37,13 +45,22 @@ const rtcConfig = {
 
 // --- Event Listeners ---
 
-joinBtn.addEventListener('click', () => {
+function handleLogin() {
     username = usernameInput.value.trim();
     if (username) {
+        joinBtn.textContent = "Connexion...";
+        joinBtn.disabled = true;
+
         loginModal.style.display = 'none';
         mainInterface.classList.remove('hidden');
         startCall();
     }
+}
+
+joinBtn.addEventListener('click', handleLogin);
+
+usernameInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') handleLogin();
 });
 
 sendBtn.addEventListener('click', sendMessage);
