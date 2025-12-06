@@ -1,81 +1,68 @@
 # Application de Visioconférence Simple
+# 🚨 ATTENTION : NE PAS UTILISER VERCEL 🚨
 
-Ce projet est une application web de visioconférence et de chat en temps réel, conçue pour être extrêmement simple et gratuite à héberger.
+**Ce site NE FONCTIONNE PAS sur Vercel.**
+Vercel est conçu pour des sites statiques. Cette application utilise la vidéo en direct (WebSockets), ce qui nécessite un vrai serveur (Node.js). Si vous utilisez Vercel, vous aurez des erreurs de connexion et des pages de mot de passe bloquantes.
+
+👉 **UTILISEZ RENDER (GRATUIT)** pour que ça marche.
+
+---
 
 ## Fonctionnalités
 
-1.  **Appel Vidéo** : Rejoignez une salle unique avec jusqu'à 5 personnes. Boutons pour activer/désactiver caméra et micro.
-2.  **Chat** : Messagerie instantanée avec historique sauvegardé (dans un fichier local).
-3.  **Notifications** : Envoi automatique d'un email à l'administrateur à chaque nouvelle connexion.
-
-## Prérequis
-
-*   Node.js installé sur votre ordinateur (pour tester localement).
-*   Un compte **Gmail** pour l'envoi des emails (nécessite un "Mot de passe d'application").
-*   Un compte **Render** (gratuit) pour le déploiement en ligne.
+1.  **Appel Vidéo** : Jusqu'à 5 personnes, connexion directe.
+2.  **Chat** : Messagerie instantanée.
+3.  **Lien Facile** : Cliquez sur "Copier lien" et envoyez-le. Pas d'inscription.
+4.  **Notifications** : Email envoyé quand quelqu'un se connecte.
 
 ---
 
-## 1. Installation et Test Local
+## Comment mettre en ligne GRATUITEMENT (Sur Render)
 
-1.  Téléchargez ou clonez ce dossier.
-2.  Ouvrez un terminal dans le dossier du projet.
-3.  Installez les dépendances :
-    ```bash
-    npm install
-    ```
-4.  Configurez les variables d'environnement (pour l'email) :
-    *   Créez un fichier `.env` (optionnel en local si vous ne voulez pas tester l'email, ou configurez-le comme suit).
-    *   Si vous ne configurez pas l'email, l'application fonctionnera mais affichera une erreur dans la console (sans planter).
-5.  Lancez le serveur :
-    ```bash
-    npm start
-    ```
-6.  Ouvrez votre navigateur sur `http://localhost:3000`.
+Suivez ces étapes EXACTEMENT. Cela prend 5 minutes.
 
----
+### 1. Préparer le code
+Si vous lisez ceci sur GitHub, passez à l'étape 2. Sinon, mettez ce code sur GitHub.
 
-## 2. Déploiement Gratuit sur Render
-
-Render est un hébergeur gratuit compatible avec Node.js.
-
-### Étape A : Préparer le code
-(Ceci est déjà fait si vous utilisez ce dépôt tel quel). Assurez-vous que votre code est sur un dépôt GitHub/GitLab.
-
-### Étape B : Créer le service sur Render
-1.  Créez un compte sur [render.com](https://render.com/).
-2.  Cliquez sur **"New +"** puis **"Web Service"**.
-3.  Connectez votre compte GitHub et sélectionnez ce dépôt.
-4.  Remplissez les informations :
-    *   **Name**: Choisissez un nom (ex: `ma-visio-simple`).
-    *   **Region**: Frankfurt (ou le plus proche).
+### 2. Créer le serveur sur Render
+1.  Allez sur [render.com](https://render.com/) et créez un compte.
+2.  Cliquez sur le bouton **"New +"** (en haut à droite) -> **"Web Service"**.
+3.  Choisissez "Build and deploy from a Git repository".
+4.  Connectez votre GitHub et sélectionnez ce projet (`simple-video-chat`).
+5.  **Remplissez le formulaire comme ceci :**
+    *   **Name**: Le nom de votre site (ex: `ma-famille-visio`).
+    *   **Region**: Frankfurt (Allemagne) - c'est le plus proche.
     *   **Branch**: `main`.
     *   **Runtime**: `Node`.
-    *   **Build Command**: `npm install`.
-    *   **Start Command**: `node server.js`.
-    *   **Instance Type**: Free.
+    *   **Build Command**: `npm install`
+    *   **Start Command**: `node server.js`
+    *   **Instance Type**: Free (Gratuit).
 
-### Étape C : Configurer l'Email (Variables d'environnement)
-Pour que les notifications fonctionnent, vous devez ajouter des "Environment Variables" dans Render :
+### 3. Configurer l'Email (Important)
+Pour recevoir les alertes quand quelqu'un se connecte :
+1.  Sur la page de votre projet Render, allez dans l'onglet **Environment**.
+2.  Cliquez sur **Add Environment Variable**.
+3.  Ajoutez ces deux lignes :
+    *   `EMAIL_USER` : Votre adresse Gmail (ex: `moi@gmail.com`).
+    *   `EMAIL_PASS` : Votre **Mot de passe d'application** Google.
 
-1.  Allez dans l'onglet **"Environment"** de votre service Render.
-2.  Ajoutez les variables suivantes :
-    *   `EMAIL_USER` : Votre adresse Gmail complète (ex: `monnom@gmail.com`).
-    *   `EMAIL_PASS` : Votre **Mot de passe d'application** Google (PAS votre mot de passe habituel).
+**⚠️ Comment avoir le mot de passe d'application ?** (Ne mettez PAS votre vrai mot de passe Gmail !)
+1.  Allez sur votre [Compte Google > Sécurité](https://myaccount.google.com/security).
+2.  Activez la "Validation en deux étapes" (2FA).
+3.  Cherchez "Mots de passe d'application" dans la barre de recherche.
+4.  Créez-en un (nommez-le "Render Visio").
+5.  Copiez le code à 16 lettres (ex: `abcd efgh ijkl mnop`) et collez-le dans `EMAIL_PASS`.
 
-**Comment obtenir le Mot de passe d'application Gmail ?**
-1.  Allez sur votre Compte Google > Sécurité.
-2.  Activez la "Validation en deux étapes" si ce n'est pas fait.
-3.  Cherchez "Mots de passe d'application" (ou "App passwords").
-4.  Générez un nouveau mot de passe (Nommez-le "Site Visio").
-5.  Copiez la clé de 16 caractères et collez-la dans la variable `EMAIL_PASS` sur Render.
-
-### Étape D : Finaliser
-Cliquez sur **"Create Web Service"**. Attendez quelques minutes que le déploiement se termine. Une fois fini, Render vous donnera une URL (ex: `https://ma-visio-simple.onrender.com`) que vous pourrez partager à vos amis !
+### 4. C'est fini !
+Cliquez sur **"Create Web Service"**.
+Attendez que ça charge (2-3 minutes).
+Render vous donnera une adresse comme `https://ma-famille-visio.onrender.com`.
+C'est ce lien que vous envoyez à votre famille !
 
 ---
 
-## Notes Importantes
+## Dépannage
 
-*   **Chat History** : Sur la version gratuite de Render, le serveur redémarre s'il n'est pas utilisé pendant un moment. À chaque redémarrage, l'historique du chat (fichier `chat_history.json`) sera effacé. C'est le compromis pour la gratuité totale sans base de données externe.
-*   **Limites WebRTC** : La technologie utilisée (Mesh) est parfaite pour 2 à 5 personnes. Au-delà, la qualité peut diminuer selon la puissance des ordinateurs.
+*   **"Ça me demande un mot de passe Vercel"** : Vous vous êtes trompé d'hébergeur. Supprimez le projet Vercel et allez sur Render.
+*   **"Message : Erreur Serveur (Vercel ?)"** : Le site détecte qu'il est mal hébergé. Passez sur Render.
+*   **"La vidéo ne marche pas"** : Vérifiez que vous avez autorisé la caméra et le micro. Sur Render gratuit, le serveur peut mettre 30 secondes à "se réveiller" si personne ne l'a utilisé depuis longtemps. Soyez patients au début.

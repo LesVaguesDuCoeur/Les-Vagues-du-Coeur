@@ -1,19 +1,78 @@
 let socket;
 
+// Status Indicator
+const statusDiv = document.createElement('div');
+statusDiv.style.position = 'fixed';
+statusDiv.style.top = '10px';
+statusDiv.style.right = '10px';
+statusDiv.style.padding = '5px 10px';
+statusDiv.style.borderRadius = '4px';
+statusDiv.style.fontSize = '12px';
+statusDiv.style.zIndex = '2000';
+statusDiv.style.display = 'none';
+document.body.appendChild(statusDiv);
+
+function updateStatus(state) {
+    statusDiv.style.display = 'block';
+    if (state === 'connected') {
+        statusDiv.textContent = "🟢 Connecté";
+        statusDiv.style.background = "rgba(16, 185, 129, 0.8)"; // Green
+        setTimeout(() => { statusDiv.style.display = 'none'; }, 3000);
+    } else if (state === 'disconnected') {
+        statusDiv.textContent = "🔴 Déconnecté";
+        statusDiv.style.background = "rgba(239, 68, 68, 0.8)"; // Red
+    } else if (state === 'error') {
+        statusDiv.textContent = "⚠️ Erreur Serveur (Vercel ?)";
+        statusDiv.style.background = "rgba(245, 158, 11, 0.9)"; // Orange
+    }
+}
+
 try {
-    socket = io();
+    socket = io({
+        reconnectionAttempts: 5,
+        timeout: 10000
+    });
 
     socket.on('connect', () => {
         console.log('Socket connected!', socket.id);
+        updateStatus('connected');
+    });
+
+    socket.on('disconnect', () => {
+        updateStatus('disconnected');
     });
 
     socket.on('connect_error', (err) => {
         console.error('Socket connection error:', err);
-        // Optional: Show error to user if connection persists in failing
+        updateStatus('error');
+
+        // Detailed help for the admin (in console/alert) if it looks like a hosting issue
+        const warningMsg = document.getElementById('hosting-warning');
+        if (!warningMsg) {
+            const div = document.createElement('div');
+            div.id = 'hosting-warning';
+            div.style.position = 'fixed';
+            div.style.bottom = '20px';
+            div.style.left = '50%';
+            div.style.transform = 'translateX(-50%)';
+            div.style.background = '#ef4444';
+            div.style.color = 'white';
+            div.style.padding = '1rem';
+            div.style.borderRadius = '8px';
+            div.style.zIndex = '9999';
+            div.style.textAlign = 'center';
+            div.innerHTML = `
+                <strong>Problème de connexion détecté</strong><br>
+                Si vous êtes sur Vercel, ça ne marchera pas.<br>
+                Utilisez <strong>Render.com</strong>.
+                <br><button onclick="this.parentElement.remove()" style="margin-top:5px;background:#333;color:white;border:none;padding:5px;cursor:pointer">Fermer</button>
+            `;
+            document.body.appendChild(div);
+        }
     });
 } catch (error) {
     console.error("Socket.io failed to initialize:", error);
-    alert("Erreur de chargement du système de connexion. Vérifiez votre connexion internet et rafraîchissez la page.");
+    alert("Erreur critique : Impossible de charger le module de connexion.");
 }
 
 // DOM Elements
