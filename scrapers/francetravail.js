@@ -1,14 +1,7 @@
-const axios = require('axios');
-const puppeteer = require('puppeteer');
 const cheerio = require('cheerio');
 
-async function scrapeFranceTravail(query, location) {
-    let browser;
+async function scrapeFranceTravail(browser, query, location) {
     try {
-        browser = await puppeteer.launch({
-            headless: 'new',
-            args: ['--no-sandbox', '--disable-setuid-sandbox', '--window-size=1920,1080']
-        });
         const page = await browser.newPage();
 
         const fullQuery = `${query} ${location}`;
@@ -17,24 +10,22 @@ async function scrapeFranceTravail(query, location) {
         console.log(`[FT] Scraping: ${url}`);
         await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36');
 
-        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
-        // Wait for results
         try {
-            await page.waitForSelector('.result', { timeout: 15000 });
+            await page.waitForSelector('.result', { timeout: 5000 });
         } catch(e) {}
 
         const content = await page.content();
+        await page.close(); // Close page
+
         const $ = cheerio.load(content);
         const jobs = [];
 
         $('.result').each((i, el) => {
             const $el = $(el);
-            // Link is often on the whole card or a specific button
-            // Usually the title is a link
             const titleLink = $el.find('h2.media-heading-title, a.media-heading-title');
 
-            // If the anchor is wrapping the h2 or inside it
             let link = titleLink.attr('href') || $el.find('a[href^="/offres/recherche/detail"]').attr('href');
 
             if (link && !link.startsWith('http')) {
@@ -47,7 +38,7 @@ async function scrapeFranceTravail(query, location) {
             const date = $el.find('.date').text().trim();
             const description = $el.find('.description').text().trim();
 
-            let contract = "CDI"; // Heuristic
+            let contract = "CDI";
             if (description.toLowerCase().includes('cdd')) contract = "CDD";
             else if (description.toLowerCase().includes('interim') || description.toLowerCase().includes('mission')) contract = "Intérim";
             else if (description.toLowerCase().includes('apprentissage') || description.toLowerCase().includes('pro')) contract = "Alternance";
@@ -61,7 +52,7 @@ async function scrapeFranceTravail(query, location) {
                     location: locationText,
                     contract,
                     date,
-                    link: link || url // Fallback to search URL if detailed link missing
+                    link: link || url
                 });
             }
         });
@@ -71,8 +62,6 @@ async function scrapeFranceTravail(query, location) {
     } catch (error) {
         console.error('[FT] Error:', error);
         return [];
-    } finally {
-        if (browser) await browser.close();
     }
 }
 

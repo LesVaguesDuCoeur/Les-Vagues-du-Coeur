@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const puppeteer = require('puppeteer');
 const smartParse = require('./utils/smartParser');
 const parseDateToDays = require('./utils/dateHelper');
 
@@ -14,6 +15,25 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.static('public'));
 app.use(express.json());
+
+// Global Browser Instance
+let browser;
+
+async function initBrowser() {
+    if (!browser) {
+        console.log("Launching Singleton Browser...");
+        browser = await puppeteer.launch({
+            headless: 'new',
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage', // Important for docker/containers
+                '--disable-gpu'
+            ]
+        });
+    }
+    return browser;
+}
 
 // Timeout Wrapper
 const withTimeout = (promise, ms = 20000, name = 'Task') => {
@@ -31,7 +51,6 @@ const withTimeout = (promise, ms = 20000, name = 'Task') => {
         }),
         timeoutPromise
     ]).catch(err => {
-        // Return empty array on error/timeout so we don't crash the whole request
         console.error(`[API] Error in ${name}:`, err.message);
         return [];
     });
@@ -42,7 +61,7 @@ app.get('/api/search', async (req, res) => {
     try {
         const { q, location, days, sort } = req.query;
 
-        console.log(`[API] Received search: q='${q}', location='${location}', days='${days}', sort='${sort}'`);
+        console.log(`[API] Received search: q='${q}', location='${location}'`);
 
         const fullQuery = (q || "") + " " + (location || "");
         const parsed = smartParse(fullQuery);
@@ -50,11 +69,14 @@ app.get('/api/search', async (req, res) => {
         const searchLocation = location || parsed.location || "France";
         const searchKeywords = parsed.keywords || q || "Offre";
 
-        // Launch Scrapers in Parallel with Timeout
+        // Use singleton browser
+        const browserInstance = await initBrowser();
+
+        // Launch Scrapers
         const results = await Promise.all([
-            withTimeout(scrapeHelloWork(searchKeywords, searchLocation), 25000, 'HelloWork'),
-            withTimeout(scrapeFranceTravail(searchKeywords, searchLocation), 25000, 'FranceTravail'),
-            withTimeout(scrapeLinkedIn(searchKeywords, searchLocation), 25000, 'LinkedIn')
+            withTimeout(scrapeHelloWork(browserInstance, searchKeywords, searchLocation), 25000, 'HelloWork'),
+            withTimeout(scrapeFranceTravail(browserInstance, searchKeywords, searchLocation), 25000, 'FranceTravail'),
+            withTimeout(scrapeLinkedIn(browserInstance, searchKeywords, searchLocation), 25000, 'LinkedIn')
         ]);
 
         let allJobs = results.flat();
@@ -108,7 +130,6 @@ app.get('/api/search', async (req, res) => {
 
     } catch (error) {
         console.error('[API] Critical Error:', error);
-        // Explicitly set content-type to JSON to prevent "HTML instead of JSON" on client
         res.header('Content-Type', 'application/json');
         res.status(500).json({ error: "Internal Server Error", details: error.message });
     }
@@ -117,19 +138,25 @@ app.get('/api/search', async (req, res) => {
 // Global Error Handler
 app.use((err, req, res, next) => {
     console.error('[Global Handler]', err);
-    if (res.headersSent) {
-        return next(err);
-    }
+    if (res.headersSent) return next(err);
     res.header('Content-Type', 'application/json');
     res.status(500).json({ error: "Something went wrong!", details: err.message });
 });
 
-// 404 Handler
+// 404
 app.use((req, res) => {
     res.header('Content-Type', 'application/json');
     res.status(404).json({ error: "Route not found" });
 });
 
-app.listen(PORT, () => {
+// Graceful Shutdown
+process.on('SIGINT', async () => {
+    if (browser) await browser.close();
+    process.exit();
+});
+
+app.listen(PORT, async () => {
     console.log(`Server running on http://localhost:${PORT}`);
+    // Pre-launch browser
+    await initBrowser();
 });

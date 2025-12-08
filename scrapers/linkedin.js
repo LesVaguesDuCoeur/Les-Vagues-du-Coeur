@@ -1,17 +1,9 @@
-const puppeteer = require('puppeteer');
 const cheerio = require('cheerio');
 
-async function scrapeLinkedIn(query, location) {
-    let browser;
+async function scrapeLinkedIn(browser, query, location) {
     try {
-        browser = await puppeteer.launch({
-            headless: 'new',
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
-        });
         const page = await browser.newPage();
 
-        // LinkedIn Guest Search URL
-        // https://www.linkedin.com/jobs/search?keywords=Comptable&location=Toulouse
         const baseUrl = 'https://www.linkedin.com/jobs/search';
         const url = `${baseUrl}?keywords=${encodeURIComponent(query)}&location=${encodeURIComponent(location)}`;
 
@@ -21,24 +13,11 @@ async function scrapeLinkedIn(query, location) {
 
         await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
-        // Check for auth wall
-        const title = await page.title();
-        if (title.includes("Login") || title.includes("S’identifier")) {
-            console.log("[LinkedIn] Hit Auth Wall.");
-            // We can try to extract from the public page if it loaded partially,
-            // but usually it redirects.
-            return [];
-        }
-
         const content = await page.content();
+        await page.close(); // Close page
+
         const $ = cheerio.load(content);
         const jobs = [];
-
-        // LinkedIn Public Job Search classes
-        // Job card: div.base-card or li
-        // Title: h3.base-search-card__title
-        // Company: h4.base-search-card__subtitle
-        // Link: a.base-card__full-link
 
         $('.base-card').each((i, el) => {
             const $el = $(el);
@@ -48,23 +27,20 @@ async function scrapeLinkedIn(query, location) {
             const date = $el.find('time').text().trim();
             let link = $el.find('a.base-card__full-link').attr('href');
 
-            // Metadata inference
-            let contract = "CDI"; // LinkedIn public view rarely shows contract type in the card list easily
-
             if (title && link) {
                 jobs.push({
                     source: 'LinkedIn',
                     title,
                     company,
                     location: locationText,
-                    contract, // Placeholder
+                    contract: "CDI", // Guess
                     date,
                     link
                 });
             }
         });
 
-        // Backup selector strategy if classes changed
+        // Backup selector
         if (jobs.length === 0) {
              $('li h3').each((i, el) => {
                  const title = $(el).text().trim();
@@ -89,8 +65,6 @@ async function scrapeLinkedIn(query, location) {
     } catch (error) {
         console.error('[LinkedIn] Error:', error);
         return [];
-    } finally {
-        if (browser) await browser.close();
     }
 }
 

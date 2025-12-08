@@ -22,10 +22,14 @@ async function searchJobs() {
         const url = `/api/search?q=${encodeURIComponent(query)}&days=${dateFilter}&sort=${sortFilter}`;
         const response = await fetch(url);
 
-        // Ensure we actually got JSON
         const contentType = response.headers.get("content-type");
         if (!contentType || !contentType.includes("application/json")) {
-            throw new Error("Le serveur a renvoyé une réponse invalide (HTML au lieu de JSON).");
+            // It's HTML or Text. Let's read it to debug.
+            const text = await response.text();
+            // Extract title if possible
+            const titleMatch = text.match(/<title>(.*?)<\/title>/i);
+            const title = titleMatch ? titleMatch[1] : text.substring(0, 100);
+            throw new Error(`Le serveur a renvoyé du HTML (${response.status}): "${title}..."`);
         }
 
         const data = await response.json();
@@ -52,7 +56,7 @@ async function searchJobs() {
 
     } catch (error) {
         container.innerHTML = `<div class="empty-state">Erreur lors de la recherche: ${error.message}</div>`;
-        console.error(error);
+        console.error("Full Error:", error);
     } finally {
         btn.disabled = false;
         loader.style.display = 'none';
@@ -111,13 +115,11 @@ function escapeHtml(text) {
         .replace(/'/g, "&#039;");
 }
 
-// Trigger search on Enter
 document.getElementById('searchInput').addEventListener('keypress', function (e) {
     if (e.key === 'Enter') {
         searchJobs();
     }
 });
 
-// Trigger search when filters change
 document.getElementById('dateFilter').addEventListener('change', searchJobs);
 document.getElementById('sortFilter').addEventListener('change', searchJobs);
