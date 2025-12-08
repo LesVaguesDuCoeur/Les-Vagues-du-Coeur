@@ -1,14 +1,12 @@
 const express = require('express');
 const cors = require('cors');
 const smartParse = require('./utils/smartParser');
+const parseDateToDays = require('./utils/dateHelper');
 
 // Import Scrapers
 const scrapeHelloWork = require('./scrapers/hellowork');
 const scrapeFranceTravail = require('./scrapers/francetravail');
 const scrapeLinkedIn = require('./scrapers/linkedin');
-// WTTJ and Indeed are unreliable/blocked, but we can include them optionally or comment out
-// const scrapeWTTJ = require('./scrapers/wttj');
-// const scrapeIndeed = require('./scrapers/indeed');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -19,73 +17,95 @@ app.use(express.json());
 
 // Search API
 app.get('/api/search', async (req, res) => {
-    const { q, location } = req.query; // Raw user input
+    try {
+        const { q, location, days, sort } = req.query; // Added days and sort
 
-    console.log(`[API] Received search: q='${q}', location='${location}'`);
+        console.log(`[API] Received search: q='${q}', location='${location}', days='${days}', sort='${sort}'`);
 
-    // 1. Smart Parse
-    // If the user typed "Alternance comptable Toulouse" in the main box, `q` has it all.
-    // If they used filters, `location` might be set separately.
+        // 1. Smart Parse
+        const fullQuery = (q || "") + " " + (location || "");
+        const parsed = smartParse(fullQuery);
 
-    // Combine for parsing
-    const fullQuery = (q || "") + " " + (location || "");
-    const parsed = smartParse(fullQuery);
+        // If we have explicit location from params, override parsed
+        const searchLocation = location || parsed.location || "France";
+        const searchKeywords = parsed.keywords || q || "Offre";
 
-    console.log(`[API] Parsed intent:`, parsed);
+        // 2. Launch Scrapers in Parallel
+        const results = await Promise.all([
+            scrapeHelloWork(searchKeywords, searchLocation).catch(e => { console.error('HW Error', e); return []; }),
+            scrapeFranceTravail(searchKeywords, searchLocation).catch(e => { console.error('FT Error', e); return []; }),
+            scrapeLinkedIn(searchKeywords, searchLocation).catch(e => { console.error('LI Error', e); return []; })
+        ]);
 
-    // If we have explicit location from params, override parsed
-    const searchLocation = location || parsed.location || "France";
-    const searchKeywords = parsed.keywords || q || "Offre";
+        // 3. Flatten
+        let allJobs = results.flat();
 
-    // 2. Launch Scrapers in Parallel
-    // We run them concurrently to save time
-    const results = await Promise.all([
-        scrapeHelloWork(searchKeywords, searchLocation).catch(e => []),
-        scrapeFranceTravail(searchKeywords, searchLocation).catch(e => []),
-        scrapeLinkedIn(searchKeywords, searchLocation).catch(e => [])
-    ]);
-
-    // 3. Flatten and Sort
-    let allJobs = results.flat();
-
-    // Filter by contract if detected (Optional: Strict or Loose?)
-    // User asked for filters.
-    if (parsed.contract.length > 0) {
-        // Simple filter: Check if job contract string contains one of the requested types
-        const targetContracts = parsed.contract; // e.g. ['alternance']
-
-        allJobs = allJobs.filter(job => {
-            if (!job.contract) return false;
-            // Flexible matching
-            const jobContractLower = job.contract.toLowerCase();
-            return targetContracts.some(target => jobContractLower.includes(target.toLowerCase()));
-        });
-    }
-
-    // Sort by date (heuristic) or relevance
-    // Since dates are strings like "2 weeks ago", exact sorting is hard.
-    // We'll shuffle or keep source order.
-
-    // Dedup (by link)
-    const uniqueJobs = [];
-    const seenLinks = new Set();
-
-    for (const job of allJobs) {
-        if (!seenLinks.has(job.link)) {
-            seenLinks.add(job.link);
-            uniqueJobs.push(job);
+        // 4. Filter by Contract (Smart Parse)
+        if (parsed.contract.length > 0) {
+            const targetContracts = parsed.contract;
+            allJobs = allJobs.filter(job => {
+                if (!job.contract) return false;
+                const jobContractLower = job.contract.toLowerCase();
+                return targetContracts.some(target => jobContractLower.includes(target.toLowerCase()));
+            });
         }
-    }
 
-    res.json({
-        metadata: {
-            keywords: searchKeywords,
-            location: searchLocation,
-            detected_contract: parsed.contract
-        },
-        count: uniqueJobs.length,
-        jobs: uniqueJobs
-    });
+        // 5. Filter by Date (Dropdown)
+        if (days && days !== 'all') {
+            const limit = parseInt(days, 10);
+            if (!isNaN(limit)) {
+                allJobs = allJobs.filter(job => {
+                    const jobDays = parseDateToDays(job.date);
+                    return jobDays <= limit;
+                });
+            }
+        }
+
+        // 6. Sort
+        if (sort === 'date') {
+            allJobs.sort((a, b) => parseDateToDays(a.date) - parseDateToDays(b.date));
+        } else {
+            // Default: Relevance (Mixed)
+            // We can just shuffle or keep them mixed.
+            // Scrapers return most relevant first usually, so keeping order is okay.
+        }
+
+        // Dedup (by link)
+        const uniqueJobs = [];
+        const seenLinks = new Set();
+
+        for (const job of allJobs) {
+            if (!seenLinks.has(job.link)) {
+                seenLinks.add(job.link);
+                uniqueJobs.push(job);
+            }
+        }
+
+        res.json({
+            metadata: {
+                keywords: searchKeywords,
+                location: searchLocation,
+                detected_contract: parsed.contract
+            },
+            count: uniqueJobs.length,
+            jobs: uniqueJobs
+        });
+
+    } catch (error) {
+        console.error('[API] Critical Error:', error);
+        res.status(500).json({ error: "Internal Server Error", details: error.message });
+    }
+});
+
+// Global Error Handler for JSON parsing or other middleware errors
+app.use((err, req, res, next) => {
+    console.error('[Global Handler]', err);
+    res.status(500).json({ error: "Something went wrong!", details: err.message });
+});
+
+// 404 Handler (must be last) - Returns JSON instead of HTML
+app.use((req, res) => {
+    res.status(404).json({ error: "Route not found" });
 });
 
 app.listen(PORT, () => {

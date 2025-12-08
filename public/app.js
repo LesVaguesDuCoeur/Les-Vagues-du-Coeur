@@ -1,5 +1,8 @@
 async function searchJobs() {
     const query = document.getElementById('searchInput').value;
+    const dateFilter = document.getElementById('dateFilter').value;
+    const sortFilter = document.getElementById('sortFilter').value;
+
     const btn = document.getElementById('searchBtn');
     const loader = document.getElementById('loader');
     const btnText = document.getElementById('btnText');
@@ -16,8 +19,20 @@ async function searchJobs() {
     container.innerHTML = '<div class="empty-state">Recherche en cours sur tous les sites... Cela peut prendre quelques secondes.</div>';
 
     try {
-        const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+        const url = `/api/search?q=${encodeURIComponent(query)}&days=${dateFilter}&sort=${sortFilter}`;
+        const response = await fetch(url);
+
+        // Ensure we actually got JSON
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+            throw new Error("Le serveur a renvoyé une réponse invalide (HTML au lieu de JSON).");
+        }
+
         const data = await response.json();
+
+        if (response.status !== 200) {
+            throw new Error(data.error || "Erreur serveur inconnue");
+        }
 
         // Show detected AI filters
         detectedFilters.innerHTML = '';
@@ -37,6 +52,7 @@ async function searchJobs() {
 
     } catch (error) {
         container.innerHTML = `<div class="empty-state">Erreur lors de la recherche: ${error.message}</div>`;
+        console.error(error);
     } finally {
         btn.disabled = false;
         loader.style.display = 'none';
@@ -52,7 +68,7 @@ function renderJobs(jobs) {
     container.innerHTML = '';
 
     if (jobs.length === 0) {
-        container.innerHTML = '<div class="empty-state">Aucune offre trouvée pour cette recherche. Essayez d\'autres mots-clés.</div>';
+        container.innerHTML = '<div class="empty-state">Aucune offre trouvée pour cette recherche avec ces filtres.</div>';
         return;
     }
 
@@ -101,3 +117,7 @@ document.getElementById('searchInput').addEventListener('keypress', function (e)
         searchJobs();
     }
 });
+
+// Trigger search when filters change
+document.getElementById('dateFilter').addEventListener('change', searchJobs);
+document.getElementById('sortFilter').addEventListener('change', searchJobs);
