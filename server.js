@@ -20,17 +20,31 @@ app.use(express.json());
 let browser;
 
 async function initBrowser() {
+    // If browser exists but is disconnected, kill it and reset
+    if (browser && !browser.isConnected()) {
+        console.warn("[Browser] Instance disconnected. Restarting...");
+        try { await browser.close(); } catch(e) {}
+        browser = null;
+    }
+
     if (!browser) {
-        console.log("Launching Singleton Browser...");
-        browser = await puppeteer.launch({
-            headless: 'new',
-            args: [
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage', // Important for docker/containers
-                '--disable-gpu'
-            ]
-        });
+        console.log("[Browser] Launching Singleton Instance...");
+        try {
+            browser = await puppeteer.launch({
+                headless: 'new',
+                args: [
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-dev-shm-usage',
+                    '--disable-gpu',
+                    '--single-process' // Helps in resource-constrained envs
+                ]
+            });
+            console.log("[Browser] Launched successfully.");
+        } catch (error) {
+            console.error("[Browser] Failed to launch:", error);
+            throw error;
+        }
     }
     return browser;
 }
@@ -60,8 +74,7 @@ const withTimeout = (promise, ms = 20000, name = 'Task') => {
 app.get('/api/search', async (req, res) => {
     try {
         const { q, location, days, sort } = req.query;
-
-        console.log(`[API] Received search: q='${q}', location='${location}'`);
+        console.log(`[API] Request: q='${q}', loc='${location}'`);
 
         const fullQuery = (q || "") + " " + (location || "");
         const parsed = smartParse(fullQuery);
@@ -69,8 +82,14 @@ app.get('/api/search', async (req, res) => {
         const searchLocation = location || parsed.location || "France";
         const searchKeywords = parsed.keywords || q || "Offre";
 
-        // Use singleton browser
-        const browserInstance = await initBrowser();
+        // Use singleton browser (Self-Healing)
+        let browserInstance;
+        try {
+            browserInstance = await initBrowser();
+        } catch (e) {
+            console.error("[API] Critical: Could not init browser", e);
+            return res.status(503).json({ error: "Service Unavailable (Browser Failed)" });
+        }
 
         // Launch Scrapers
         const results = await Promise.all([
@@ -118,6 +137,7 @@ app.get('/api/search', async (req, res) => {
             }
         }
 
+        console.log(`[API] Returning ${uniqueJobs.length} jobs.`);
         res.json({
             metadata: {
                 keywords: searchKeywords,
@@ -130,9 +150,21 @@ app.get('/api/search', async (req, res) => {
 
     } catch (error) {
         console.error('[API] Critical Error:', error);
-        res.header('Content-Type', 'application/json');
-        res.status(500).json({ error: "Internal Server Error", details: error.message });
+        if (!res.headersSent) {
+            res.header('Content-Type', 'application/json');
+            res.status(500).json({ error: "Internal Server Error", details: error.message });
+        }
     }
+});
+
+// Process Safety
+process.on('uncaughtException', (err) => {
+    console.error('[Fatal] Uncaught Exception:', err);
+    // Don't exit, try to keep running
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('[Fatal] Unhandled Rejection at:', promise, 'reason:', reason);
 });
 
 // Global Error Handler
@@ -151,12 +183,12 @@ app.use((req, res) => {
 
 // Graceful Shutdown
 process.on('SIGINT', async () => {
+    console.log("Shutting down...");
     if (browser) await browser.close();
     process.exit();
 });
 
 app.listen(PORT, async () => {
     console.log(`Server running on http://localhost:${PORT}`);
-    // Pre-launch browser
-    await initBrowser();
+    await initBrowser().catch(e => console.error("Initial browser launch failed:", e));
 });
