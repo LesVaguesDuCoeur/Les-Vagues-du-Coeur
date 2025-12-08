@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JobAggregator - Tous les emplois, un seul endroit</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <div class="container header-content">
+            <div class="logo">JobAggregator</div>
+            <nav>
+                <a href="#">Accueil</a>
+                <a href="#">À propos</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="search-section">
+            <h1>Trouvez votre prochain emploi <span class="highlight">Intelligemment</span></h1>
+            <p class="subtitle">Cherche sur France Travail, LinkedIn, HelloWork et plus encore.</p>
+
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Ex: Alternance comptable à Toulouse...">
+                <button id="searchBtn" onclick="searchJobs()">
+                    <span id="btnText">Rechercher</span>
+                    <div id="loader" class="spinner" style="display:none;"></div>
+                </button>
+            </div>
+
+            <div class="filters">
+                <div class="filter-tag" id="ia-badge" style="display:none;">✨ Boosté par IA</div>
+                <!-- Detected filters will appear here -->
+                <span id="detected-filters"></span>
+            </div>
+        </section>
+
+        <section class="results-section">
+            <div class="results-header">
+                <h2 id="resultsTitle">Résultats</h2>
+                <button class="refresh-btn" onclick="searchJobs()">Actualiser ⟳</button>
+            </div>
+
+            <div id="jobsContainer" class="jobs-grid">
+                <!-- Job Cards will be injected here -->
+                <div class="empty-state">Lancez une recherche pour voir les offres.</div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 JobAggregator. Projet Étudiant.</p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
