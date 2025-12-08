@@ -15,32 +15,51 @@ app.use(cors());
 app.use(express.static('public'));
 app.use(express.json());
 
+// Timeout Wrapper
+const withTimeout = (promise, ms = 20000, name = 'Task') => {
+    let timer;
+    const timeoutPromise = new Promise((_, reject) => {
+        timer = setTimeout(() => {
+            reject(new Error(`Timeout: ${name} took longer than ${ms}ms`));
+        }, ms);
+    });
+
+    return Promise.race([
+        promise.then(res => {
+            clearTimeout(timer);
+            return res;
+        }),
+        timeoutPromise
+    ]).catch(err => {
+        // Return empty array on error/timeout so we don't crash the whole request
+        console.error(`[API] Error in ${name}:`, err.message);
+        return [];
+    });
+};
+
 // Search API
 app.get('/api/search', async (req, res) => {
     try {
-        const { q, location, days, sort } = req.query; // Added days and sort
+        const { q, location, days, sort } = req.query;
 
         console.log(`[API] Received search: q='${q}', location='${location}', days='${days}', sort='${sort}'`);
 
-        // 1. Smart Parse
         const fullQuery = (q || "") + " " + (location || "");
         const parsed = smartParse(fullQuery);
 
-        // If we have explicit location from params, override parsed
         const searchLocation = location || parsed.location || "France";
         const searchKeywords = parsed.keywords || q || "Offre";
 
-        // 2. Launch Scrapers in Parallel
+        // Launch Scrapers in Parallel with Timeout
         const results = await Promise.all([
-            scrapeHelloWork(searchKeywords, searchLocation).catch(e => { console.error('HW Error', e); return []; }),
-            scrapeFranceTravail(searchKeywords, searchLocation).catch(e => { console.error('FT Error', e); return []; }),
-            scrapeLinkedIn(searchKeywords, searchLocation).catch(e => { console.error('LI Error', e); return []; })
+            withTimeout(scrapeHelloWork(searchKeywords, searchLocation), 25000, 'HelloWork'),
+            withTimeout(scrapeFranceTravail(searchKeywords, searchLocation), 25000, 'FranceTravail'),
+            withTimeout(scrapeLinkedIn(searchKeywords, searchLocation), 25000, 'LinkedIn')
         ]);
 
-        // 3. Flatten
         let allJobs = results.flat();
 
-        // 4. Filter by Contract (Smart Parse)
+        // Filter by Contract
         if (parsed.contract.length > 0) {
             const targetContracts = parsed.contract;
             allJobs = allJobs.filter(job => {
@@ -50,7 +69,7 @@ app.get('/api/search', async (req, res) => {
             });
         }
 
-        // 5. Filter by Date (Dropdown)
+        // Filter by Date
         if (days && days !== 'all') {
             const limit = parseInt(days, 10);
             if (!isNaN(limit)) {
@@ -61,16 +80,12 @@ app.get('/api/search', async (req, res) => {
             }
         }
 
-        // 6. Sort
+        // Sort
         if (sort === 'date') {
             allJobs.sort((a, b) => parseDateToDays(a.date) - parseDateToDays(b.date));
-        } else {
-            // Default: Relevance (Mixed)
-            // We can just shuffle or keep them mixed.
-            // Scrapers return most relevant first usually, so keeping order is okay.
         }
 
-        // Dedup (by link)
+        // Dedup
         const uniqueJobs = [];
         const seenLinks = new Set();
 
@@ -93,18 +108,25 @@ app.get('/api/search', async (req, res) => {
 
     } catch (error) {
         console.error('[API] Critical Error:', error);
+        // Explicitly set content-type to JSON to prevent "HTML instead of JSON" on client
+        res.header('Content-Type', 'application/json');
         res.status(500).json({ error: "Internal Server Error", details: error.message });
     }
 });
 
-// Global Error Handler for JSON parsing or other middleware errors
+// Global Error Handler
 app.use((err, req, res, next) => {
     console.error('[Global Handler]', err);
+    if (res.headersSent) {
+        return next(err);
+    }
+    res.header('Content-Type', 'application/json');
     res.status(500).json({ error: "Something went wrong!", details: err.message });
 });
 
-// 404 Handler (must be last) - Returns JSON instead of HTML
+// 404 Handler
 app.use((req, res) => {
+    res.header('Content-Type', 'application/json');
     res.status(404).json({ error: "Route not found" });
 });
 
