@@ -1,0 +1,318 @@
+:root {
+    --primary-gold: #D4AF37;
+    --primary-black: #000000;
+    --primary-white: #FFFFFF;
+    --bg-dark: #121212;
+    --text-light: #F5F5F5;
+}
+
+body {
+    margin: 0;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background-color: #2c2c2c;
+    color: var(--text-light);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.app-container {
+    display: flex;
+    width: 95%;
+    max-width: 1400px;
+    height: 90vh;
+    background-color: var(--bg-dark);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+/* Controls Section */
+.controls {
+    width: 400px;
+    padding: 20px;
+    background-color: #1e1e1e;
+    overflow-y: auto;
+    border-right: 1px solid #333;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #333;
+    padding-bottom: 15px;
+}
+
+.header-logo {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.header h1 {
+    font-size: 1.2rem;
+    margin: 0;
+    color: var(--primary-gold);
+}
+
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.control-group label {
+    font-size: 0.85rem;
+    color: #aaa;
+    font-weight: 600;
+}
+
+input[type="text"], textarea, select {
+    background-color: #2c2c2c;
+    border: 1px solid #444;
+    color: white;
+    padding: 10px;
+    border-radius: 6px;
+    font-family: inherit;
+}
+
+textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+button {
+    cursor: pointer;
+    padding: 10px;
+    border-radius: 6px;
+    border: none;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.slide-type-selector {
+    display: flex;
+    gap: 5px;
+}
+
+.slide-type-selector button {
+    flex: 1;
+    background-color: #333;
+    color: white;
+    font-size: 0.8rem;
+}
+
+.slide-type-selector button.active {
+    background-color: var(--primary-gold);
+    color: black;
+}
+
+.logo-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.logo-controls input[type="file"] {
+    display: none; /* We'll style a button to trigger this if needed, or just leave standard for now */
+    font-size: 0.8rem;
+}
+
+.actions {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.btn-primary {
+    background-color: var(--primary-gold);
+    color: black;
+    font-size: 1rem;
+}
+
+.btn-primary:hover {
+    background-color: #b5952f;
+}
+
+.btn-secondary {
+    background-color: transparent;
+    border: 1px solid var(--primary-gold);
+    color: var(--primary-gold);
+}
+
+.bio-section {
+    margin-top: auto;
+    border-top: 1px solid #333;
+    padding-top: 15px;
+}
+
+/* Preview Section */
+.preview-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #000;
+    padding: 40px;
+    position: relative;
+    background-image:
+        linear-gradient(45deg, #111 25%, transparent 25%),
+        linear-gradient(-45deg, #111 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #111 75%),
+        linear-gradient(-45deg, transparent 75%, #111 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+}
+
+.slide {
+    width: 600px; /* Base size for preview */
+    height: 600px;
+    background-color: black;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Default for Title slide */
+    align-items: center;
+    padding: 40px;
+    box-sizing: border-box;
+    box-shadow: 0 0 50px rgba(0,0,0,0.8);
+    text-align: center;
+}
+
+.slide-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    opacity: 0.3;
+    z-index: 1;
+    filter: grayscale(100%);
+}
+
+.slide-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.8));
+    z-index: 2;
+}
+
+.slide-content {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+}
+
+.slide h1 {
+    font-size: 3.5rem;
+    line-height: 1.1;
+    font-weight: 900;
+    color: white;
+    text-transform: uppercase;
+    margin: 0 0 20px 0;
+    letter-spacing: -1px;
+}
+
+.highlight {
+    background-color: var(--primary-gold);
+    color: black;
+    padding: 0 10px;
+    display: inline;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+}
+
+.slide p {
+    font-size: 1.5rem;
+    font-weight: 400;
+    color: #ddd;
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* Logo in slide */
+.logo-container {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#previewLogo {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%; /* Optional circle crop */
+    border: 2px solid var(--primary-gold);
+}
+
+/* Footer dots/indicators just for aesthetic in preview */
+.footer-indicator {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    display: flex;
+    gap: 5px;
+}
+
+.dot {
+    width: 6px;
+    height: 6px;
+    background-color: #555;
+    border-radius: 50%;
+}
+
+.dot.active {
+    background-color: var(--primary-gold);
+}
+
+/* Variants */
+.slide.content-mode {
+    justify-content: flex-start;
+    text-align: left;
+    padding-top: 80px;
+}
+
+.slide.content-mode h1 {
+    font-size: 2.5rem;
+    margin-bottom: 40px;
+    border-left: 5px solid var(--primary-gold);
+    padding-left: 20px;
+}
+
+.slide.content-mode p {
+    font-size: 1.8rem;
+}
+
+.slide.quote-mode h1 {
+    font-family: 'Georgia', serif;
+    font-style: italic;
+    font-size: 2.5rem;
+    color: var(--primary-gold);
+}
+
+.slide.quote-mode p {
+    margin-top: 20px;
+    font-size: 1.2rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
