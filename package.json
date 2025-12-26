@@ -1,0 +1,12 @@
+{
+  "name": "insta-slide-generator",
+  "version": "1.0.0",
+  "description": "Générateur de Slides Instagram - Chaoui Engagé",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
