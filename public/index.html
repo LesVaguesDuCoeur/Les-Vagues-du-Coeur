@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Générateur de Slides Instagram - Style Chaoui Engagé</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="html2canvas.min.js"></script> <!-- Load local file -->
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Controls -->
+        <div class="controls">
+            <div class="header">
+                <img src="logo_default.jpg" alt="Logo" class="header-logo">
+                <h1>Éditeur de Slide</h1>
+            </div>
+
+            <div class="control-group">
+                <label>Type de Slide</label>
+                <div class="slide-type-selector">
+                    <button class="active" onclick="setSlideType('title')">Titre</button>
+                    <button onclick="setSlideType('content')">Contenu</button>
+                    <button onclick="setSlideType('quote')">Citation</button>
+                    <button onclick="setSlideType('conclusion')">Conclusion</button>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>Texte Principal (Titre/Accroche)</label>
+                <textarea id="mainText" oninput="updatePreview()">Un accord de cessez-le-feu entre Israël et le Hamas ?</textarea>
+            </div>
+
+            <div class="control-group">
+                <label>Texte Secondaire / Détails</label>
+                <textarea id="subText" oninput="updatePreview()">Israël et le Hamas annoncent s'être entendus...</textarea>
+            </div>
+
+            <div class="control-group">
+                <label>Mise en valeur (Surlignage Rouge/Or)</label>
+                <input type="text" id="highlightText" placeholder="Mots à surligner" oninput="updatePreview()">
+            </div>
+
+            <div class="control-group">
+                <label>Logo</label>
+                <div class="logo-controls">
+                    <button onclick="toggleLogo(true)">Afficher</button>
+                    <button onclick="toggleLogo(false)">Masquer</button>
+                    <input type="file" id="logoUpload" accept="image/*" onchange="uploadLogo(event)">
+                </div>
+            </div>
+
+             <div class="control-group">
+                <label>Image de Fond (Assemblée)</label>
+                <input type="file" id="bgUpload" accept="image/*" onchange="uploadBackground(event)">
+                <input type="range" id="bgOpacity" min="0" max="1" step="0.1" value="0.3" oninput="updatePreview()">
+            </div>
+
+            <div class="actions">
+                <button class="btn-primary" onclick="downloadSlide()">Télécharger l'image</button>
+                <button class="btn-secondary" onclick="loadMarineLePenData()">Charger Exemple Marine Le Pen</button>
+            </div>
+
+            <div class="bio-section">
+                <label>Bio / Légende Instagram (Générée)</label>
+                <textarea id="bioText" readonly></textarea>
+                <button onclick="copyBio()">Copier la bio</button>
+            </div>
+        </div>
+
+        <!-- Preview Area -->
+        <div class="preview-container">
+            <div id="slidePreview" class="slide square">
+                <div class="slide-bg" id="slideBg"></div>
+                <div class="slide-overlay"></div>
+
+                <div class="slide-content" id="slideContent">
+                    <h1 id="previewMainText">TITRE ICI</h1>
+                    <p id="previewSubText">Sous-texte ici</p>
+                </div>
+
+                <div class="logo-container" id="previewLogoContainer">
+                    <img src="logo_default.jpg" id="previewLogo" alt="Logo">
+                </div>
+
+                <div class="footer-indicator">
+                    <span class="dot active"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
