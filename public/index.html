@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chaoui Recettes</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1>Chaoui<span class="gold">Recettes</span></h1>
+            <nav>
+                <button id="nav-client" class="active">Espace Client</button>
+                <button id="nav-admin">ChaouiEngagé</button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Client Section -->
+    <main id="view-client" class="active-view">
+        <div class="search-bar">
+            <input type="text" id="client-search" placeholder="Rechercher une recette...">
+        </div>
+
+        <div class="import-area" id="drop-zone">
+            <p>Glissez un fichier Stats ici pour débloquer une recette</p>
+            <input type="file" id="client-file-input" hidden accept=".xlsx, .xls">
+            <button onclick="document.getElementById('client-file-input').click()">Ou sélectionner un fichier</button>
+        </div>
+
+        <div id="recipe-grid" class="recipe-grid">
+            <!-- Recipes will be injected here -->
+        </div>
+    </main>
+
+    <!-- Admin Login -->
+    <main id="view-login" class="hidden-view">
+        <div class="login-container">
+            <h2>Accès ChaouiEngagé</h2>
+            <input type="password" id="admin-code" placeholder="Entrez le code">
+            <button id="login-btn">Valider</button>
+            <p id="login-error" class="error"></p>
+        </div>
+    </main>
+
+    <!-- Admin Dashboard -->
+    <main id="view-admin" class="hidden-view">
+        <div class="admin-toolbar">
+            <button onclick="createNewRecipe()">+ Nouvelle Recette</button>
+            <div class="database-actions">
+                <button onclick="importDatabase()">Importer Excel</button>
+                <button onclick="exportDatabase()">Exporter Excel (Admin)</button>
+                <button onclick="exportStatsGlobal()">Exporter Stats (Client)</button>
+            </div>
+        </div>
+
+        <div id="admin-recipe-list" class="admin-list">
+            <!-- Admin list -->
+        </div>
+    </main>
+
+    <!-- Recipe Editor Modal -->
+    <div id="editor-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2 id="modal-title">Éditer la recette</h2>
+
+            <div class="form-group">
+                <label>Titre de la recette</label>
+                <input type="text" id="edit-title">
+            </div>
+
+            <div class="form-group">
+                <label>Image (URL ou Upload)</label>
+                <input type="file" id="edit-image-upload" accept="image/*">
+                <input type="text" id="edit-image-url" placeholder="Ou coller une URL">
+                <div id="image-preview"></div>
+            </div>
+
+            <div class="form-group">
+                <label>Ingrédients</label>
+                <div id="ingredients-list">
+                    <!-- Ingredients rows -->
+                </div>
+                <button class="small-btn" onclick="addIngredientRow()">+ Ajouter Ingrédient</button>
+            </div>
+
+            <div class="form-group">
+                <label>Description (Utilisez @ pour insérer un ingrédient)</label>
+                <!-- Custom Rich Editor Area -->
+                <div id="description-editor" class="rich-editor" contenteditable="true"></div>
+                <!-- Hidden helper for dropdown -->
+                <div id="mention-dropdown" class="mention-dropdown hidden"></div>
+            </div>
+
+            <div class="modal-actions">
+                <button onclick="saveCurrentRecipe()" class="primary-btn">Sauvegarder</button>
+                <button onclick="closeModal()">Annuler</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ingredient Modifier Modal (for percentages) -->
+    <div id="modifier-modal" class="modal hidden" style="z-index: 2000;">
+        <div class="modal-content small-modal">
+            <h3>Modifier l'utilisation</h3>
+            <p id="mod-ing-name"></p>
+            <label>Quantité utilisée :</label>
+            <select id="mod-type" onchange="toggleModInput()">
+                <option value="100%">Tout (100%)</option>
+                <option value="50%">Moitié (50%)</option>
+                <option value="custom_pct">% Personnalisé</option>
+                <option value="custom_val">Valeur Exacte</option>
+            </select>
+            <input type="number" id="mod-value" class="hidden" placeholder="Valeur">
+            <button onclick="applyModifier()">Valider</button>
+        </div>
+    </div>
+
+    <!-- Recipe Detail Modal (Client View) -->
+    <div id="detail-modal" class="modal hidden">
+        <div class="modal-content large-modal">
+            <span class="close-modal" onclick="closeDetailModal()">&times;</span>
+            <div id="detail-content"></div>
+            <button onclick="exportSingleStats()" class="secondary-btn">Exporter en "Stats"</button>
+        </div>
+    </div>
+
+    <script src="js/lib/xlsx.full.min.js"></script>
+    <script src="js/lib/html2canvas.min.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
