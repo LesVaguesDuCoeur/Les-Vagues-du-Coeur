@@ -9,13 +9,19 @@
 <body>
     <header>
         <div class="header-content">
-            <h1>Chaoui<span class="gold">Recettes</span></h1>
+            <!-- Replaced text with Logo -->
+            <div class="logo-container">
+                <img src="logo.jpeg" alt="Chaoui Recettes" class="main-logo">
+            </div>
             <nav>
                 <button id="nav-client" class="active">Espace Client</button>
                 <button id="nav-admin">ChaouiEngagé</button>
             </nav>
         </div>
     </header>
+
+    <!-- Print Area -->
+    <div id="print-area" class="hidden"></div>
 
     <!-- Client Section -->
     <main id="view-client" class="active-view">
@@ -160,6 +166,17 @@
             <div id="detail-content"></div>
         </div>
     </div>
+
+    <footer class="main-footer">
+        <div class="footer-content">
+            <div class="social-links">
+                <a href="#" class="social-btn snap">👻 Snapchat</a>
+                <a href="#" class="social-btn insta">📸 Instagram</a>
+                <a href="#" class="social-btn paypal">💰 Paypal</a>
+            </div>
+            <p>&copy; 2024 ChaouiRecettes. Tous droits réservés.</p>
+        </div>
+    </footer>
 
     <script src="js/lib/xlsx.full.min.js"></script>
     <script src="js/lib/html2canvas.min.js"></script>

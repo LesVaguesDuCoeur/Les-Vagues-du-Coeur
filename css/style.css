@@ -31,6 +31,17 @@ header {
     align-items: center;
 }
 
+.logo-container {
+    display: flex;
+    align-items: center;
+}
+
+.main-logo {
+    height: 80px; /* Adjust based on logo aspect ratio */
+    width: auto;
+    border-radius: 4px; /* Optional slightly rounded */
+}
+
 h1 {
     margin: 0;
     font-weight: 300;
@@ -122,6 +133,122 @@ main {
     font-weight: bold;
     margin: 0;
     color: var(--black);
+}
+
+/* Footer */
+.main-footer {
+    background: var(--black);
+    color: var(--gold);
+    padding: 2rem;
+    margin-top: 3rem;
+    text-align: center;
+}
+
+.footer-content {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.social-links {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.social-btn {
+    text-decoration: none;
+    color: var(--black);
+    background: var(--gold);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: bold;
+    transition: all 0.3s;
+}
+
+.social-btn:hover {
+    background: white;
+    color: var(--black);
+    transform: scale(1.05);
+}
+
+/* Mobile Responsiveness for List View */
+@media (max-width: 768px) {
+    .recipe-grid {
+        grid-template-columns: 1fr; /* Single column */
+        gap: 1rem;
+    }
+
+    .recipe-card {
+        display: flex; /* Horizontal Layout */
+        flex-direction: row;
+        align-items: center;
+        height: 100px; /* Fixed height for bubbles */
+        border: 1px solid #eee;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+
+    .recipe-image {
+        width: 100px;
+        height: 100px;
+        aspect-ratio: 1/1;
+        flex-shrink: 0;
+    }
+
+    .recipe-info {
+        padding: 0 1rem;
+        display: flex;
+        align-items: center;
+        flex: 1;
+    }
+
+    .recipe-title {
+        font-size: 1.1rem;
+    }
+
+    .header-content {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+
+    .main-logo {
+        height: 60px; /* Smaller logo on mobile */
+    }
+
+    .detail-header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .detail-img {
+        width: 100%;
+        max-width: 300px;
+        height: auto;
+        aspect-ratio: 1/1;
+    }
+
+    .recipe-layout {
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .recipe-col-left, .recipe-col-right {
+        width: 100%;
+        min-width: 0;
+        padding: 1rem;
+        box-sizing: border-box;
+    }
+
+    /* Editor Mobile */
+    .ing-row {
+        grid-template-columns: 1fr 1fr;
+    }
+    .ing-row input:nth-child(5) { /* Delete btn */
+        grid-column: span 2;
+    }
 }
 
 /* Admin View */
@@ -468,5 +595,54 @@ button:hover {
     }
     .ing-row input:nth-child(5) { /* Delete btn */
         grid-column: span 2;
+    }
+}
+
+/* Print Styles */
+@media print {
+    body > :not(#print-area) {
+        display: none !important;
+    }
+
+    #print-area {
+        display: block !important;
+        background: white;
+        padding: 20px;
+    }
+
+    /* Print Specific Tweaks */
+    .detail-header {
+        flex-direction: row; /* Force side-by-side for print */
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .detail-img {
+        width: 150px;
+        height: 150px;
+        border: 2px solid var(--gold);
+    }
+
+    .recipe-layout {
+        display: block; /* Stack or custom print layout */
+    }
+
+    .recipe-col-left {
+        width: 100%;
+        margin-bottom: 20px;
+        background: none;
+        border: 1px solid #eee;
+    }
+
+    .recipe-col-right {
+        width: 100%;
+    }
+
+    h2, h3 {
+        color: black !important; /* Save ink, though gold is requested */
+    }
+
+    .gold {
+        color: #D4AF37 !important; /* Force gold if color printing enabled */
     }
 }

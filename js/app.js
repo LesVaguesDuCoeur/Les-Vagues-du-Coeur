@@ -19,6 +19,10 @@ function generateColor(str) {
     return `hsl(${h}, ${s}%, ${l}%)`;
 }
 
+function normalizeStr(str) {
+    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
     // Navigation
@@ -36,6 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Image Upload Preview
     document.getElementById('edit-image-upload').addEventListener('change', handleImageUpload);
+    document.getElementById('edit-image-url').addEventListener('input', handleImageURLInput);
 
     // Editor - Mention System (Global listener for delegation)
     setupMentionSystem();
@@ -418,7 +423,11 @@ function openEditor() {
     const r = currentRecipe;
     document.getElementById('modal-title').innerText = r.title ? "Éditer" : "Nouvelle Recette";
     document.getElementById('edit-title').value = r.title;
-    document.getElementById('edit-image-url').value = "";
+
+    // Check if image is URL or Base64 (heuristic: Base64 starts with data:image)
+    const isUrl = r.image && !r.image.startsWith('data:image');
+    document.getElementById('edit-image-url').value = isUrl ? r.image : "";
+
     document.getElementById('edit-base-servings').value = r.baseServings || 1; // Load Servings
     renderImagePreview(r.image);
 
@@ -444,19 +453,65 @@ function closeModal() {
 
 function renderImagePreview(src) {
     const div = document.getElementById('image-preview');
-    div.innerHTML = src ? `<img src="${src}" style="max-height:100px; margin-top:10px">` : '';
+    div.innerHTML = src ? `<img src="${src}" style="max-height:100px; margin-top:10px; border-radius: 8px; border: 1px solid #ddd;">` : '';
+}
+
+function handleImageURLInput(e) {
+    const val = e.target.value;
+    if (val) {
+        // If user types URL, we temporarily show it. It will be saved on "Sauvegarder"
+        renderImagePreview(val);
+    }
 }
 
 function handleImageUpload(e) {
     const file = e.target.files[0];
     if (file) {
-        const reader = new FileReader();
-        reader.onload = (evt) => {
-            currentRecipe.image = evt.target.result;
-            renderImagePreview(currentRecipe.image);
-        };
-        reader.readAsDataURL(file);
+        compressImage(file, 800, 0.7).then(base64 => {
+            currentRecipe.image = base64;
+            // Clear URL input if file is uploaded to avoid confusion
+            document.getElementById('edit-image-url').value = "";
+            renderImagePreview(base64);
+        }).catch(err => {
+            console.error("Image compression failed", err);
+            alert("Erreur lors du traitement de l'image.");
+        });
     }
+}
+
+function compressImage(file, maxWidth, quality) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = event => {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = () => {
+                const elem = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+
+                if (width > maxWidth) {
+                    height *= maxWidth / width;
+                    width = maxWidth;
+                }
+
+                // Also limit height just in case
+                if (height > maxWidth) {
+                     width *= maxWidth / height;
+                     height = maxWidth;
+                }
+
+                elem.width = width;
+                elem.height = height;
+                const ctx = elem.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                resolve(ctx.toDataURL('image/jpeg', quality));
+            };
+            img.onerror = error => reject(error);
+        };
+        reader.onerror = error => reject(error);
+    });
 }
 
 function addIngredientRow(data = null) {
@@ -538,6 +593,12 @@ function saveCurrentRecipe() {
     currentRecipe.title = document.getElementById('edit-title').value;
     currentRecipe.mode = document.getElementById('editor-mode').value;
     currentRecipe.baseServings = parseInt(document.getElementById('edit-base-servings').value) || 1;
+
+    // Check URL input for image preference
+    const urlVal = document.getElementById('edit-image-url').value.trim();
+    if (urlVal) {
+        currentRecipe.image = urlVal;
+    }
 
     // Ingredients
     const rows = document.querySelectorAll('.ing-row');
@@ -627,7 +688,7 @@ function showDropdown(query, range, editor) {
         });
     });
 
-    const matches = currentIngs.filter(ing => ing.name.toLowerCase().includes(query.toLowerCase()));
+    const matches = currentIngs.filter(ing => normalizeStr(ing.name).includes(normalizeStr(query)));
 
     if (matches.length === 0) {
         dropdown.classList.add('hidden');
@@ -772,7 +833,7 @@ let activeChecklist = new Set(); // Stores indices of checked steps
 function renderRecipeGrid(search = "") {
     const grid = document.getElementById('recipe-grid');
     grid.innerHTML = '';
-    const filtered = recipes.filter(r => r.title.toLowerCase().includes(search.toLowerCase()));
+    const filtered = recipes.filter(r => normalizeStr(r.title).includes(normalizeStr(search)));
     filtered.forEach(r => {
         const card = document.createElement('div');
         card.className = 'recipe-card';
@@ -796,6 +857,9 @@ function renderDetailView() {
     const r = currentRecipe;
     const content = document.getElementById('detail-content');
     const scale = activeServings / (r.baseServings || 1);
+
+    // Add Print Button dynamically if not present (or rebuild header)
+    // We'll add it in the HTML string below
 
     // 1. Calculate Cross-offs
     // We need to know which ingredients are "fully used" by checked steps.
@@ -878,6 +942,9 @@ function renderDetailView() {
     }
 
     content.innerHTML = `
+        <div class="detail-header-actions" style="display:flex; justify-content:flex-end; margin-bottom:10px;">
+             <button onclick="printRecipe()" class="secondary-btn">🖨️ Imprimer / PDF</button>
+        </div>
         <div class="detail-header">
             ${r.image ? `<img src="${r.image}" class="detail-img">` : ''}
             <div>
@@ -946,4 +1013,42 @@ window.toggleStep = function(idx) {
 
 window.closeDetailModal = function() {
     document.getElementById('detail-modal').classList.add('hidden');
+};
+
+window.printRecipe = function() {
+    const printArea = document.getElementById('print-area');
+    const detailContent = document.getElementById('detail-content');
+
+    // Clone Content
+    // We want to remove the "Print" button and the servings control (maybe keep servings text but not input?)
+    // For simplicity, we clone everything and hide specific elements via CSS in @media print if needed.
+    // However, JS manipulation is safer.
+
+    // Header for Print
+    const logoHtml = `<div style="text-align:center; margin-bottom:20px;">
+        <img src="logo.jpeg" style="height:80px;">
+        <h1 style="font-size:24px;">Chaoui<span style="color:#D4AF37">Recettes</span></h1>
+    </div>`;
+
+    let contentCopy = detailContent.cloneNode(true);
+
+    // Remove Action Buttons
+    const actions = contentCopy.querySelector('.detail-header-actions');
+    if(actions) actions.remove();
+
+    // Replace Input with Static Text for Servings
+    const servInput = contentCopy.querySelector('.servings-control input');
+    if(servInput) {
+        const val = servInput.value;
+        const parent = servInput.parentElement;
+        parent.innerHTML = `Pour <strong>${val}</strong> personnes`;
+    }
+
+    // Remove Checkboxes from steps? No, user might want to see them.
+    // Maybe remove checked state style?
+    // Let's keep it WYSIWYG but cleaner.
+
+    printArea.innerHTML = logoHtml + contentCopy.innerHTML;
+
+    window.print();
 };
