@@ -11,3 +11,10 @@
 127.0.0.1 - - [29/Dec/2025 14:16:01] "GET /js/lib/html2canvas.min.js HTTP/1.1" 200 -
 127.0.0.1 - - [29/Dec/2025 14:16:01] "GET /js/app.js HTTP/1.1" 200 -
 127.0.0.1 - - [29/Dec/2025 14:16:01] "GET /js/lib/html2pdf.bundle.min.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Dec/2025 14:57:24] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [29/Dec/2025 14:57:24] "GET /js/lib/xlsx.full.min.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Dec/2025 14:57:24] "GET /css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [29/Dec/2025 14:57:24] "GET /logo.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [29/Dec/2025 14:57:24] "GET /js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Dec/2025 14:57:24] "GET /js/lib/html2canvas.min.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Dec/2025 14:57:24] "GET /js/lib/html2pdf.bundle.min.js HTTP/1.1" 200 -

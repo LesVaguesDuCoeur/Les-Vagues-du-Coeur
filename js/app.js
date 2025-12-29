@@ -60,31 +60,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function autoLoadDatabase() {
     // Direct ID: 1lmCcRUezm8xeHSTf-PznxnJ0JWMDn3Yf
-    // Use CORS proxy or hope for the best (usually Drive blocks direct fetch from client JS)
-    // Fallback: If fetch fails, we just don't load. The user said:
-    // "je mettrais a jours normalement les clients n'auront plus besoin d importer"
-    // Trying a CORS-friendly proxy or direct
+    // Using AllOrigins as a public CORS proxy to bypass Drive restrictions for client-side fetch.
 
     const fileId = "1lmCcRUezm8xeHSTf-PznxnJ0JWMDn3Yf";
-    const url = `https://drive.google.com/uc?export=download&id=${fileId}`;
-
-    // Note: This will likely fail with CORS in a pure client-side environment without a proxy.
-    // However, I will implement the fetch.
+    const driveUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
+    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(driveUrl)}`;
 
     try {
-        const response = await fetch(url);
+        console.log("Attempting auto-import from Drive via Proxy...");
+        const response = await fetch(proxyUrl);
         if (response.ok) {
             const blob = await response.blob();
+            console.log("Auto-import downloaded. Size:", blob.size);
+
             // Process like a file import
+            // We need to create a mock Event object that handleClientImport expects
             const file = new File([blob], "auto_import.txt");
-            const evt = { target: { files: [file] } };
-            handleClientImport(evt);
+            const mockEvent = { target: { files: [file] } };
+
+            // Call import handler
+            handleClientImport(mockEvent);
         } else {
-            console.log("Auto-import fetch failed:", response.status);
+            console.error("Auto-import fetch failed:", response.status);
         }
     } catch (e) {
-        console.log("Auto-import error (likely CORS):", e);
-        // Fallback: Can't really do much client-side without user interaction or a proxy.
+        console.error("Auto-import error:", e);
     }
 }
 
