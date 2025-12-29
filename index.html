@@ -24,9 +24,9 @@
         </div>
 
         <div class="import-area" id="drop-zone">
-            <p>Glissez un fichier Stats ici pour débloquer une recette</p>
-            <input type="file" id="client-file-input" hidden accept=".xlsx, .xls">
-            <button onclick="document.getElementById('client-file-input').click()">Ou sélectionner un fichier</button>
+            <p>Glissez un fichier Recette ici pour débloquer</p>
+            <input type="file" id="client-file-input" hidden accept=".xlsx, .xls, .txt">
+            <button onclick="document.getElementById('client-file-input').click()">Importer un fichier</button>
         </div>
 
         <div id="recipe-grid" class="recipe-grid">
@@ -49,9 +49,9 @@
         <div class="admin-toolbar">
             <button onclick="createNewRecipe()">+ Nouvelle Recette</button>
             <div class="database-actions">
-                <button onclick="importDatabase()">Importer Excel</button>
+                <button onclick="importDatabase()">Importer Fichier</button>
                 <button onclick="exportDatabase()">Exporter Excel (Admin)</button>
-                <button onclick="exportStatsGlobal()">Exporter Stats (Client)</button>
+                <button onclick="exportStatsGlobal()">Exporter Recette (Client)</button>
             </div>
         </div>
 
@@ -76,6 +76,11 @@
                 <input type="file" id="edit-image-upload" accept="image/*">
                 <input type="text" id="edit-image-url" placeholder="Ou coller une URL">
                 <div id="image-preview"></div>
+            </div>
+
+            <div class="form-group">
+                 <label>Nombre de personnes (Base)</label>
+                 <input type="number" id="edit-base-servings" value="1" min="1">
             </div>
 
             <div class="form-group">
@@ -148,7 +153,6 @@
         <div class="modal-content large-modal">
             <span class="close-modal" onclick="closeDetailModal()">&times;</span>
             <div id="detail-content"></div>
-            <!-- Removed Export Stats button -->
         </div>
     </div>
 

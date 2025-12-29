@@ -40,9 +40,22 @@ document.addEventListener('DOMContentLoaded', () => {
     // Editor - Mention System (Global listener for delegation)
     setupMentionSystem();
 
+    // Modal Click Outside Handler
+    setupModalClickOutside();
+
     // Initial Render
     renderRecipeGrid();
 });
+
+function setupModalClickOutside() {
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.add('hidden');
+            }
+        });
+    });
+}
 
 // --- Navigation & Auth ---
 async function switchView(view) {
@@ -240,21 +253,9 @@ function generateSparseExcel(recipesToExport) {
 function importDatabase() {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = '.xlsx, .xls';
+    input.accept = '.xlsx, .xls, .txt'; // Added .txt for stats
     input.onchange = (e) => {
-        const file = e.target.files[0];
-        const reader = new FileReader();
-        reader.onload = (evt) => {
-            const data = new Uint8Array(evt.target.result);
-            const newRecipes = parseSparseExcel(data);
-            if (confirm(`Importer ${newRecipes.length} recettes ? Cela remplacera la base actuelle.`)) {
-                recipes = newRecipes;
-                renderAdminList();
-                renderRecipeGrid();
-                alert("Import réussi !");
-            }
-        };
-        reader.readAsArrayBuffer(file);
+        handleClientImport(e, true); // Reuse logic, with 'isAdmin' flag? No need, just parse.
     };
     input.click();
 }
@@ -269,7 +270,7 @@ function exportDatabase() {
 }
 
 function exportStatsGlobal() {
-    exportStatsAsText(recipes, "Rapport_Systeme_Global.txt");
+    exportStatsAsText(recipes, "Rapport_Recette_Global.txt"); // Renamed
 }
 
 function exportStatsAsText(dataToHide, filename) {
@@ -291,7 +292,7 @@ function exportStatsAsText(dataToHide, filename) {
     a.click();
 }
 
-function handleClientImport(e) {
+function handleClientImport(e, fromAdmin = false) {
     const file = e.target.files[0];
     if (!file) return;
 
@@ -308,7 +309,12 @@ function handleClientImport(e) {
                 const encoded = text.substring(start, end !== -1 ? end : undefined).trim();
                 const jsonStr = decodeURIComponent(escape(atob(encoded)));
                 const importedRecipes = JSON.parse(jsonStr);
-                mergeRecipes(importedRecipes);
+
+                if (fromAdmin && confirm(`Importer ${importedRecipes.length} recettes depuis fichier Recette ?`)) {
+                     mergeRecipes(importedRecipes);
+                } else if (!fromAdmin) {
+                     mergeRecipes(importedRecipes);
+                }
                 return;
             }
         } catch(e) { /* Not text */ }
@@ -318,7 +324,11 @@ function handleClientImport(e) {
             const data = new Uint8Array(evt.target.result);
             const imported = parseSparseExcel(data);
             if (imported.length > 0) {
-                 mergeRecipes(imported);
+                 if (fromAdmin) {
+                     if (confirm(`Importer ${imported.length} recettes depuis Excel ?`)) mergeRecipes(imported);
+                 } else {
+                     mergeRecipes(imported);
+                 }
             } else {
                 alert("Format non reconnu.");
             }
@@ -339,6 +349,7 @@ function mergeRecipes(newItems) {
         }
     });
     renderRecipeGrid();
+    if(isAuthenticated) renderAdminList(); // Refresh admin list if active
     alert(`${count} recette(s) débloquée(s) !`);
 }
 
@@ -387,6 +398,7 @@ function openEditor() {
     document.getElementById('modal-title').innerText = r.title ? "Éditer" : "Nouvelle Recette";
     document.getElementById('edit-title').value = r.title;
     document.getElementById('edit-image-url').value = "";
+    document.getElementById('edit-base-servings').value = r.baseServings || 1; // Load Servings
     renderImagePreview(r.image);
 
     // Ingredients
@@ -504,6 +516,7 @@ function removeStepRow(btn) {
 function saveCurrentRecipe() {
     currentRecipe.title = document.getElementById('edit-title').value;
     currentRecipe.mode = document.getElementById('editor-mode').value;
+    currentRecipe.baseServings = parseInt(document.getElementById('edit-base-servings').value) || 1;
 
     // Ingredients
     const rows = document.querySelectorAll('.ing-row');
@@ -812,11 +825,14 @@ function renderDetailView() {
 
             methodHtml += `
                 <div class="step-view-row ${isChecked ? 'step-checked' : ''}">
-                    <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleStep(${idx})">
-                    <div class="step-content">
-                        <strong>Etape ${idx+1}</strong>
-                        <div>${hydrated}</div>
-                    </div>
+                    <!-- Inline Checkbox -->
+                    <label style="cursor:pointer; display:flex; gap:10px; width:100%">
+                        <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleStep(${idx})">
+                        <div class="step-content">
+                            <strong>[${isChecked ? 'x' : ' '}] Etape ${idx+1}</strong>
+                            <div>${hydrated}</div>
+                        </div>
+                    </label>
                 </div>
             `;
         });
