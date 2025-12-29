@@ -62,6 +62,10 @@ document.addEventListener('DOMContentLoaded', () => {
     autoLoadDatabase();
 });
 
+function refreshDatabase() {
+    autoLoadDatabase(false);
+}
+
 function saveDriveConfig() {
     const url = document.getElementById('drive-script-url').value.trim();
     if (url) {
@@ -74,12 +78,12 @@ function saveDriveConfig() {
     }
 }
 
-async function autoLoadDatabase() {
+async function autoLoadDatabase(silent = true) {
     // New Workflow: Hardcoded Google Doc URL
     const docUrl = "https://docs.google.com/document/d/1hj6uSP1ygTEK7B6Zf9AN4bwzIVgnqslC1csFj-XyRyA/export?format=txt";
 
     try {
-        console.log("Chargement depuis Google Doc...");
+        if(!silent) console.log("Rafraîchissement...");
         const response = await fetch(docUrl);
         if (response.ok) {
             const text = await response.text();
@@ -101,22 +105,25 @@ async function autoLoadDatabase() {
 
                     if (Array.isArray(importedRecipes) && importedRecipes.length > 0) {
                         mergeRecipes(importedRecipes);
-                        console.log("Synchronisation Doc réussie : " + importedRecipes.length + " recettes.");
+                        if(!silent) alert(`Synchronisation réussie ! ${importedRecipes.length} recettes chargées.`);
                     } else {
-                        console.log("Doc: Format vide ou incorrect.");
+                        if(!silent) alert("Format vide ou incorrect dans le Google Doc.");
                     }
                 } catch (parseErr) {
                     console.error("Erreur parsing Base64/JSON:", parseErr);
+                    if(!silent) alert("Erreur de lecture du format (Base64/JSON invalide).");
                 }
             } else {
                 console.log("Doc: Marqueur 'SYSTEM DUMP' introuvable.");
+                if(!silent) alert("Le document Google ne contient pas le format attendu.");
             }
         } else {
             console.error("Erreur Fetch Doc:", response.status);
+            if(!silent) alert("Impossible de lire le Google Doc (Erreur " + response.status + ")");
         }
     } catch (e) {
         console.error("Erreur Auto-import (CORS possible):", e);
-        console.log("Passage en mode manuel (Import Fichier).");
+        if(!silent) alert("Erreur de connexion au Google Doc (CORS ou Réseau). Essayez l'import manuel.");
     }
 }
 
