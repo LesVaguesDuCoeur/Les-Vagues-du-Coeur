@@ -43,6 +43,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Modal Click Outside Handler
     setupModalClickOutside();
 
+    // Global Enter Handler for Modals
+    setupGlobalEnterHandler();
+
     // Initial Render
     renderRecipeGrid();
 });
@@ -53,6 +56,24 @@ function setupModalClickOutside() {
             if (e.target === modal) {
                 modal.classList.add('hidden');
             }
+        });
+    });
+}
+
+function setupGlobalEnterHandler() {
+    // 1. Login
+    const loginInput = document.getElementById('admin-code');
+    if (loginInput) {
+        loginInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') handleLogin();
+        });
+    }
+
+    // 2. Modifier Modal (Article, Value)
+    const modInputs = document.querySelectorAll('#modifier-modal input, #modifier-modal select');
+    modInputs.forEach(input => {
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') applyModifier();
         });
     });
 }
