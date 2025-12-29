@@ -54,64 +54,78 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initial Render
     renderRecipeGrid();
 
-    // Init Drive Config Field
-    const savedUrl = localStorage.getItem('drive_script_url');
-    if(savedUrl) document.getElementById('drive-script-url').value = savedUrl;
-
     // Auto-load from Drive
     autoLoadDatabase();
 });
 
-function saveDriveConfig() {
-    const url = document.getElementById('drive-script-url').value.trim();
-    if (url) {
-        localStorage.setItem('drive_script_url', url);
-        alert("Lien sauvegardé ! Le site va maintenant essayer de charger les recettes depuis ce lien.");
-        autoLoadDatabase(); // Reload immediately
-    } else {
-        localStorage.removeItem('drive_script_url');
-        alert("Lien supprimé.");
+// --- Toast Notification ---
+function showToast(message, duration = 3000) {
+    let toast = document.getElementById('toast-notification');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'toast-notification';
+        toast.style.position = 'fixed';
+        toast.style.bottom = '20px';
+        toast.style.right = '20px';
+        toast.style.background = '#333';
+        toast.style.color = '#fff';
+        toast.style.padding = '12px 24px';
+        toast.style.borderRadius = '8px';
+        toast.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
+        toast.style.zIndex = '9999';
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.3s ease';
+        document.body.appendChild(toast);
     }
+    toast.innerText = message;
+    toast.style.opacity = '1';
+
+    setTimeout(() => {
+        toast.style.opacity = '0';
+    }, duration);
 }
 
-async function autoLoadDatabase() {
-    const scriptUrl = localStorage.getItem('drive_script_url');
+// --- Sync Logic (Auto) ---
+
+function getScriptUrl() {
+    // Priority: 1. Config.js (Hardcoded) 2. LocalStorage (Admin Setup)
+    if (typeof DRIVE_SCRIPT_URL !== 'undefined' && DRIVE_SCRIPT_URL) return DRIVE_SCRIPT_URL;
+    return localStorage.getItem('drive_script_url');
+}
+
+async function autoLoadDatabase(silent = true) {
+    const scriptUrl = getScriptUrl();
 
     if (!scriptUrl) {
-        console.log("Aucun lien de script configuré. Import manuel requis.");
+        if (!silent) alert("Lien de synchronisation non configuré (Voir js/config.js).");
         return;
     }
 
     try {
-        console.log("Chargement depuis Drive (Script)...");
+        if (!silent) showToast("🔄 Chargement...");
         const response = await fetch(scriptUrl);
         if (response.ok) {
             const data = await response.json();
             if (Array.isArray(data) && data.length > 0) {
-                mergeRecipes(data);
-                console.log("Synchronisation Drive réussie : " + data.length + " recettes.");
-            } else {
-                console.log("Drive: Aucune recette trouvée ou format vide.");
+                mergeRecipes(data, true); // True = Silent merge
+                console.log("Sync Drive : OK (" + data.length + ")");
+                if (!silent) showToast("✅ Données à jour !");
             }
-        } else {
-            console.error("Erreur Fetch Drive:", response.status);
         }
     } catch (e) {
         console.error("Erreur Auto-import:", e);
+        if (!silent) showToast("❌ Erreur de connexion");
     }
 }
 
-async function saveToDrive() {
-    const scriptUrl = localStorage.getItem('drive_script_url');
-    if (!scriptUrl) return alert("Veuillez configurer le lien du script Google d'abord.");
-    if (recipes.length === 0) return alert("Rien à sauvegarder.");
-
-    const btn = document.querySelector('button[onclick="saveToDrive()"]');
-    const originalText = btn.innerText;
-    btn.innerText = "⏳ Envoi...";
-    btn.disabled = true;
+async function saveToDrive(auto = false) {
+    const scriptUrl = getScriptUrl();
+    if (!scriptUrl) return; // Silent fail if not configured
+    if (recipes.length === 0) return;
 
     try {
+        if (auto) showToast("☁️ Sauvegarde auto...");
+
         // 1. Envoyer au Drive (Cloud)
         const payload = JSON.stringify(recipes);
         const response = await fetch(scriptUrl, {
@@ -120,18 +134,18 @@ async function saveToDrive() {
         });
 
         const text = await response.text();
+        console.log("Drive Response:", text);
 
-        // 2. Télécharger en local (Backup/Client)
-        exportStatsAsText(recipes, "Rapport_Recette_Global.txt");
-
-        alert("Succès !\n\n1. Drive : " + text + "\n2. Local : Fichier téléchargé (Backup).");
+        if (auto) showToast("✅ Sauvegardé sur Drive");
+        else {
+             // Manual trigger (if any) -> Download Backup
+             exportStatsAsText(recipes, "Rapport_Recette_Global.txt");
+             alert("Synchronisation Terminée !\n\n1. Drive : Mis à jour\n2. Local : Backup téléchargé");
+        }
 
     } catch (e) {
         console.error("Erreur Save Drive:", e);
-        alert("Erreur lors de la sauvegarde : " + e.message);
-    } finally {
-        btn.innerText = originalText;
-        btn.disabled = false;
+        showToast("⚠️ Erreur Sauvegarde Drive");
     }
 }
 
@@ -196,6 +210,15 @@ async function handleLogin() {
         isAuthenticated = true;
         document.getElementById('admin-code').value = '';
         switchView('admin');
+
+        // Setup Flow: Check if Script URL is missing (Only if not hardcoded)
+        if (!getScriptUrl()) {
+            const url = prompt("Configuration initiale :\n\nVeuillez entrer l'URL de l'application Web (Script Google) pour activer la synchronisation automatique :");
+            if (url) {
+                localStorage.setItem('drive_script_url', url.trim());
+                autoLoadDatabase();
+            }
+        }
     } else {
         document.getElementById('login-error').innerText = "Code incorrect.";
     }
@@ -452,18 +475,37 @@ function handleClientImport(e, fromAdmin = false) {
     reader.readAsArrayBuffer(file);
 }
 
-function mergeRecipes(newItems) {
+function mergeRecipes(newItems, silent = false) {
     const existingIds = new Set(recipes.map(r => r.id));
     let count = 0;
+
+    // In silent sync mode (Cloud), we often want to UPDATE existing recipes too,
+    // but mergeRecipes was originally "Import only new".
+    // For cloud sync, we should probably overwrite or intelligently merge.
+    // Simplest strategy: Overwrite if ID matches, Add if new.
+
+    // Map existing for quick access
+    let recipeMap = new Map(recipes.map(r => [r.id, r]));
+
     newItems.forEach(r => {
-        if (!existingIds.has(r.id)) {
-            recipes.push(r);
+        if (recipeMap.has(r.id)) {
+            // Update existing? Only if silent sync (Cloud source of truth)
+            if (silent) recipeMap.set(r.id, r);
+        } else {
+            recipeMap.set(r.id, r);
             count++;
         }
     });
+
+    recipes = Array.from(recipeMap.values());
+
     renderRecipeGrid();
-    if(isAuthenticated) renderAdminList(); // Refresh admin list if active
-    alert(`${count} recette(s) débloquée(s) !`);
+    if(isAuthenticated) renderAdminList();
+
+    if(!silent && count > 0) alert(`${count} recette(s) ajoutée(s) !`);
+
+    // Trigger Auto-Save only if NOT silent (manual import) to sync back to cloud
+    if (!silent) saveToDrive(true);
 }
 
 // --- Admin UI ---
@@ -502,6 +544,7 @@ function deleteRecipe(id) {
     if(confirm("Supprimer ?")) {
         recipes = recipes.filter(r => r.id !== id);
         renderAdminList();
+        saveToDrive(true); // Auto-save
     }
 }
 
@@ -733,6 +776,7 @@ function saveCurrentRecipe() {
     closeModal();
     renderAdminList();
     renderRecipeGrid();
+    saveToDrive(true); // Auto-save
 }
 
 // --- Smart Editor & Mentions ---
