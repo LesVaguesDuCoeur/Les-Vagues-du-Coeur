@@ -1,34 +1,8 @@
-127.0.0.1 - - [29/Dec/2025 13:31:30] "GET / HTTP/1.1" 200 -
-127.0.0.1 - - [29/Dec/2025 13:31:30] "GET /css/style.css HTTP/1.1" 200 -
-127.0.0.1 - - [29/Dec/2025 13:31:30] "GET /js/lib/xlsx.full.min.js HTTP/1.1" 200 -
-127.0.0.1 - - [29/Dec/2025 13:31:30] "GET /logo.jpeg HTTP/1.1" 200 -
-127.0.0.1 - - [29/Dec/2025 13:31:30] "GET /js/lib/html2canvas.min.js HTTP/1.1" 200 -
-127.0.0.1 - - [29/Dec/2025 13:31:30] "GET /js/app.js HTTP/1.1" 200 -
-127.0.0.1 - - [29/Dec/2025 14:16:00] "GET / HTTP/1.1" 200 -
-127.0.0.1 - - [29/Dec/2025 14:16:00] "GET /js/lib/xlsx.full.min.js HTTP/1.1" 200 -
-127.0.0.1 - - [29/Dec/2025 14:16:01] "GET /css/style.css HTTP/1.1" 200 -
-127.0.0.1 - - [29/Dec/2025 14:16:01] "GET /logo.jpeg HTTP/1.1" 200 -
-127.0.0.1 - - [29/Dec/2025 14:16:01] "GET /js/lib/html2canvas.min.js HTTP/1.1" 200 -
-127.0.0.1 - - [29/Dec/2025 14:16:01] "GET /js/app.js HTTP/1.1" 200 -
-127.0.0.1 - - [29/Dec/2025 14:16:01] "GET /js/lib/html2pdf.bundle.min.js HTTP/1.1" 200 -
-127.0.0.1 - - [29/Dec/2025 14:57:24] "GET / HTTP/1.1" 200 -
-127.0.0.1 - - [29/Dec/2025 14:57:24] "GET /js/lib/xlsx.full.min.js HTTP/1.1" 200 -
-127.0.0.1 - - [29/Dec/2025 14:57:24] "GET /css/style.css HTTP/1.1" 200 -
-127.0.0.1 - - [29/Dec/2025 14:57:24] "GET /logo.jpeg HTTP/1.1" 200 -
-127.0.0.1 - - [29/Dec/2025 14:57:24] "GET /js/app.js HTTP/1.1" 200 -
-127.0.0.1 - - [29/Dec/2025 14:57:24] "GET /js/lib/html2canvas.min.js HTTP/1.1" 200 -
-127.0.0.1 - - [29/Dec/2025 14:57:24] "GET /js/lib/html2pdf.bundle.min.js HTTP/1.1" 200 -
-127.0.0.1 - - [29/Dec/2025 15:49:19] "GET / HTTP/1.1" 200 -
-127.0.0.1 - - [29/Dec/2025 15:49:20] "GET /logo.jpeg HTTP/1.1" 200 -
-127.0.0.1 - - [29/Dec/2025 15:49:20] "GET /css/style.css HTTP/1.1" 200 -
-127.0.0.1 - - [29/Dec/2025 15:49:20] "GET /js/lib/xlsx.full.min.js HTTP/1.1" 200 -
-127.0.0.1 - - [29/Dec/2025 15:49:20] "GET /js/lib/html2canvas.min.js HTTP/1.1" 200 -
-127.0.0.1 - - [29/Dec/2025 15:49:20] "GET /js/app.js HTTP/1.1" 200 -
-127.0.0.1 - - [29/Dec/2025 15:49:20] "GET /js/lib/html2pdf.bundle.min.js HTTP/1.1" 200 -
-127.0.0.1 - - [29/Dec/2025 16:26:17] "GET / HTTP/1.1" 200 -
-127.0.0.1 - - [29/Dec/2025 16:26:17] "GET /css/style.css HTTP/1.1" 200 -
-127.0.0.1 - - [29/Dec/2025 16:26:17] "GET /logo.jpeg HTTP/1.1" 200 -
-127.0.0.1 - - [29/Dec/2025 16:26:17] "GET /js/lib/xlsx.full.min.js HTTP/1.1" 200 -
-127.0.0.1 - - [29/Dec/2025 16:26:17] "GET /js/lib/html2pdf.bundle.min.js HTTP/1.1" 200 -
-127.0.0.1 - - [29/Dec/2025 16:26:17] "GET /js/app.js HTTP/1.1" 200 -
-127.0.0.1 - - [29/Dec/2025 16:26:17] "GET /js/lib/html2canvas.min.js HTTP/1.1" 200 -
+npm error code ENOENT
+npm error syscall open
+npm error path /app/package.json
+npm error errno -2
+npm error enoent Could not read package.json: Error: ENOENT: no such file or directory, open '/app/package.json'
+npm error enoent This is related to npm not being able to find a file.
+npm error enoent
+npm error A complete log of this run can be found in: /home/jules/.npm/_logs/2025-12-29T17_00_51_804Z-debug-0.log

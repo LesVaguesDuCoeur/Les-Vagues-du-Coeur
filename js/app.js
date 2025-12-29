@@ -54,38 +54,84 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initial Render
     renderRecipeGrid();
 
+    // Init Drive Config Field
+    const savedUrl = localStorage.getItem('drive_script_url');
+    if(savedUrl) document.getElementById('drive-script-url').value = savedUrl;
+
     // Auto-load from Drive
     autoLoadDatabase();
 });
 
-async function autoLoadDatabase() {
-    // Direct ID: 1lmCcRUezm8xeHSTf-PznxnJ0JWMDn3Yf
-    // Using AllOrigins as a public CORS proxy to bypass Drive restrictions for client-side fetch.
+function saveDriveConfig() {
+    const url = document.getElementById('drive-script-url').value.trim();
+    if (url) {
+        localStorage.setItem('drive_script_url', url);
+        alert("Lien sauvegardé ! Le site va maintenant essayer de charger les recettes depuis ce lien.");
+        autoLoadDatabase(); // Reload immediately
+    } else {
+        localStorage.removeItem('drive_script_url');
+        alert("Lien supprimé.");
+    }
+}
 
-    const fileId = "1lmCcRUezm8xeHSTf-PznxnJ0JWMDn3Yf";
-    const driveUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
-    // Add timestamp to prevent caching (Cache Busting)
-    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(driveUrl)}&timestamp=${new Date().getTime()}`;
+async function autoLoadDatabase() {
+    const scriptUrl = localStorage.getItem('drive_script_url');
+
+    if (!scriptUrl) {
+        console.log("Aucun lien de script configuré. Import manuel requis.");
+        return;
+    }
 
     try {
-        console.log("Attempting auto-import from Drive via Proxy...", proxyUrl);
-        const response = await fetch(proxyUrl);
+        console.log("Chargement depuis Drive (Script)...");
+        const response = await fetch(scriptUrl);
         if (response.ok) {
-            const blob = await response.blob();
-            console.log("Auto-import downloaded. Size:", blob.size);
-
-            // Process like a file import
-            // We need to create a mock Event object that handleClientImport expects
-            const file = new File([blob], "auto_import.txt");
-            const mockEvent = { target: { files: [file] } };
-
-            // Call import handler
-            handleClientImport(mockEvent);
+            const data = await response.json();
+            if (Array.isArray(data) && data.length > 0) {
+                mergeRecipes(data);
+                console.log("Synchronisation Drive réussie : " + data.length + " recettes.");
+            } else {
+                console.log("Drive: Aucune recette trouvée ou format vide.");
+            }
         } else {
-            console.error("Auto-import fetch failed:", response.status);
+            console.error("Erreur Fetch Drive:", response.status);
         }
     } catch (e) {
-        console.error("Auto-import error:", e);
+        console.error("Erreur Auto-import:", e);
+    }
+}
+
+async function saveToDrive() {
+    const scriptUrl = localStorage.getItem('drive_script_url');
+    if (!scriptUrl) return alert("Veuillez configurer le lien du script Google d'abord.");
+    if (recipes.length === 0) return alert("Rien à sauvegarder.");
+
+    const btn = document.querySelector('button[onclick="saveToDrive()"]');
+    const originalText = btn.innerText;
+    btn.innerText = "⏳ Envoi...";
+    btn.disabled = true;
+
+    try {
+        // 1. Envoyer au Drive (Cloud)
+        const payload = JSON.stringify(recipes);
+        const response = await fetch(scriptUrl, {
+            method: 'POST',
+            body: payload
+        });
+
+        const text = await response.text();
+
+        // 2. Télécharger en local (Backup/Client)
+        exportStatsAsText(recipes, "Rapport_Recette_Global.txt");
+
+        alert("Succès !\n\n1. Drive : " + text + "\n2. Local : Fichier téléchargé (Backup).");
+
+    } catch (e) {
+        console.error("Erreur Save Drive:", e);
+        alert("Erreur lors de la sauvegarde : " + e.message);
+    } finally {
+        btn.innerText = originalText;
+        btn.disabled = false;
     }
 }
 
