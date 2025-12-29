@@ -64,10 +64,11 @@ async function autoLoadDatabase() {
 
     const fileId = "1lmCcRUezm8xeHSTf-PznxnJ0JWMDn3Yf";
     const driveUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
-    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(driveUrl)}`;
+    // Add timestamp to prevent caching (Cache Busting)
+    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(driveUrl)}&timestamp=${new Date().getTime()}`;
 
     try {
-        console.log("Attempting auto-import from Drive via Proxy...");
+        console.log("Attempting auto-import from Drive via Proxy...", proxyUrl);
         const response = await fetch(proxyUrl);
         if (response.ok) {
             const blob = await response.blob();
@@ -329,7 +330,14 @@ function exportDatabase() {
 }
 
 function exportStatsGlobal() {
-    exportStatsAsText(recipes, "Rapport_Recette_Global.txt"); // Renamed
+    exportStatsAsText(recipes, "Rapport_Recette_Global.txt");
+
+    // Guide user for Drive update
+    setTimeout(() => {
+        if(confirm("Le fichier a été téléchargé.\n\n1. Cliquez sur OK pour ouvrir le dossier Drive.\n2. Glissez le nouveau fichier dedans.\n3. Supprimez l'ancien fichier.")) {
+            window.open("https://drive.google.com/drive/folders/1Nk-ep6pQ3DAwhDTODwxYHCFerzewG07p?usp=sharing", "_blank");
+        }
+    }, 500);
 }
 
 function exportStatsAsText(dataToHide, filename) {
