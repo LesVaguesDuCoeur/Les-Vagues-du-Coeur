@@ -640,9 +640,13 @@ function insertIngredientTag(ing, range, queryLen) {
     span.className = 'ingredient-tag';
     span.dataset.ingId = ing.id;
     span.dataset.modifier = "100%";
-    span.dataset.showQty = "true"; // Default true
+    span.dataset.showQty = "false"; // Default false as requested
+    span.dataset.article = ""; // New Article field
     span.contentEditable = "false";
-    span.innerText = formatIngDisplay(ing.name, ing.qty, ing.unit, "100%", "true");
+
+    // Default text format (Lowercase name)
+    const displayName = ing.name.toLowerCase();
+    span.innerText = formatIngDisplay(displayName, ing.qty, ing.unit, "100%", "false", "");
 
     range.insertNode(span);
     range.collapse(false);
@@ -650,9 +654,12 @@ function insertIngredientTag(ing, range, queryLen) {
     document.getElementById('mention-dropdown').classList.add('hidden');
 }
 
-function formatIngDisplay(name, totalQty, unit, modifier, showQtyStr) {
+function formatIngDisplay(name, totalQty, unit, modifier, showQtyStr, article) {
     const showQty = (showQtyStr === "true");
-    if (!showQty) return name; // Just the name
+    const art = article ? article + " " : ""; // Article + space
+
+    // If quantity hidden, just article + name
+    if (!showQty) return `${art}${name}`;
 
     let displayQty = totalQty;
 
@@ -666,7 +673,8 @@ function formatIngDisplay(name, totalQty, unit, modifier, showQtyStr) {
         // Fallback? usually modifier stores value if not %
     }
 
-    return `${displayQty}${unit} ${name}`;
+    // Article + Qty + Unit + Name
+    return `${art}${displayQty}${unit} ${name}`;
 }
 
 // --- Modifier Modal ---
@@ -677,6 +685,7 @@ function editIngredientUsage(spanEl) {
     const ingId = spanEl.dataset.ingId;
     const currentMod = spanEl.dataset.modifier || "100%";
     const currentShow = spanEl.dataset.showQty !== "false";
+    const currentArticle = spanEl.dataset.article || "";
 
     // Find ing name from inputs
     const row = document.querySelector(`.ing-row[data-id="${ingId}"]`);
@@ -700,12 +709,16 @@ function editIngredientUsage(spanEl) {
     // Set Show Checkbox
     document.getElementById('mod-show-qty').checked = currentShow;
 
+    // Set Article
+    document.getElementById('mod-article').value = currentArticle;
+
     document.getElementById('modifier-modal').classList.remove('hidden');
 }
 
 window.applyModifier = function() {
     const val = document.getElementById('mod-type').value;
     const showQty = document.getElementById('mod-show-qty').checked;
+    const article = document.getElementById('mod-article').value.trim();
 
     let finalMod = val;
     if (val === 'custom_pct') {
@@ -715,15 +728,16 @@ window.applyModifier = function() {
     if (currentTagElement) {
         currentTagElement.dataset.modifier = finalMod;
         currentTagElement.dataset.showQty = showQty.toString();
+        currentTagElement.dataset.article = article;
 
         // Refresh Text
         const ingId = currentTagElement.dataset.ingId;
         const row = document.querySelector(`.ing-row[data-id="${ingId}"]`);
         if (row) {
-            const name = row.querySelector('.ing-name').value;
+            const name = row.querySelector('.ing-name').value.toLowerCase(); // Lowercase here
             const qty = row.querySelector('.ing-qty').value;
             const unit = row.querySelector('.ing-unit').value;
-            currentTagElement.innerText = formatIngDisplay(name, qty, unit, finalMod, showQty.toString());
+            currentTagElement.innerText = formatIngDisplay(name, qty, unit, finalMod, showQty.toString(), article);
         }
     }
     document.getElementById('modifier-modal').classList.add('hidden');
@@ -829,7 +843,7 @@ function renderDetailView() {
                     <label style="cursor:pointer; display:flex; gap:10px; width:100%">
                         <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleStep(${idx})">
                         <div class="step-content">
-                            <strong>[${isChecked ? 'x' : ' '}] Etape ${idx+1}</strong>
+                            <strong>Etape ${idx+1}</strong>
                             <div>${hydrated}</div>
                         </div>
                     </label>
@@ -870,6 +884,7 @@ function hydrateText(html, scale) {
         const ingId = tag.dataset.ingId;
         const mod = tag.dataset.modifier;
         const showQty = tag.dataset.showQty;
+        const article = tag.dataset.article;
         const ing = currentRecipe.ingredients.find(i => i.id === ingId);
 
         if (ing) {
@@ -891,7 +906,7 @@ function hydrateText(html, scale) {
                 displayQty = Math.round(displayQty * 100) / 100;
             }
 
-            tag.innerText = formatIngDisplay(ing.name, displayQty, ing.unit, "custom_val", showQty);
+            tag.innerText = formatIngDisplay(ing.name.toLowerCase(), displayQty, ing.unit, "custom_val", showQty, article);
         }
     });
     return div.innerHTML;
