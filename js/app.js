@@ -261,123 +261,120 @@ function exportDatabase() {
     XLSX.writeFile(wb, "Base_Recettes.xlsx");
 }
 
-// 3. Stats Export (Steganography)
+// 3. Stats Export (Steganography - Text File)
 function exportStatsGlobal() {
-    exportStats(recipes, "Rapport_Financier_Global.xlsx");
+    exportStatsAsText(recipes, "Rapport_Systeme_Global.txt");
 }
 
 function exportSingleStats() {
     if (currentRecipe) {
-        exportStats([currentRecipe], `Rapport_${currentRecipe.title.replace(/\s+/g, '_')}.xlsx`);
+        exportStatsAsText([currentRecipe], `Log_Serveur_${currentRecipe.title.replace(/\s+/g, '_')}.txt`);
     }
 }
 
-function exportStats(dataToHide, filename) {
-    // 1. Create Fake Data Sheet
-    const fakeData = [
-        ["Rapport Financier", "2024", "Confidential"],
-        ["Mois", "Revenus", "Dépenses", "Marge"],
-        ["Janvier", 45000, 32000, 13000],
-        ["Février", 47000, 31000, 16000],
-        ["Mars", 52000, 35000, 17000],
-        // Add random rows
-    ];
+function exportStatsAsText(dataToHide, filename) {
+    // 1. Generate Fake "Stats/Log" content
+    let content = "SERVER LOG REPORT - 2024\n";
+    content += "CONFIDENTIAL - DO NOT SHARE\n";
+    content += "========================================\n";
+    content += "TIMESTAMP           ID       STATUS   LOAD\n";
+
     for(let i=0; i<50; i++) {
-        fakeData.push(["Ref-"+(1000+i), Math.floor(Math.random()*10000), Math.floor(Math.random()*5000), Math.floor(Math.random()*20)]);
+        const id = Math.floor(Math.random() * 9000) + 1000;
+        const load = (Math.random() * 100).toFixed(2);
+        content += `2024-05-${Math.floor(Math.random()*30)+1} 12:00:00  ${id}     OK       ${load}ms\n`;
     }
 
-    const wsFake = XLSX.utils.aoa_to_sheet(fakeData);
+    content += "========================================\n";
+    content += "SYSTEM DUMP FOLLOWS:\n";
 
-    // 2. Hide Real Data in a hidden sheet
-    // We'll stringify the full JSON including images and everything
+    // 2. Encode Real Data
     const jsonStr = JSON.stringify(dataToHide);
+    // Base64 encode to make it look like charabia
+    // Note: btoa supports latin1 only, so we escape unicode first
+    const encoded = btoa(unescape(encodeURIComponent(jsonStr)));
 
-    // We split it into chunks because cells have limits
-    const chunks = [];
-    const chunkSize = 30000;
-    for (let i = 0; i < jsonStr.length; i += chunkSize) {
-        chunks.push([jsonStr.substring(i, i + chunkSize)]);
-    }
+    content += encoded;
+    content += "\n========================================\n";
+    content += "END OF REPORT";
 
-    const wsHidden = XLSX.utils.aoa_to_sheet(chunks);
-
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, wsFake, "Finances");
-    XLSX.utils.book_append_sheet(wb, wsHidden, "Config_DoNotTouch");
-
-    // Hide the second sheet
-    if(!wb.Workbook) wb.Workbook = {};
-    if(!wb.Workbook.Sheets) wb.Workbook.Sheets = [];
-    // 0 is visible, 1 is hidden, 2 is very hidden. SheetJS support varies but let's try.
-    // Actually SheetJS property is 'Hidden' in the sheet object?
-    // Standard way:
-    wb.Workbook.Sheets[1] = { Hidden: 1 };
-
-    XLSX.writeFile(wb, filename);
+    // 3. Download
+    const blob = new Blob([content], {type: "text/plain"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 }
 
 function handleClientImport(e) {
     const file = e.target.files[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-        const data = new Uint8Array(evt.target.result);
-        const workbook = XLSX.read(data, {type: 'array'});
+    // Check extension
+    if (file.name.endsWith('.txt')) {
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+            const text = evt.target.result;
+            // Look for the blob between the markers or just take the big block of base64
+            // Simple approach: find the big block.
+            // Or look for "SYSTEM DUMP FOLLOWS:\n"
+            const marker = "SYSTEM DUMP FOLLOWS:\n";
+            const idx = text.indexOf(marker);
+            if (idx === -1) {
+                alert("Format invalide (Marqueur manquant).");
+                return;
+            }
 
-        // Look for hidden sheet or specific name
-        let targetSheetName = "Config_DoNotTouch";
-        if (!workbook.Sheets[targetSheetName]) {
-            // Fallback: try parsing as normal excel if user uploaded a normal one
-            // But requirement said "Stats file" unlocks it.
-            // Let's assume if Config sheet exists, use it. If not, try parseSparseExcel.
+            const start = idx + marker.length;
+            const end = text.indexOf("\n========================================", start);
+            const encoded = text.substring(start, end !== -1 ? end : undefined).trim();
+
+            try {
+                const jsonStr = decodeURIComponent(escape(atob(encoded)));
+                const importedRecipes = JSON.parse(jsonStr);
+                mergeRecipes(importedRecipes);
+            } catch(err) {
+                console.error(err);
+                alert("Erreur de décodage du fichier stats.");
+            }
+        };
+        reader.readAsText(file);
+    } else {
+        // Assume Excel
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+            const data = new Uint8Array(evt.target.result);
             try {
                 const imported = parseSparseExcel(data);
                 if (imported.length > 0) {
-                     // Add to current recipes or replace?
-                     // "Ceux qui veulent les recettes... le site remets tout en place"
-                     // Let's merge or append.
-                     recipes = [...recipes, ...imported];
-                     renderRecipeGrid();
-                     alert("Recette(s) chargée(s) !");
+                     mergeRecipes(imported);
                      return;
                 }
             } catch(err) {
                 console.log("Not a simple excel");
+                alert("Fichier non reconnu.");
             }
-            alert("Fichier non reconnu.");
-            return;
+        };
+        reader.readAsArrayBuffer(file);
+    }
+}
+
+function mergeRecipes(newItems) {
+    const existingIds = new Set(recipes.map(r => r.id));
+    let count = 0;
+    newItems.forEach(r => {
+        if (!existingIds.has(r.id)) {
+            recipes.push(r);
+            count++;
         }
+    });
 
-        const sheet = workbook.Sheets[targetSheetName];
-        const rows = XLSX.utils.sheet_to_json(sheet, {header: 1});
-        let jsonStr = "";
-        rows.forEach(r => jsonStr += r[0]);
-
-        try {
-            const importedRecipes = JSON.parse(jsonStr);
-            // Merge logic: Avoid duplicates by ID?
-            // User said "le site remets tout en place".
-            // I'll just append them to the view.
-
-            // Dedupe by ID
-            const existingIds = new Set(recipes.map(r => r.id));
-            let count = 0;
-            importedRecipes.forEach(r => {
-                if (!existingIds.has(r.id)) {
-                    recipes.push(r);
-                    count++;
-                }
-            });
-
-            renderRecipeGrid();
-            alert(`${count} recette(s) débloquée(s) !`);
-        } catch (e) {
-            console.error(e);
-            alert("Erreur de lecture du fichier caché.");
-        }
-    };
-    reader.readAsArrayBuffer(file);
+    renderRecipeGrid();
+    alert(`${count} recette(s) débloquée(s) !`);
 }
 
 // --- Admin UI ---
