@@ -30,9 +30,12 @@
         </div>
 
         <div class="import-area" id="drop-zone">
-            <p>Glissez un fichier Recette ici pour débloquer</p>
-            <input type="file" id="client-file-input" hidden accept=".xlsx, .xls, .txt">
-            <button onclick="document.getElementById('client-file-input').click()">Importer un fichier</button>
+            <div style="display:flex; gap:10px; justify-content:center; align-items:center; flex-wrap:wrap;">
+                 <p style="margin:0;">Glissez un fichier Recette ici</p>
+                 <input type="file" id="client-file-input" hidden accept=".xlsx, .xls, .txt">
+                 <button onclick="document.getElementById('client-file-input').click()" class="secondary-btn">Importer</button>
+                 <button onclick="downloadAllRecipesPDF()" class="primary-btn">📚 Tout Télécharger (PDF)</button>
+            </div>
         </div>
 
         <div id="recipe-grid" class="recipe-grid">
@@ -170,9 +173,9 @@
     <footer class="main-footer">
         <div class="footer-content">
             <div class="social-links">
-                <a href="#" class="social-btn snap">👻 Snapchat</a>
-                <a href="#" class="social-btn insta">📸 Instagram</a>
-                <a href="#" class="social-btn paypal">💰 Paypal</a>
+                <a href="https://www.snapchat.com/" target="_blank" class="social-btn snap">👻 Snapchat</a>
+                <a href="https://www.instagram.com/" target="_blank" class="social-btn insta">📸 Instagram</a>
+                <a href="https://www.paypal.com/" target="_blank" class="social-btn paypal">💰 Paypal</a>
             </div>
             <p>&copy; 2024 ChaouiRecettes. Tous droits réservés.</p>
         </div>
@@ -180,6 +183,7 @@
 
     <script src="js/lib/xlsx.full.min.js"></script>
     <script src="js/lib/html2canvas.min.js"></script>
+    <script src="js/lib/html2pdf.bundle.min.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>

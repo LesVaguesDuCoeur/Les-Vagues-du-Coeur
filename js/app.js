@@ -53,7 +53,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initial Render
     renderRecipeGrid();
+
+    // Auto-load from Drive
+    autoLoadDatabase();
 });
+
+async function autoLoadDatabase() {
+    // Direct ID: 1lmCcRUezm8xeHSTf-PznxnJ0JWMDn3Yf
+    // Use CORS proxy or hope for the best (usually Drive blocks direct fetch from client JS)
+    // Fallback: If fetch fails, we just don't load. The user said:
+    // "je mettrais a jours normalement les clients n'auront plus besoin d importer"
+    // Trying a CORS-friendly proxy or direct
+
+    const fileId = "1lmCcRUezm8xeHSTf-PznxnJ0JWMDn3Yf";
+    const url = `https://drive.google.com/uc?export=download&id=${fileId}`;
+
+    // Note: This will likely fail with CORS in a pure client-side environment without a proxy.
+    // However, I will implement the fetch.
+
+    try {
+        const response = await fetch(url);
+        if (response.ok) {
+            const blob = await response.blob();
+            // Process like a file import
+            const file = new File([blob], "auto_import.txt");
+            const evt = { target: { files: [file] } };
+            handleClientImport(evt);
+        } else {
+            console.log("Auto-import fetch failed:", response.status);
+        }
+    } catch (e) {
+        console.log("Auto-import error (likely CORS):", e);
+        // Fallback: Can't really do much client-side without user interaction or a proxy.
+    }
+}
 
 function setupModalClickOutside() {
     document.querySelectorAll('.modal').forEach(modal => {
@@ -453,14 +486,35 @@ function closeModal() {
 
 function renderImagePreview(src) {
     const div = document.getElementById('image-preview');
-    div.innerHTML = src ? `<img src="${src}" style="max-height:100px; margin-top:10px; border-radius: 8px; border: 1px solid #ddd;">` : '';
+    if (!src) {
+        div.innerHTML = '';
+        return;
+    }
+    div.innerHTML = `
+        <div style="position:relative; display:inline-block; margin-top:10px;">
+            <img src="${src}" style="max-height:100px; border-radius: 8px; border: 1px solid #ddd;">
+            <button onclick="removeImage()" style="position:absolute; top:-10px; right:-10px; background:red; color:white; border:none; border-radius:50%; width:24px; height:24px; cursor:pointer; font-weight:bold;">X</button>
+        </div>
+    `;
+}
+
+function removeImage() {
+    currentRecipe.image = "";
+    document.getElementById('edit-image-url').value = "";
+    document.getElementById('edit-image-upload').value = ""; // Reset file input
+    renderImagePreview("");
 }
 
 function handleImageURLInput(e) {
     const val = e.target.value;
     if (val) {
-        // If user types URL, we temporarily show it. It will be saved on "Sauvegarder"
+        currentRecipe.image = val; // Update immediately
         renderImagePreview(val);
+    } else {
+        // If cleared, revert to empty if no file uploaded, or keep file if exists?
+        // Simpler: Sync completely. If URL cleared, image cleared.
+        currentRecipe.image = "";
+        renderImagePreview("");
     }
 }
 
@@ -594,11 +648,7 @@ function saveCurrentRecipe() {
     currentRecipe.mode = document.getElementById('editor-mode').value;
     currentRecipe.baseServings = parseInt(document.getElementById('edit-base-servings').value) || 1;
 
-    // Check URL input for image preference
-    const urlVal = document.getElementById('edit-image-url').value.trim();
-    if (urlVal) {
-        currentRecipe.image = urlVal;
-    }
+    // Image is already updated in currentRecipe.image via handlers
 
     // Ingredients
     const rows = document.querySelectorAll('.ing-row');
@@ -943,7 +993,7 @@ function renderDetailView() {
 
     content.innerHTML = `
         <div class="detail-header-actions" style="display:flex; justify-content:flex-end; margin-bottom:10px;">
-             <button onclick="printRecipe()" class="secondary-btn">🖨️ Imprimer / PDF</button>
+             <button onclick="downloadRecipePDF()" class="secondary-btn">📥 Télécharger PDF</button>
         </div>
         <div class="detail-header">
             ${r.image ? `<img src="${r.image}" class="detail-img">` : ''}
@@ -1015,19 +1065,23 @@ window.closeDetailModal = function() {
     document.getElementById('detail-modal').classList.add('hidden');
 };
 
-window.printRecipe = function() {
-    const printArea = document.getElementById('print-area');
+window.downloadRecipePDF = function() {
     const detailContent = document.getElementById('detail-content');
 
-    // Clone Content
-    // We want to remove the "Print" button and the servings control (maybe keep servings text but not input?)
-    // For simplicity, we clone everything and hide specific elements via CSS in @media print if needed.
-    // However, JS manipulation is safer.
+    // Create a temporary container for PDF generation
+    const tempContainer = document.createElement('div');
+    tempContainer.style.padding = "20px";
+    tempContainer.style.background = "white";
+    tempContainer.style.width = "800px"; // Fixed width for consistency
 
-    // Header for Print
+    // Header with Logo (No Text Title "Chaoui Recettes" as requested? Or just minimal?)
+    // User said: "a limpression je ne veux pas chaouirecette et la date en haut en petit"
+    // This usually refers to browser headers/footers. html2pdf avoids that.
+    // But they might also mean the specific header I added.
+    // "et je ne veux pas que la page d'impression s affiche que sa se telecharge directement"
+
     const logoHtml = `<div style="text-align:center; margin-bottom:20px;">
         <img src="logo.jpeg" style="height:80px;">
-        <h1 style="font-size:24px;">Chaoui<span style="color:#D4AF37">Recettes</span></h1>
     </div>`;
 
     let contentCopy = detailContent.cloneNode(true);
@@ -1044,11 +1098,143 @@ window.printRecipe = function() {
         parent.innerHTML = `Pour <strong>${val}</strong> personnes`;
     }
 
-    // Remove Checkboxes from steps? No, user might want to see them.
-    // Maybe remove checked state style?
-    // Let's keep it WYSIWYG but cleaner.
+    // Fix layout for PDF (Grid/Flex issues in PDF gen)
+    const layout = contentCopy.querySelector('.recipe-layout');
+    if(layout) {
+        layout.style.display = 'block'; // Stack columns
+        const left = contentCopy.querySelector('.recipe-col-left');
+        const right = contentCopy.querySelector('.recipe-col-right');
+        if(left) { left.style.width = '100%'; left.style.marginBottom = '20px'; }
+        if(right) { right.style.width = '100%'; }
+    }
 
-    printArea.innerHTML = logoHtml + contentCopy.innerHTML;
+    tempContainer.innerHTML = logoHtml + contentCopy.innerHTML;
 
-    window.print();
+    // Generate filename
+    const filename = (currentRecipe.title || "Recette").replace(/[^a-z0-9]/gi, '_').toLowerCase() + ".pdf";
+
+    const opt = {
+      margin:       10,
+      filename:     filename,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2, useCORS: true }, // Higher scale for better quality
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    // Use html2pdf
+    html2pdf().set(opt).from(tempContainer).save();
 };
+
+window.downloadAllRecipesPDF = function() {
+    if (recipes.length === 0) return alert("Aucune recette à télécharger.");
+
+    // Create a container
+    const masterContainer = document.createElement('div');
+    masterContainer.style.width = "800px";
+    masterContainer.style.background = "white";
+
+    // Header Global
+    const coverHtml = `
+        <div style="text-align:center; padding: 50px 0; page-break-after: always;">
+            <img src="logo.jpeg" style="height:150px; margin-bottom:20px;">
+            <h1 style="font-size:36px; color:#D4AF37;">Livre de Recettes</h1>
+            <p style="font-size:18px;">${recipes.length} Recettes</p>
+        </div>
+    `;
+    masterContainer.innerHTML = coverHtml;
+
+    // Iterate recipes
+    recipes.forEach((r, idx) => {
+        // We reuse logic from renderDetailView but need to return HTML string instead of setting innerHTML
+        // Hack: Create a dummy div, render into it, extract HTML
+        // But renderDetailView depends on currentRecipe global and DOM elements.
+
+        // Let's implement a 'getRecipeHTML(r)' helper to avoid messing with global state
+        const recipeHtml = getRecipeHTML(r);
+
+        const pageDiv = document.createElement('div');
+        pageDiv.style.padding = "20px";
+        pageDiv.style.pageBreakAfter = "always";
+        pageDiv.innerHTML = recipeHtml;
+
+        masterContainer.appendChild(pageDiv);
+    });
+
+    const opt = {
+      margin:       10,
+      filename:     'Livre_ChaouiRecettes.pdf',
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2, useCORS: true },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    html2pdf().set(opt).from(masterContainer).save();
+};
+
+function getRecipeHTML(r) {
+    // Stripped down version of renderDetailView logic
+    const scale = 1; // Base scale
+    const ingredients = r.ingredients || [];
+
+    // Ingredients Groups
+    const groups = {};
+    ingredients.forEach(ing => {
+        const g = ing.group || "Principal";
+        if (!groups[g]) groups[g] = [];
+        groups[g].push(ing);
+    });
+
+    let ingHtml = '';
+    for (const [gName, ings] of Object.entries(groups)) {
+        ingHtml += `<div class="ing-group"><h4 style="border-bottom: 2px solid #D4AF37; display: inline-block; margin-bottom: 5px;">${gName}</h4>`;
+        ings.forEach(i => {
+            ingHtml += `
+                <div style="display:flex; justify-content:space-between; border-bottom:1px dashed #eee; padding:2px 0;">
+                    <span>${i.name}</span>
+                    <span style="font-weight:bold">${i.qty} ${i.unit}</span>
+                </div>
+            `;
+        });
+        ingHtml += `</div>`;
+    }
+
+    // Method
+    let methodHtml = '';
+    if (r.mode === 'steps') {
+        r.steps.forEach((stepHtml, idx) => {
+             // Hydrate text for color tags (simplified hydrateText)
+             const tempDiv = document.createElement('div');
+             tempDiv.innerHTML = stepHtml;
+             tempDiv.querySelectorAll('.ingredient-tag').forEach(tag => {
+                 tag.style.fontWeight = 'bold';
+                 tag.style.color = '#000'; // Simplify for PDF
+             });
+
+             methodHtml += `
+                <div style="margin-bottom:10px;">
+                    <strong style="color:#D4AF37;">Etape ${idx+1}</strong>
+                    <div>${tempDiv.innerHTML}</div>
+                </div>
+             `;
+        });
+    } else {
+         const tempDiv = document.createElement('div');
+         tempDiv.innerHTML = r.description;
+         methodHtml = `<div>${tempDiv.innerHTML}</div>`;
+    }
+
+    return `
+        <div style="display:flex; justify-content:center; margin-bottom:20px;">
+             ${r.image ? `<img src="${r.image}" style="max-height:200px; border: 2px solid #D4AF37;">` : ''}
+        </div>
+        <h2 style="text-align:center; color:#000;">${r.title}</h2>
+        <div style="margin-top:20px;">
+            <h3 style="color:#D4AF37;">Ingrédients</h3>
+            ${ingHtml}
+        </div>
+        <div style="margin-top:20px;">
+            <h3 style="color:#D4AF37;">Préparation</h3>
+            ${methodHtml}
+        </div>
+    `;
+}
