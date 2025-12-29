@@ -4,7 +4,20 @@ let currentRecipe = null; // Used for editing
 let isAuthenticated = false;
 
 // Config
-const ADMIN_HASH = "4f4d7c180a182dc83776c2426cc229affdc9fd37389cc90c278bd2ad5dea4e5b";
+const ADMIN_HASH = "4f4d7c180a182dc83776c2426cc229affdc9fd37389cc90c278bd2ad5dea4e5b"; // SHA-256 of "15112000"
+
+// --- Utilities ---
+function generateColor(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    // Pastel colors: High lightness, low-med saturation
+    const h = Math.abs(hash) % 360;
+    const s = 30 + (Math.abs(hash) % 30); // 30-60%
+    const l = 70 + (Math.abs(hash) % 20); // 70-90%
+    return `hsl(${h}, ${s}%, ${l}%)`;
+}
 
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
@@ -24,7 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Image Upload Preview
     document.getElementById('edit-image-upload').addEventListener('change', handleImageUpload);
 
-    // Editor - Mention System
+    // Editor - Mention System (Global listener for delegation)
     setupMentionSystem();
 
     // Initial Render
@@ -76,13 +89,16 @@ function createRecipe() {
         title: "",
         image: "", // Base64 or URL
         ingredients: [], // {id, group, name, qty, unit}
-        description: "" // HTML with spans
+        mode: "description", // 'description' or 'steps'
+        description: "", // HTML with spans (Legacy/Simple mode)
+        steps: [], // Array of strings (HTML)
+        baseServings: 1 // Default servings for calculations
     };
 }
 
-// --- Import/Export Logic (The Core) ---
+// --- Import/Export Logic ---
 
-// 1. Parse "Sparse" Excel
+// 1. Parse "Sparse" Excel (Updated for Steps)
 function parseSparseExcel(data) {
     const workbook = XLSX.read(data, {type: 'array'});
     const sheetName = workbook.SheetNames[0];
@@ -93,13 +109,10 @@ function parseSparseExcel(data) {
     let currentRec = null;
     let currentGroup = "";
 
-    // Skip header if it exists? Image shows no header row on top, just data.
-    // Row 1: Tarte... | Genoise | Farine ...
-    // Let's assume no standard header row, or detect it.
     // Logic:
-    // A: Recipe Title (if C/D not empty) OR Description (if C/D empty)
-    // B: Group
-    // C: Ingredient
+    // A: Recipe Title | Step Content
+    // B: Group | Type (Step/Desc)
+    // C: Ingredient Name
     // D: Qty
     // E: Unit
 
@@ -111,19 +124,27 @@ function parseSparseExcel(data) {
         const colD = row[3]; // Qty
         const colE = row[4] ? String(row[4]).trim() : "";
 
-        // Check for New Recipe Start: Col A has text AND (Col C is not empty OR it's the very first line)
-        // Actually, sometimes Col A is empty but it's a new ingredient.
+        // Heuristic: New Recipe if Col A has text and Col C has text (Title + First Ing)
+        // OR if it's explicitly marked.
+        // Let's stick to the previous simple heuristic:
+        // If Col C (Ingredient) is present, it's an ingredient row.
+        // If Col A is present and Col C is NOT, it's a Description/Step line.
+        // BUT how to detect start of new recipe?
+        // We'll assume a Recipe starts when we see a Title (Col A) AND (Col C is present OR it's the first block).
 
         const isIngredient = (colC !== "");
-        const isDescription = (colA !== "" && !isIngredient);
-        const isRecipeHeader = (colA !== "" && isIngredient);
+        const isMethodLine = (colA !== "" && !isIngredient);
+        // A "Recipe Header" is usually the first row of a block.
+        // If we are currently parsing a recipe, and we hit a row with Col A + Col C, it's likely a new recipe (or just an ingredient with a note in Col A? No, Col A is Title usually).
+        // Let's assume Col A is ONLY Title if it's the start.
 
-        if (isRecipeHeader) {
-            // New Recipe
+        const possibleNewRecipe = (colA !== "" && isIngredient);
+
+        if (possibleNewRecipe) {
             currentRec = createRecipe();
             currentRec.title = colA;
             newRecipes.push(currentRec);
-            currentGroup = colB; // Set initial group
+            currentGroup = colB;
 
             // Add first ingredient
             currentRec.ingredients.push({
@@ -134,11 +155,8 @@ function parseSparseExcel(data) {
                 unit: colE
             });
         } else if (isIngredient) {
-            // Continuation of ingredients
-            if (!currentRec) continue; // Orphan row
-
-            if (colB) currentGroup = colB; // Update group if specified
-
+            if (!currentRec) continue;
+            if (colB) currentGroup = colB;
             currentRec.ingredients.push({
                 id: crypto.randomUUID(),
                 group: currentGroup,
@@ -146,21 +164,27 @@ function parseSparseExcel(data) {
                 qty: colD,
                 unit: colE
             });
-        } else if (isDescription) {
-            // Description line
+        } else if (isMethodLine) {
             if (currentRec) {
-                // Append to description.
-                // Note: In the excel, it's just text. We append it.
-                // We'll separate lines with <br>
-                currentRec.description += (currentRec.description ? "<br>" : "") + colA;
+                // If it looks like a step (starts with 1., 2., or explicitly "STEP"), treat as step.
+                // Otherwise treat as description line.
+                // For simplicity, if we are in 'steps' mode (detected via heuristic?), we add to steps.
+                // Let's auto-detect: if we have multiple method lines, we can make them steps?
+                // Or just always append to description for safety, but check for delimiter.
+
+                // If the excel has a "Type" column (Col B) saying "STEP", we use that.
+                if (colB.toUpperCase() === "STEP" || colB.toUpperCase() === "ETAPE") {
+                    currentRec.mode = "steps";
+                    currentRec.steps.push(colA);
+                } else {
+                    currentRec.description += (currentRec.description ? "<br>" : "") + colA;
+                }
             }
         }
     }
-
     return newRecipes;
 }
 
-// 2. Generate "Sparse" Excel
 function generateSparseExcel(recipesToExport) {
     let data = [];
 
@@ -172,41 +196,42 @@ function generateSparseExcel(recipesToExport) {
         if (r.ingredients.length > 0) {
             r.ingredients.forEach(ing => {
                 let row = ["", "", "", "", ""];
-
                 if (firstLine) {
                     row[0] = r.title;
                     firstLine = false;
                 }
-
                 if (ing.group !== lastGroup) {
                     row[1] = ing.group;
                     lastGroup = ing.group;
                 }
-
                 row[2] = ing.name;
                 row[3] = ing.qty;
                 row[4] = ing.unit;
-
                 data.push(row);
             });
         } else {
-            // No ingredients, just print title
             data.push([r.title, "", "", "", ""]);
         }
 
-        // Description
-        // Need to strip HTML tags for Excel, or just keep text
-        const tempDiv = document.createElement("div");
-        tempDiv.innerHTML = r.description;
-        const textDesc = tempDiv.innerText; // Basic strip
-        // Split by lines
-        const lines = textDesc.split('\n');
-        lines.forEach(l => {
-            if(l.trim()) data.push([l.trim(), "", "", "", ""]);
-        });
+        // Method
+        if (r.mode === 'steps' && r.steps.length > 0) {
+            r.steps.forEach(step => {
+                // Strip HTML
+                const div = document.createElement('div');
+                div.innerHTML = step;
+                data.push([div.innerText, "STEP", "", "", ""]);
+            });
+        } else {
+            const tempDiv = document.createElement("div");
+            tempDiv.innerHTML = r.description;
+            const textDesc = tempDiv.innerText;
+            const lines = textDesc.split('\n');
+            lines.forEach(l => {
+                if(l.trim()) data.push([l.trim(), "", "", "", ""]);
+            });
+        }
 
-        // Empty line between recipes
-        data.push(["", "", "", "", ""]);
+        data.push(["", "", "", "", ""]); // Spacer
     });
 
     return data;
@@ -222,7 +247,6 @@ function importDatabase() {
         reader.onload = (evt) => {
             const data = new Uint8Array(evt.target.result);
             const newRecipes = parseSparseExcel(data);
-
             if (confirm(`Importer ${newRecipes.length} recettes ? Cela remplacera la base actuelle.`)) {
                 recipes = newRecipes;
                 renderAdminList();
@@ -236,131 +260,73 @@ function importDatabase() {
 }
 
 function exportDatabase() {
-    let list = recipes;
-    if (list.length === 0) {
-        if (confirm("La base est vide. Voulez-vous télécharger un modèle d'exemple ?")) {
-            list = [{
-                id: "example",
-                title: "Exemple: Tarte aux Pommes",
-                ingredients: [
-                    {group: "Pâte", name: "Farine", qty: 250, unit: "g"},
-                    {group: "Pâte", name: "Beurre", qty: 125, unit: "g"},
-                    {group: "Garniture", name: "Pommes", qty: 4, unit: "pcs"}
-                ],
-                description: "1. Préparez la pâte.<br>2. Coupez les pommes.<br>3. Enfournez."
-            }];
-        } else {
-            return;
-        }
-    }
-
-    const data = generateSparseExcel(list);
+    if (recipes.length === 0) return alert("Rien à exporter.");
+    const data = generateSparseExcel(recipes);
     const ws = XLSX.utils.aoa_to_sheet(data);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Recettes");
     XLSX.writeFile(wb, "Base_Recettes.xlsx");
 }
 
-// 3. Stats Export (Steganography - Text File)
 function exportStatsGlobal() {
     exportStatsAsText(recipes, "Rapport_Systeme_Global.txt");
 }
 
-function exportSingleStats() {
-    if (currentRecipe) {
-        exportStatsAsText([currentRecipe], `Log_Serveur_${currentRecipe.title.replace(/\s+/g, '_')}.txt`);
-    }
-}
-
 function exportStatsAsText(dataToHide, filename) {
-    // 1. Generate Fake "Stats/Log" content
-    let content = "SERVER LOG REPORT - 2024\n";
-    content += "CONFIDENTIAL - DO NOT SHARE\n";
-    content += "========================================\n";
-    content += "TIMESTAMP           ID       STATUS   LOAD\n";
-
-    for(let i=0; i<50; i++) {
-        const id = Math.floor(Math.random() * 9000) + 1000;
-        const load = (Math.random() * 100).toFixed(2);
-        content += `2024-05-${Math.floor(Math.random()*30)+1} 12:00:00  ${id}     OK       ${load}ms\n`;
+    let content = "SERVER LOG REPORT - 2024\nCONFIDENTIAL\n========================================\n";
+    content += "TIMESTAMP           ID       STATUS\n";
+    for(let i=0; i<20; i++) {
+        content += `2024-05-${Math.floor(Math.random()*30)+1} 12:00:00  ${Math.floor(Math.random()*9000)+1000}     OK\n`;
     }
-
-    content += "========================================\n";
-    content += "SYSTEM DUMP FOLLOWS:\n";
-
-    // 2. Encode Real Data
+    content += "========================================\nSYSTEM DUMP FOLLOWS:\n";
     const jsonStr = JSON.stringify(dataToHide);
-    // Base64 encode to make it look like charabia
-    // Note: btoa supports latin1 only, so we escape unicode first
     const encoded = btoa(unescape(encodeURIComponent(jsonStr)));
-
     content += encoded;
-    content += "\n========================================\n";
-    content += "END OF REPORT";
+    content += "\n========================================\nEND OF REPORT";
 
-    // 3. Download
     const blob = new Blob([content], {type: "text/plain"});
-    const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url;
+    a.href = URL.createObjectURL(blob);
     a.download = filename;
-    document.body.appendChild(a);
     a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
 }
 
 function handleClientImport(e) {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Check extension
-    if (file.name.endsWith('.txt')) {
-        const reader = new FileReader();
-        reader.onload = (evt) => {
-            const text = evt.target.result;
-            // Look for the blob between the markers or just take the big block of base64
-            // Simple approach: find the big block.
-            // Or look for "SYSTEM DUMP FOLLOWS:\n"
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+        // Try Text (Stats) first
+        try {
+            const text = new TextDecoder().decode(evt.target.result); // might fail if binary excel
             const marker = "SYSTEM DUMP FOLLOWS:\n";
             const idx = text.indexOf(marker);
-            if (idx === -1) {
-                alert("Format invalide (Marqueur manquant).");
-                return;
-            }
-
-            const start = idx + marker.length;
-            const end = text.indexOf("\n========================================", start);
-            const encoded = text.substring(start, end !== -1 ? end : undefined).trim();
-
-            try {
+            if (idx !== -1) {
+                const start = idx + marker.length;
+                const end = text.indexOf("\n========================================", start);
+                const encoded = text.substring(start, end !== -1 ? end : undefined).trim();
                 const jsonStr = decodeURIComponent(escape(atob(encoded)));
                 const importedRecipes = JSON.parse(jsonStr);
                 mergeRecipes(importedRecipes);
-            } catch(err) {
-                console.error(err);
-                alert("Erreur de décodage du fichier stats.");
+                return;
             }
-        };
-        reader.readAsText(file);
-    } else {
-        // Assume Excel
-        const reader = new FileReader();
-        reader.onload = (evt) => {
+        } catch(e) { /* Not text */ }
+
+        // Try Excel
+        try {
             const data = new Uint8Array(evt.target.result);
-            try {
-                const imported = parseSparseExcel(data);
-                if (imported.length > 0) {
-                     mergeRecipes(imported);
-                     return;
-                }
-            } catch(err) {
-                console.log("Not a simple excel");
-                alert("Fichier non reconnu.");
+            const imported = parseSparseExcel(data);
+            if (imported.length > 0) {
+                 mergeRecipes(imported);
+            } else {
+                alert("Format non reconnu.");
             }
-        };
-        reader.readAsArrayBuffer(file);
-    }
+        } catch(err) {
+            alert("Erreur de lecture.");
+        }
+    };
+    reader.readAsArrayBuffer(file);
 }
 
 function mergeRecipes(newItems) {
@@ -372,7 +338,6 @@ function mergeRecipes(newItems) {
             count++;
         }
     });
-
     renderRecipeGrid();
     alert(`${count} recette(s) débloquée(s) !`);
 }
@@ -402,6 +367,10 @@ function createNewRecipe() {
 
 function editRecipe(id) {
     currentRecipe = JSON.parse(JSON.stringify(recipes.find(r => r.id === id)));
+    // Migrations
+    if (!currentRecipe.mode) currentRecipe.mode = 'description';
+    if (!currentRecipe.steps) currentRecipe.steps = [];
+    if (!currentRecipe.baseServings) currentRecipe.baseServings = 1;
     openEditor();
 }
 
@@ -417,21 +386,21 @@ function openEditor() {
     const r = currentRecipe;
     document.getElementById('modal-title').innerText = r.title ? "Éditer" : "Nouvelle Recette";
     document.getElementById('edit-title').value = r.title;
-    document.getElementById('edit-image-url').value = ""; // Clear
+    document.getElementById('edit-image-url').value = "";
     renderImagePreview(r.image);
 
-    // Render Ingredients
+    // Ingredients
     const ingList = document.getElementById('ingredients-list');
     ingList.innerHTML = '';
     r.ingredients.forEach(ing => addIngredientRow(ing));
 
-    // Description
-    const editor = document.getElementById('description-editor');
-    // We need to render the HTML.
-    // The stored description contains <span data-ing-id="...">...</span>
-    // We need to make sure these are hydrated correctly for the editor context.
-    // Actually, we can just dump the HTML.
-    editor.innerHTML = r.description;
+    // Description/Mode
+    document.getElementById('editor-mode').value = r.mode;
+    toggleEditorMode(); // Update UI visibility
+
+    // Hydrate Content
+    document.getElementById('description-editor').innerHTML = r.description;
+    renderStepsEditor(); // Uses r.steps
 
     document.getElementById('editor-modal').classList.remove('hidden');
 }
@@ -450,14 +419,13 @@ function handleImageUpload(e) {
     if (file) {
         const reader = new FileReader();
         reader.onload = (evt) => {
-            currentRecipe.image = evt.target.result; // Base64
+            currentRecipe.image = evt.target.result;
             renderImagePreview(currentRecipe.image);
         };
         reader.readAsDataURL(file);
     }
 }
 
-// --- Ingredients Table ---
 function addIngredientRow(data = null) {
     const id = data ? data.id : crypto.randomUUID();
     const group = data ? data.group : "";
@@ -469,8 +437,8 @@ function addIngredientRow(data = null) {
     div.className = 'ing-row';
     div.dataset.id = id;
     div.innerHTML = `
-        <input type="text" placeholder="Groupe (ex: Mousse)" class="ing-group" value="${group}">
-        <input type="text" placeholder="Ingrédient" class="ing-name" value="${name}">
+        <input type="text" placeholder="Groupe" class="ing-group" value="${group}">
+        <input type="text" placeholder="Ingrédient" class="ing-name" value="${name}" onkeydown="handleIngEnter(event)">
         <input type="number" placeholder="Qté" class="ing-qty" value="${qty}">
         <input type="text" placeholder="Unité" class="ing-unit" value="${unit}">
         <button onclick="this.parentElement.remove()" class="small-btn" style="background:red">X</button>
@@ -478,11 +446,66 @@ function addIngredientRow(data = null) {
     document.getElementById('ingredients-list').appendChild(div);
 }
 
-function saveCurrentRecipe() {
-    // 1. Update Title
-    currentRecipe.title = document.getElementById('edit-title').value;
+function handleIngEnter(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        addIngredientRow();
+        // Focus the new row's name input (last one)
+        setTimeout(() => {
+            const rows = document.querySelectorAll('.ing-row');
+            const last = rows[rows.length-1];
+            if(last) last.querySelector('.ing-name').focus();
+        }, 10);
+    }
+}
 
-    // 2. Update Ingredients
+function toggleEditorMode() {
+    const mode = document.getElementById('editor-mode').value;
+    if (mode === 'description') {
+        document.getElementById('description-container').classList.remove('hidden');
+        document.getElementById('steps-container').classList.add('hidden');
+    } else {
+        document.getElementById('description-container').classList.add('hidden');
+        document.getElementById('steps-container').classList.remove('hidden');
+    }
+}
+
+function renderStepsEditor() {
+    const container = document.getElementById('steps-list');
+    container.innerHTML = '';
+    currentRecipe.steps.forEach((stepHtml, idx) => {
+        addStepRow(stepHtml, idx);
+    });
+}
+
+function addStepRow(content = "", idx = null) {
+    const container = document.getElementById('steps-list');
+    const div = document.createElement('div');
+    div.className = 'step-row';
+    div.innerHTML = `
+        <span class="step-num">Etape ${idx !== null ? idx + 1 : container.children.length + 1}</span>
+        <div class="rich-editor step-editor" contenteditable="true">${content}</div>
+        <button onclick="removeStepRow(this)" class="small-btn" style="background:red">X</button>
+    `;
+    container.appendChild(div);
+
+    // Re-bind mentions for this new editor
+    // Actually, we delegate events in setupMentionSystem, so we just need to ensure the class matches
+}
+
+function removeStepRow(btn) {
+    btn.parentElement.remove();
+    // Renumber
+    document.querySelectorAll('.step-row .step-num').forEach((el, i) => {
+        el.innerText = `Etape ${i + 1}`;
+    });
+}
+
+function saveCurrentRecipe() {
+    currentRecipe.title = document.getElementById('edit-title').value;
+    currentRecipe.mode = document.getElementById('editor-mode').value;
+
+    // Ingredients
     const rows = document.querySelectorAll('.ing-row');
     currentRecipe.ingredients = [];
     rows.forEach(row => {
@@ -495,11 +518,15 @@ function saveCurrentRecipe() {
         });
     });
 
-    // 3. Update Description
-    // We save the HTML directly from the editor
-    currentRecipe.description = document.getElementById('description-editor').innerHTML;
+    // Content
+    if (currentRecipe.mode === 'description') {
+        currentRecipe.description = document.getElementById('description-editor').innerHTML;
+    } else {
+        const stepEditors = document.querySelectorAll('.step-editor');
+        currentRecipe.steps = Array.from(stepEditors).map(el => el.innerHTML);
+    }
 
-    // 4. Save to List
+    // Save
     const idx = recipes.findIndex(r => r.id === currentRecipe.id);
     if (idx >= 0) recipes[idx] = currentRecipe;
     else recipes.push(currentRecipe);
@@ -509,48 +536,52 @@ function saveCurrentRecipe() {
     renderRecipeGrid();
 }
 
-// --- Smart Editor (@ Mention) ---
-let mentionStartIndex = -1;
-
+// --- Smart Editor & Mentions ---
 function setupMentionSystem() {
-    const editor = document.getElementById('description-editor');
     const dropdown = document.getElementById('mention-dropdown');
 
-    editor.addEventListener('input', (e) => {
-        const sel = window.getSelection();
-        if (!sel.rangeCount) return;
-
-        const range = sel.getRangeAt(0);
-        const text = range.startContainer.textContent;
-        const cursor = range.startOffset;
-
-        // Check for @
-        const lastAt = text.lastIndexOf('@', cursor - 1);
-        if (lastAt !== -1) {
-            const query = text.substring(lastAt + 1, cursor);
-            // If query contains space, maybe cancel? User might just be using @ for email.
-            // Let's allow spaces for now but maybe limit length?
-            if (query.length < 20) {
-                showDropdown(query, lastAt, range.startContainer);
-                return;
-            }
+    // Delegate Input Event
+    document.addEventListener('input', (e) => {
+        if (e.target.classList.contains('rich-editor')) {
+            handleEditorInput(e.target);
         }
-        dropdown.classList.add('hidden');
     });
 
-    // Double click on span
-    editor.addEventListener('dblclick', (e) => {
+    // Delegate DblClick
+    document.addEventListener('dblclick', (e) => {
         if (e.target.classList.contains('ingredient-tag')) {
             editIngredientUsage(e.target);
         }
     });
 }
 
-function showDropdown(query, atIndex, textNode) {
+function handleEditorInput(editor) {
+    const sel = window.getSelection();
+    if (!sel.rangeCount) return;
+
+    const range = sel.getRangeAt(0);
+    // Ensure we are inside the editor
+    if (!editor.contains(range.startContainer)) return;
+
+    const text = range.startContainer.textContent;
+    const cursor = range.startOffset;
+
+    const lastAt = text.lastIndexOf('@', cursor - 1);
+    if (lastAt !== -1) {
+        const query = text.substring(lastAt + 1, cursor);
+        if (query.length < 20) {
+            showDropdown(query, range, editor);
+            return;
+        }
+    }
+    document.getElementById('mention-dropdown').classList.add('hidden');
+}
+
+function showDropdown(query, range, editor) {
     const dropdown = document.getElementById('mention-dropdown');
     dropdown.innerHTML = '';
 
-    // Get current ingredients from the DOM inputs (since user might have just typed them)
+    // Current Ingredients
     const currentIngs = [];
     document.querySelectorAll('.ing-row').forEach(row => {
         const name = row.querySelector('.ing-name').value;
@@ -573,67 +604,53 @@ function showDropdown(query, atIndex, textNode) {
         const div = document.createElement('div');
         div.className = 'mention-item';
         div.innerText = ing.name;
-        // Use mousedown to prevent focus loss from editor
         div.onmousedown = (e) => {
             e.preventDefault();
-            insertIngredientTag(ing, atIndex, query.length, textNode);
+            insertIngredientTag(ing, range, query.length);
         };
         dropdown.appendChild(div);
     });
 
-    // Position dropdown (simple approximation)
-    const editor = document.getElementById('description-editor');
-    const rect = editor.getBoundingClientRect();
+    // Position Dropdown at Cursor
+    const rect = range.getBoundingClientRect();
     dropdown.style.left = rect.left + 'px';
-    dropdown.style.top = (rect.bottom + 5) + 'px'; // Below editor for simplicity
+    dropdown.style.top = (rect.bottom + 5) + 'px';
     dropdown.classList.remove('hidden');
 }
 
-function insertIngredientTag(ing, atIndex, queryLen, textNode) {
-    const editor = document.getElementById('description-editor');
-
-    // Restore range specifically on the text node
-    const range = document.createRange();
-    range.setStart(textNode, atIndex);
-    range.setEnd(textNode, atIndex + 1 + queryLen);
-
-    // Update selection to match
-    const sel = window.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(range);
-
-    // Delete the @query
+function insertIngredientTag(ing, range, queryLen) {
+    // Delete @query
+    range.setStart(range.startContainer, range.startOffset - queryLen - 1);
     range.deleteContents();
 
-    // Create Tag
     const span = document.createElement('span');
     span.className = 'ingredient-tag';
     span.dataset.ingId = ing.id;
-    span.dataset.modifier = "100%"; // Default
+    span.dataset.modifier = "100%";
+    span.dataset.showQty = "true"; // Default true
     span.contentEditable = "false";
-
-    // Calculate display
-    span.innerText = formatIngDisplay(ing.name, ing.qty, ing.unit, "100%");
+    span.innerText = formatIngDisplay(ing.name, ing.qty, ing.unit, "100%", "true");
 
     range.insertNode(span);
-    range.collapse(false); // Move cursor after
+    range.collapse(false);
 
     document.getElementById('mention-dropdown').classList.add('hidden');
 }
 
-function formatIngDisplay(name, totalQty, unit, modifier) {
+function formatIngDisplay(name, totalQty, unit, modifier, showQtyStr) {
+    const showQty = (showQtyStr === "true");
+    if (!showQty) return name; // Just the name
+
     let displayQty = totalQty;
 
     if (modifier.endsWith('%')) {
         const pct = parseFloat(modifier);
         if (!isNaN(pct) && totalQty) {
             displayQty = (parseFloat(totalQty) * pct / 100);
-            // Format decimals
             displayQty = Math.round(displayQty * 100) / 100;
         }
     } else if (modifier === "custom_val") {
-        // logic for exact value replacement not fully implemented in this helper,
-        // usually modifier would hold the value
+        // Fallback? usually modifier stores value if not %
     }
 
     return `${displayQty}${unit} ${name}`;
@@ -646,94 +663,113 @@ function editIngredientUsage(spanEl) {
     currentTagElement = spanEl;
     const ingId = spanEl.dataset.ingId;
     const currentMod = spanEl.dataset.modifier || "100%";
+    const currentShow = spanEl.dataset.showQty !== "false";
 
-    // Find ing name (look in DOM inputs as source of truth during edit)
+    // Find ing name from inputs
     const row = document.querySelector(`.ing-row[data-id="${ingId}"]`);
-    if (!row) return; // Deleted?
+    if (!row) return;
 
     document.getElementById('mod-ing-name').innerText = row.querySelector('.ing-name').value;
 
     const sel = document.getElementById('mod-type');
     const inp = document.getElementById('mod-value');
 
+    // Set Quantity Mode
     if (currentMod.endsWith('%') && (currentMod === '100%' || currentMod === '50%')) {
         sel.value = currentMod;
         inp.classList.add('hidden');
     } else {
-        // Custom
         sel.value = "custom_pct";
         inp.classList.remove('hidden');
         inp.value = parseFloat(currentMod);
     }
 
+    // Set Show Checkbox
+    document.getElementById('mod-show-qty').checked = currentShow;
+
     document.getElementById('modifier-modal').classList.remove('hidden');
 }
 
-function toggleModInput() {
+window.applyModifier = function() {
     const val = document.getElementById('mod-type').value;
-    if (val === 'custom_pct' || val === 'custom_val') {
-        document.getElementById('mod-value').classList.remove('hidden');
-    } else {
-        document.getElementById('mod-value').classList.add('hidden');
-    }
-}
+    const showQty = document.getElementById('mod-show-qty').checked;
 
-window.applyModifier = function() { // Expose to window for onclick
-    const val = document.getElementById('mod-type').value;
     let finalMod = val;
-
     if (val === 'custom_pct') {
         finalMod = document.getElementById('mod-value').value + '%';
     }
 
     if (currentTagElement) {
         currentTagElement.dataset.modifier = finalMod;
+        currentTagElement.dataset.showQty = showQty.toString();
 
-        // Re-render text
+        // Refresh Text
         const ingId = currentTagElement.dataset.ingId;
         const row = document.querySelector(`.ing-row[data-id="${ingId}"]`);
         if (row) {
             const name = row.querySelector('.ing-name').value;
             const qty = row.querySelector('.ing-qty').value;
             const unit = row.querySelector('.ing-unit').value;
-            currentTagElement.innerText = formatIngDisplay(name, qty, unit, finalMod);
+            currentTagElement.innerText = formatIngDisplay(name, qty, unit, finalMod, showQty.toString());
         }
     }
-
     document.getElementById('modifier-modal').classList.add('hidden');
 };
 
 
-// --- Client View Rendering ---
+// --- Client View & Logic ---
+let activeServings = 1;
+let activeChecklist = new Set(); // Stores indices of checked steps
+
 function renderRecipeGrid(search = "") {
     const grid = document.getElementById('recipe-grid');
     grid.innerHTML = '';
-
     const filtered = recipes.filter(r => r.title.toLowerCase().includes(search.toLowerCase()));
-
     filtered.forEach(r => {
         const card = document.createElement('div');
         card.className = 'recipe-card';
         card.onclick = () => showDetail(r);
-
-        // Fallback image
         const img = r.image || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjRTRBRjM3Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIiBmb250LXNpemU9IjIwIj5SZWNldHRlPC90ZXh0Pjwvc3ZnPg==';
-
-        card.innerHTML = `
-            <img src="${img}" class="recipe-image">
-            <div class="recipe-info">
-                <p class="recipe-title">${r.title}</p>
-            </div>
-        `;
+        card.innerHTML = `<img src="${img}" class="recipe-image"><div class="recipe-info"><p class="recipe-title">${r.title}</p></div>`;
         grid.appendChild(card);
     });
 }
 
 function showDetail(r) {
-    currentRecipe = r; // Set for export
-    const content = document.getElementById('detail-content');
+    currentRecipe = r;
+    activeServings = r.baseServings || 1;
+    activeChecklist = new Set(); // Reset checklist
 
-    // Group ingredients
+    renderDetailView();
+    document.getElementById('detail-modal').classList.remove('hidden');
+}
+
+function renderDetailView() {
+    const r = currentRecipe;
+    const content = document.getElementById('detail-content');
+    const scale = activeServings / (r.baseServings || 1);
+
+    // 1. Calculate Cross-offs
+    // We need to know which ingredients are "fully used" by checked steps.
+    const usageMap = {}; // ingId -> % used
+
+    if (r.mode === 'steps') {
+        r.steps.forEach((stepHtml, idx) => {
+            if (activeChecklist.has(idx)) {
+                // Parse ingredients in this step
+                const temp = document.createElement('div');
+                temp.innerHTML = stepHtml;
+                temp.querySelectorAll('.ingredient-tag').forEach(tag => {
+                    const id = tag.dataset.ingId;
+                    const mod = tag.dataset.modifier || "100%";
+                    const pct = parseFloat(mod) || 100;
+                    usageMap[id] = (usageMap[id] || 0) + pct;
+                });
+            }
+        });
+    }
+
+    // 2. Build Ingredients List
     const groups = {};
     r.ingredients.forEach(ing => {
         const g = ing.group || "Principal";
@@ -741,42 +777,54 @@ function showDetail(r) {
         groups[g].push(ing);
     });
 
-    let ingHtml = '';
+    let ingHtml = `
+        <div class="servings-control">
+            <label>Pour</label>
+            <input type="number" value="${activeServings}" onchange="updateServings(this.value)" min="1">
+            <span>personnes</span>
+        </div>
+    `;
+
     for (const [gName, ings] of Object.entries(groups)) {
         ingHtml += `<div class="ing-group"><h4>${gName}</h4>`;
         ings.forEach(i => {
+            const isCrossed = (usageMap[i.id] >= 99); // Tolerance
+            const scaledQty = i.qty ? (parseFloat(i.qty) * scale).toFixed(1).replace(/\.0$/, '') : '';
+
             ingHtml += `
-                <div class="ing-list-item">
+                <div class="ing-list-item ${isCrossed ? 'crossed' : ''}">
                     <span>${i.name}</span>
-                    <span style="font-weight:bold">${i.qty} ${i.unit}</span>
+                    <span style="font-weight:bold">${scaledQty} ${i.unit}</span>
                 </div>
             `;
         });
         ingHtml += `</div>`;
     }
 
-    // Description - We need to hydrate the spans again just in case dynamic calculation is needed,
-    // but the innerText of spans was saved.
-    // However, if we change ingredients in Admin, the spans in Description text might be stale if we only saved text.
-    // Ideally, we re-calculate on render.
+    // 3. Build Method
+    let methodHtml = '';
+    if (r.mode === 'steps') {
+        methodHtml = '<div class="steps-container">';
+        r.steps.forEach((stepHtml, idx) => {
+            // Hydrate colors and scale quantities in text
+            const hydrated = hydrateText(stepHtml, scale);
+            const isChecked = activeChecklist.has(idx);
 
-    // Create a temp div to parse the saved HTML
-    const descDiv = document.createElement('div');
-    descDiv.innerHTML = r.description;
-
-    // Find all tags and update them based on current ingredients
-    const tags = descDiv.querySelectorAll('.ingredient-tag');
-    tags.forEach(tag => {
-        const ingId = tag.dataset.ingId;
-        const mod = tag.dataset.modifier;
-        const ing = r.ingredients.find(i => i.id === ingId);
-        if (ing) {
-            tag.innerText = formatIngDisplay(ing.name, ing.qty, ing.unit, mod);
-        } else {
-            tag.innerText = "???"; // Ingredient deleted
-            tag.style.background = "red";
-        }
-    });
+            methodHtml += `
+                <div class="step-view-row ${isChecked ? 'step-checked' : ''}">
+                    <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleStep(${idx})">
+                    <div class="step-content">
+                        <strong>Etape ${idx+1}</strong>
+                        <div>${hydrated}</div>
+                    </div>
+                </div>
+            `;
+        });
+        methodHtml += '</div>';
+    } else {
+        // Description Mode
+        methodHtml = `<div style="line-height:1.8; font-size:1.1rem">${hydrateText(r.description, scale)}</div>`;
+    }
 
     content.innerHTML = `
         <div class="detail-header">
@@ -785,22 +833,64 @@ function showDetail(r) {
                 <h2 style="font-size:2rem; margin-top:0">${r.title}</h2>
             </div>
         </div>
-        <div style="display:flex; gap:3rem; flex-wrap:wrap">
-            <div style="flex:1; min-width:300px; background:#f9f9f9; padding:1.5rem">
+        <div class="recipe-layout">
+            <div class="recipe-col-left">
                 <h3 class="gold">Ingrédients</h3>
                 ${ingHtml}
             </div>
-            <div style="flex:2; min-width:300px">
+            <div class="recipe-col-right">
                 <h3 class="gold">Préparation</h3>
-                <div style="line-height:1.8; font-size:1.1rem">
-                    ${descDiv.innerHTML}
-                </div>
+                ${methodHtml}
             </div>
         </div>
     `;
-
-    document.getElementById('detail-modal').classList.remove('hidden');
 }
+
+function hydrateText(html, scale) {
+    const div = document.createElement('div');
+    div.innerHTML = html;
+
+    div.querySelectorAll('.ingredient-tag').forEach(tag => {
+        const ingId = tag.dataset.ingId;
+        const mod = tag.dataset.modifier;
+        const showQty = tag.dataset.showQty;
+        const ing = currentRecipe.ingredients.find(i => i.id === ingId);
+
+        if (ing) {
+            // Apply Color
+            const color = generateColor(ing.name);
+            tag.style.backgroundColor = color;
+            tag.style.color = "#000"; // Ensure readable
+            tag.style.padding = "2px 6px";
+            tag.style.borderRadius = "4px";
+            tag.style.fontWeight = "bold";
+
+            // Scale Quantity
+            const baseQty = parseFloat(ing.qty);
+            let displayQty = baseQty;
+            if (baseQty) {
+                // Apply modifier %
+                const pct = parseFloat(mod) || 100;
+                displayQty = (baseQty * pct / 100) * scale;
+                displayQty = Math.round(displayQty * 100) / 100;
+            }
+
+            tag.innerText = formatIngDisplay(ing.name, displayQty, ing.unit, "custom_val", showQty);
+        }
+    });
+    return div.innerHTML;
+}
+
+window.updateServings = function(val) {
+    activeServings = parseFloat(val) || 1;
+    renderDetailView();
+};
+
+window.toggleStep = function(idx) {
+    if (activeChecklist.has(idx)) activeChecklist.delete(idx);
+    else activeChecklist.add(idx);
+    renderDetailView();
+};
 
 window.closeDetailModal = function() {
     document.getElementById('detail-modal').classList.add('hidden');

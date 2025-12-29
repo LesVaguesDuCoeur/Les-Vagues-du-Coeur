@@ -63,7 +63,7 @@
     <!-- Recipe Editor Modal -->
     <div id="editor-modal" class="modal hidden">
         <div class="modal-content">
-            <span class="close-modal">&times;</span>
+            <span class="close-modal" onclick="closeModal()">&times;</span>
             <h2 id="modal-title">Éditer la recette</h2>
 
             <div class="form-group">
@@ -87,12 +87,30 @@
             </div>
 
             <div class="form-group">
+                <label>Mode de rédaction</label>
+                <select id="editor-mode" onchange="toggleEditorMode()">
+                    <option value="description">Texte Libre (Description)</option>
+                    <option value="steps">Étape par Étape (Cochable)</option>
+                </select>
+            </div>
+
+            <div id="description-container" class="form-group">
                 <label>Description (Utilisez @ pour insérer un ingrédient)</label>
                 <!-- Custom Rich Editor Area -->
                 <div id="description-editor" class="rich-editor" contenteditable="true"></div>
-                <!-- Hidden helper for dropdown -->
-                <div id="mention-dropdown" class="mention-dropdown hidden"></div>
             </div>
+
+            <!-- Steps Mode -->
+            <div id="steps-container" class="form-group hidden">
+                <label>Étapes (Utilisez @ pour insérer un ingrédient)</label>
+                <div id="steps-list">
+                    <!-- Steps rows -->
+                </div>
+                <button class="small-btn" onclick="addStepRow()">+ Ajouter Étape</button>
+            </div>
+
+            <!-- Hidden helper for dropdown -->
+            <div id="mention-dropdown" class="mention-dropdown hidden"></div>
 
             <div class="modal-actions">
                 <button onclick="saveCurrentRecipe()" class="primary-btn">Sauvegarder</button>
@@ -113,8 +131,15 @@
                 <option value="custom_pct">% Personnalisé</option>
                 <option value="custom_val">Valeur Exacte</option>
             </select>
-            <input type="number" id="mod-value" class="hidden" placeholder="Valeur">
-            <button onclick="applyModifier()">Valider</button>
+            <input type="number" id="mod-value" class="hidden" placeholder="Valeur (%)">
+
+            <div style="margin-top: 10px;">
+                <label>
+                    <input type="checkbox" id="mod-show-qty" checked> Afficher la quantité dans le texte
+                </label>
+            </div>
+
+            <button onclick="applyModifier()" style="margin-top:15px">Valider</button>
         </div>
     </div>
 
@@ -123,7 +148,7 @@
         <div class="modal-content large-modal">
             <span class="close-modal" onclick="closeDetailModal()">&times;</span>
             <div id="detail-content"></div>
-            <button onclick="exportSingleStats()" class="secondary-btn">Exporter en "Stats"</button>
+            <!-- Removed Export Stats button -->
         </div>
     </div>
 
