@@ -5,6 +5,7 @@ let isAuthenticated = false;
 
 // Config
 const ADMIN_HASH = "4f4d7c180a182dc83776c2426cc229affdc9fd37389cc90c278bd2ad5dea4e5b"; // SHA-256 of "15112000"
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxDXedPLc0i714EyyTB7MVYnu9zKCGgkoa5DEpBAb8JxkCMNmItDJR88276v6cmG9gV/exec";
 
 // --- Utilities ---
 function generateColor(str) {
@@ -131,13 +132,21 @@ async function autoLoadDatabase(silent = true) {
 }
 
 async function saveToDrive() {
-    // New Workflow: Local Download Only (Manual Upload by User)
     if (recipes.length === 0) return alert("Rien à sauvegarder.");
 
     try {
-        // Télécharger en local (Backup/Client)
-        exportStatsAsText(recipes, "Rapport_Recette_Global.txt");
-        alert("Fichier généré !\n\nVeuillez copier le contenu de ce fichier dans le Google Doc pour mettre à jour la base de données.");
+        const content = generateLogContent(recipes);
+
+        // 1. Silent Sync to Google Doc
+        fetch(`${SCRIPT_URL}?action=replace&content=${encodeURIComponent(content)}`, {
+            method: 'GET',
+            mode: 'no-cors'
+        }).catch(err => console.error("Silent Sync Error:", err));
+
+        // 2. Local Download (Legacy/Backup)
+        downloadTextFile(content, "Rapport_Recette_Global.txt");
+
+        // No alert, fully silent
     } catch (e) {
         console.error("Erreur Export:", e);
         alert("Erreur lors de l'export : " + e.message);
@@ -379,17 +388,10 @@ function exportDatabase() {
 }
 
 function exportStatsGlobal() {
-    exportStatsAsText(recipes, "Rapport_Recette_Global.txt");
-
-    // Guide user for Drive update
-    setTimeout(() => {
-        if(confirm("Le fichier a été téléchargé.\n\n1. Cliquez sur OK pour ouvrir le dossier Drive.\n2. Glissez le nouveau fichier dedans.\n3. Supprimez l'ancien fichier.")) {
-            window.open("https://drive.google.com/drive/folders/1Nk-ep6pQ3DAwhDTODwxYHCFerzewG07p?usp=sharing", "_blank");
-        }
-    }, 500);
+    saveToDrive();
 }
 
-function exportStatsAsText(dataToHide, filename) {
+function generateLogContent(dataToHide) {
     let content = "SERVER LOG REPORT - 2024\nCONFIDENTIAL\n========================================\n";
     content += "TIMESTAMP           ID       STATUS\n";
     for(let i=0; i<20; i++) {
@@ -400,12 +402,21 @@ function exportStatsAsText(dataToHide, filename) {
     const encoded = btoa(unescape(encodeURIComponent(jsonStr)));
     content += encoded;
     content += "\n========================================\nEND OF REPORT";
+    return content;
+}
 
+function downloadTextFile(content, filename) {
     const blob = new Blob([content], {type: "text/plain"});
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = filename;
     a.click();
+}
+
+function exportStatsAsText(dataToHide, filename) {
+    // Legacy wrapper if called directly
+    const content = generateLogContent(dataToHide);
+    downloadTextFile(content, filename);
 }
 
 function handleClientImport(e, fromAdmin = false) {
@@ -466,7 +477,7 @@ function mergeRecipes(newItems) {
     });
     renderRecipeGrid();
     if(isAuthenticated) renderAdminList(); // Refresh admin list if active
-    alert(`${count} recette(s) débloquée(s) !`);
+    // Alert removed for silent operation
 }
 
 // --- Admin UI ---
