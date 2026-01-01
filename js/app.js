@@ -5,7 +5,7 @@ let isAuthenticated = false;
 
 // Config
 const ADMIN_HASH = "4f4d7c180a182dc83776c2426cc229affdc9fd37389cc90c278bd2ad5dea4e5b"; // SHA-256 of "15112000"
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxDXedPLc0i714EyyTB7MVYnu9zKCGgkoa5DEpBAb8JxkCMNmItDJR88276v6cmG9gV/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwkWyCVfjJ0HTGrQewpmgz7YuOQzKZSXbGMceNlfm4PTnZlbdItvi8vnEvMCT4d7ZZ3/exec";
 
 // --- Utilities ---
 function generateColor(str) {
@@ -55,28 +55,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initial Render
     renderRecipeGrid();
 
-    // Init Drive Config Field
-    const savedUrl = localStorage.getItem('drive_script_url');
-    if(savedUrl) document.getElementById('drive-script-url').value = savedUrl;
-
     // Auto-load from Drive
     autoLoadDatabase();
 });
 
 function refreshDatabase() {
     autoLoadDatabase(false);
-}
-
-function saveDriveConfig() {
-    const url = document.getElementById('drive-script-url').value.trim();
-    if (url) {
-        localStorage.setItem('drive_script_url', url);
-        alert("Lien sauvegardé ! Le site va maintenant essayer de charger les recettes depuis ce lien.");
-        autoLoadDatabase(); // Reload immediately
-    } else {
-        localStorage.removeItem('drive_script_url');
-        alert("Lien supprimé.");
-    }
 }
 
 async function autoLoadDatabase(silent = true) {
