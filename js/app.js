@@ -6,6 +6,7 @@ let isAuthenticated = false;
 // Config
 const ADMIN_HASH = "4f4d7c180a182dc83776c2426cc229affdc9fd37389cc90c278bd2ad5dea4e5b"; // SHA-256 of "15112000"
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyn9JMOI2KL-qfjQXl32kbGQC379ADb-op_7CKN8XWAQNw2VGyaux88LvOfvTxdS6Xz/exec";
+const DOC_EXPORT_URL = "https://docs.google.com/document/d/1hj6uSP1ygTEK7B6Zf9AN4bwzIVgnqslC1csFj-XyRyA/export?format=txt";
 
 // --- Utilities ---
 function generateColor(str) {
@@ -64,54 +65,47 @@ function refreshDatabase() {
 }
 
 async function autoLoadDatabase(silent = true) {
-    // New Workflow: Hardcoded Google Doc URL
-    const docUrl = "https://docs.google.com/document/d/1hj6uSP1ygTEK7B6Zf9AN4bwzIVgnqslC1csFj-XyRyA/export?format=txt";
-
     try {
         if(!silent) console.log("Rafraîchissement...");
-        const response = await fetch(docUrl);
+        const response = await fetch(DOC_EXPORT_URL);
         if (response.ok) {
             const text = await response.text();
+            let importedRecipes = [];
 
-            // Reuse logic from handleClientImport to parse the "Server Log/Base64" format
-            const marker = "SYSTEM DUMP FOLLOWS:";
-            const idx = text.indexOf(marker);
+            // 1. Try Simple JSON (New Format)
+            try {
+                // If the file is pure JSON
+                importedRecipes = JSON.parse(text);
+            } catch (jsonErr) {
+                // 2. Try Legacy "Server Log" Format
+                const marker = "SYSTEM DUMP FOLLOWS:";
+                const idx = text.indexOf(marker);
 
-            if (idx !== -1) {
-                const start = idx + marker.length;
-                const end = text.indexOf("========================================", start);
-                const encoded = text.substring(start, end !== -1 ? end : undefined).trim();
-
-                try {
-                    // Fix Base64 string if it has newlines or spaces from GDoc formatting
-                    const cleanEncoded = encoded.replace(/\s/g, '');
-                    const jsonStr = decodeURIComponent(escape(atob(cleanEncoded)));
-                    const importedRecipes = JSON.parse(jsonStr);
-
-                    if (Array.isArray(importedRecipes) && importedRecipes.length > 0) {
-                        // Merge strategies:
-                        // 1. If silent (auto-load), we just merge to ensure we have latest data
-                        // 2. If manual (refresh), we confirm or just merge. Merging is safest.
-                        mergeRecipes(importedRecipes);
-                        if(!silent) alert(`Synchronisation réussie ! ${importedRecipes.length} recettes chargées.`);
-                    } else {
-                        if(!silent) alert("Format vide ou incorrect dans le Google Doc.");
-                    }
-                } catch (parseErr) {
-                    console.error("Erreur parsing Base64/JSON:", parseErr);
-                    if(!silent) alert("Erreur de lecture du format (Base64/JSON invalide).");
+                if (idx !== -1) {
+                    const start = idx + marker.length;
+                    const end = text.indexOf("========================================", start);
+                    const encoded = text.substring(start, end !== -1 ? end : undefined).trim();
+                    try {
+                        const cleanEncoded = encoded.replace(/\s/g, '');
+                        const jsonStr = decodeURIComponent(escape(atob(cleanEncoded)));
+                        importedRecipes = JSON.parse(jsonStr);
+                    } catch (e) { console.error("Legacy parse error", e); }
                 }
+            }
+
+            if (Array.isArray(importedRecipes) && importedRecipes.length > 0) {
+                mergeRecipes(importedRecipes);
+                if(!silent) alert(`Synchronisation réussie ! ${importedRecipes.length} recettes chargées.`);
             } else {
-                console.log("Doc: Marqueur 'SYSTEM DUMP' introuvable.");
-                if(!silent) alert("Le document Google ne contient pas le format attendu.");
+                if(!silent) alert("Format vide ou incorrect dans le Google Doc.");
             }
         } else {
             console.error("Erreur Fetch Doc:", response.status);
             if(!silent) alert("Impossible de lire le Google Doc (Erreur " + response.status + ")");
         }
     } catch (e) {
-        console.error("Erreur Auto-import (CORS possible):", e);
-        if(!silent) alert("Erreur de connexion au Google Doc (CORS ou Réseau). Essayez l'import manuel.");
+        console.error("Erreur Auto-import:", e);
+        if(!silent) alert("Erreur de connexion au Google Doc. Essayez l'import manuel.");
     }
 }
 
@@ -119,18 +113,26 @@ async function saveToDrive() {
     if (recipes.length === 0) return alert("Rien à sauvegarder.");
 
     try {
-        const content = generateLogContent(recipes);
+        // Simple JSON export as requested ("désécurise")
+        const content = JSON.stringify(recipes, null, 2);
 
-        // 1. Silent Sync to Google Doc
-        fetch(`${SCRIPT_URL}?action=replace&content=${encodeURIComponent(content)}`, {
-            method: 'GET',
-            mode: 'no-cors'
-        }).catch(err => console.error("Silent Sync Error:", err));
+        // 1. Silent Sync to Google Doc via POST
+        // We use 'no-cors' which sends an opaque request.
+        // Google Apps Script `doPost` must handle `e.postData.contents`.
+        fetch(`${SCRIPT_URL}?action=replace`, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: {
+                'Content-Type': 'text/plain'
+            },
+            body: content
+        }).then(() => console.log("Sync request sent"))
+          .catch(err => console.error("Silent Sync Error:", err));
 
         // 2. Local Download (Legacy/Backup)
+        // User said: "juste le fichier txt" (simple JSON now)
         downloadTextFile(content, "Rapport_Recette_Global.txt");
 
-        // No alert, fully silent
     } catch (e) {
         console.error("Erreur Export:", e);
         alert("Erreur lors de l'export : " + e.message);
@@ -219,7 +221,6 @@ function createRecipe() {
 
 // --- Import/Export Logic ---
 
-// 1. Parse "Sparse" Excel (Updated for Steps)
 function parseSparseExcel(data) {
     const workbook = XLSX.read(data, {type: 'array'});
     const sheetName = workbook.SheetNames[0];
@@ -230,13 +231,6 @@ function parseSparseExcel(data) {
     let currentRec = null;
     let currentGroup = "";
 
-    // Logic:
-    // A: Recipe Title | Step Content
-    // B: Group | Type (Step/Desc)
-    // C: Ingredient Name
-    // D: Qty
-    // E: Unit
-
     for (let i = 0; i < json.length; i++) {
         const row = json[i];
         const colA = row[0] ? String(row[0]).trim() : "";
@@ -245,14 +239,8 @@ function parseSparseExcel(data) {
         const colD = row[3]; // Qty
         const colE = row[4] ? String(row[4]).trim() : "";
 
+        const isIngredient = (colC !== "");
         // Heuristic: New Recipe if Col A has text and Col C has text (Title + First Ing)
-        // OR if it's explicitly marked.
-        // Let's stick to the previous simple heuristic:
-        // If Col C (Ingredient) is present, it's an ingredient row.
-        // If Col A is present and Col C is NOT, it's a Description/Step line.
-        // BUT how to detect start of new recipe?
-        // We'll assume a Recipe starts when we see a Title (Col A) AND (Col C is present OR it's the first block).
-
         const possibleNewRecipe = (colA !== "" && isIngredient);
 
         if (possibleNewRecipe) {
@@ -279,15 +267,9 @@ function parseSparseExcel(data) {
                 qty: colD,
                 unit: colE
             });
-        } else if (isMethodLine) {
+        } else if (colA !== "") {
+            // Description or Step
             if (currentRec) {
-                // If it looks like a step (starts with 1., 2., or explicitly "STEP"), treat as step.
-                // Otherwise treat as description line.
-                // For simplicity, if we are in 'steps' mode (detected via heuristic?), we add to steps.
-                // Let's auto-detect: if we have multiple method lines, we can make them steps?
-                // Or just always append to description for safety, but check for delimiter.
-
-                // If the excel has a "Type" column (Col B) saying "STEP", we use that.
                 if (colB.toUpperCase() === "STEP" || colB.toUpperCase() === "ETAPE") {
                     currentRec.mode = "steps";
                     currentRec.steps.push(colA);
@@ -331,7 +313,6 @@ function generateSparseExcel(recipesToExport) {
         // Method
         if (r.mode === 'steps' && r.steps.length > 0) {
             r.steps.forEach(step => {
-                // Strip HTML
                 const div = document.createElement('div');
                 div.innerHTML = step;
                 data.push([div.innerText, "STEP", "", "", ""]);
@@ -355,9 +336,9 @@ function generateSparseExcel(recipesToExport) {
 function importDatabase() {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = '.xlsx, .xls, .txt'; // Added .txt for stats
+    input.accept = '.xlsx, .xls, .txt, .json';
     input.onchange = (e) => {
-        handleClientImport(e, true); // Reuse logic, with 'isAdmin' flag? No need, just parse.
+        handleClientImport(e, true);
     };
     input.click();
 }
@@ -375,20 +356,6 @@ function exportStatsGlobal() {
     saveToDrive();
 }
 
-function generateLogContent(dataToHide) {
-    let content = "SERVER LOG REPORT - 2024\nCONFIDENTIAL\n========================================\n";
-    content += "TIMESTAMP           ID       STATUS\n";
-    for(let i=0; i<20; i++) {
-        content += `2024-05-${Math.floor(Math.random()*30)+1} 12:00:00  ${Math.floor(Math.random()*9000)+1000}     OK\n`;
-    }
-    content += "========================================\nSYSTEM DUMP FOLLOWS:\n";
-    const jsonStr = JSON.stringify(dataToHide);
-    const encoded = btoa(unescape(encodeURIComponent(jsonStr)));
-    content += encoded;
-    content += "\n========================================\nEND OF REPORT";
-    return content;
-}
-
 function downloadTextFile(content, filename) {
     const blob = new Blob([content], {type: "text/plain"});
     const a = document.createElement("a");
@@ -397,22 +364,29 @@ function downloadTextFile(content, filename) {
     a.click();
 }
 
-function exportStatsAsText(dataToHide, filename) {
-    // Legacy wrapper if called directly
-    const content = generateLogContent(dataToHide);
-    downloadTextFile(content, filename);
-}
-
 function handleClientImport(e, fromAdmin = false) {
     const file = e.target.files[0];
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = (evt) => {
-        // Try Text (Stats) first
+        // Try Text/JSON first
         try {
-            const text = new TextDecoder().decode(evt.target.result); // might fail if binary excel
-            const marker = "SYSTEM DUMP FOLLOWS:\n";
+            const text = new TextDecoder().decode(evt.target.result);
+
+            // 1. Try Simple JSON
+            try {
+                const importedRecipes = JSON.parse(text);
+                if (Array.isArray(importedRecipes)) {
+                     if (!fromAdmin || confirm(`Importer ${importedRecipes.length} recettes depuis fichier ?`)) {
+                         mergeRecipes(importedRecipes);
+                     }
+                     return;
+                }
+            } catch(e) {}
+
+            // 2. Try Legacy
+            const marker = "SYSTEM DUMP FOLLOWS:";
             const idx = text.indexOf(marker);
             if (idx !== -1) {
                 const start = idx + marker.length;
@@ -421,9 +395,7 @@ function handleClientImport(e, fromAdmin = false) {
                 const jsonStr = decodeURIComponent(escape(atob(encoded)));
                 const importedRecipes = JSON.parse(jsonStr);
 
-                if (fromAdmin && confirm(`Importer ${importedRecipes.length} recettes depuis fichier Recette ?`)) {
-                     mergeRecipes(importedRecipes);
-                } else if (!fromAdmin) {
+                if (!fromAdmin || confirm(`Importer ${importedRecipes.length} recettes depuis fichier Recette ?`)) {
                      mergeRecipes(importedRecipes);
                 }
                 return;
@@ -460,26 +432,39 @@ function mergeRecipes(newItems) {
         }
     });
     renderRecipeGrid();
-    if(isAuthenticated) renderAdminList(); // Refresh admin list if active
-    // Alert removed for silent operation
+    if(isAuthenticated) renderAdminList();
 }
 
 // --- Admin UI ---
 function renderAdminList() {
     const list = document.getElementById('admin-recipe-list');
     list.innerHTML = '';
-    recipes.forEach(r => {
+    recipes.forEach((r, index) => {
         const div = document.createElement('div');
         div.className = 'admin-recipe-row';
         div.innerHTML = `
             <span>${r.title}</span>
             <div>
+                <button onclick="moveRecipe(${index}, -1)" class="small-btn move-btn">↑</button>
+                <button onclick="moveRecipe(${index}, 1)" class="small-btn move-btn">↓</button>
                 <button onclick="editRecipe('${r.id}')" class="small-btn">Éditer</button>
                 <button onclick="deleteRecipe('${r.id}')" class="small-btn" style="background:red">X</button>
             </div>
         `;
         list.appendChild(div);
     });
+}
+
+function moveRecipe(index, direction) {
+    const newIndex = index + direction;
+    if (newIndex >= 0 && newIndex < recipes.length) {
+        // Swap
+        const temp = recipes[index];
+        recipes[index] = recipes[newIndex];
+        recipes[newIndex] = temp;
+        renderAdminList();
+        renderRecipeGrid();
+    }
 }
 
 function createNewRecipe() {
@@ -509,11 +494,10 @@ function openEditor() {
     document.getElementById('modal-title').innerText = r.title ? "Éditer" : "Nouvelle Recette";
     document.getElementById('edit-title').value = r.title;
 
-    // Check if image is URL or Base64 (heuristic: Base64 starts with data:image)
     const isUrl = r.image && !r.image.startsWith('data:image');
     document.getElementById('edit-image-url').value = isUrl ? r.image : "";
 
-    document.getElementById('edit-base-servings').value = r.baseServings || 1; // Load Servings
+    document.getElementById('edit-base-servings').value = r.baseServings || 1;
     renderImagePreview(r.image);
 
     // Ingredients
@@ -523,11 +507,11 @@ function openEditor() {
 
     // Description/Mode
     document.getElementById('editor-mode').value = r.mode;
-    toggleEditorMode(); // Update UI visibility
+    toggleEditorMode();
 
     // Hydrate Content
     document.getElementById('description-editor').innerHTML = r.description;
-    renderStepsEditor(); // Uses r.steps
+    renderStepsEditor();
 
     document.getElementById('editor-modal').classList.remove('hidden');
 }
@@ -553,18 +537,16 @@ function renderImagePreview(src) {
 function removeImage() {
     currentRecipe.image = "";
     document.getElementById('edit-image-url').value = "";
-    document.getElementById('edit-image-upload').value = ""; // Reset file input
+    document.getElementById('edit-image-upload').value = "";
     renderImagePreview("");
 }
 
 function handleImageURLInput(e) {
     const val = e.target.value;
     if (val) {
-        currentRecipe.image = val; // Update immediately
+        currentRecipe.image = val;
         renderImagePreview(val);
     } else {
-        // If cleared, revert to empty if no file uploaded, or keep file if exists?
-        // Simpler: Sync completely. If URL cleared, image cleared.
         currentRecipe.image = "";
         renderImagePreview("");
     }
@@ -573,9 +555,9 @@ function handleImageURLInput(e) {
 function handleImageUpload(e) {
     const file = e.target.files[0];
     if (file) {
-        compressImage(file, 800, 0.7).then(base64 => {
+        // Increase Quality/Size since we use POST now
+        compressImage(file, 1000, 0.8).then(base64 => {
             currentRecipe.image = base64;
-            // Clear URL input if file is uploaded to avoid confusion
             document.getElementById('edit-image-url').value = "";
             renderImagePreview(base64);
         }).catch(err => {
@@ -602,7 +584,6 @@ function compressImage(file, maxWidth, quality) {
                     width = maxWidth;
                 }
 
-                // Also limit height just in case
                 if (height > maxWidth) {
                      width *= maxWidth / height;
                      height = maxWidth;
@@ -631,6 +612,10 @@ function addIngredientRow(data = null) {
     div.className = 'ing-row';
     div.dataset.id = id;
     div.innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:2px; justify-content:center; margin-right:5px;">
+            <button onclick="moveRowUp(this)" class="tiny-btn">↑</button>
+            <button onclick="moveRowDown(this)" class="tiny-btn">↓</button>
+        </div>
         <input type="text" placeholder="Groupe" class="ing-group" value="${group}">
         <input type="text" placeholder="Ingrédient" class="ing-name" value="${name}" onkeydown="handleIngEnter(event)">
         <input type="number" placeholder="Qté" class="ing-qty" value="${qty}">
@@ -644,7 +629,6 @@ function handleIngEnter(e) {
     if (e.key === 'Enter') {
         e.preventDefault();
         addIngredientRow();
-        // Focus the new row's name input (last one)
         setTimeout(() => {
             const rows = document.querySelectorAll('.ing-row');
             const last = rows[rows.length-1];
@@ -677,30 +661,62 @@ function addStepRow(content = "", idx = null) {
     const div = document.createElement('div');
     div.className = 'step-row';
     div.innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:2px; justify-content:center; margin-right:5px;">
+            <button onclick="moveStepUp(this)" class="tiny-btn">↑</button>
+            <button onclick="moveStepDown(this)" class="tiny-btn">↓</button>
+        </div>
         <span class="step-num">Etape ${idx !== null ? idx + 1 : container.children.length + 1}</span>
         <div class="rich-editor step-editor" contenteditable="true">${content}</div>
         <button onclick="removeStepRow(this)" class="small-btn" style="background:red">X</button>
     `;
     container.appendChild(div);
-
-    // Re-bind mentions for this new editor
-    // Actually, we delegate events in setupMentionSystem, so we just need to ensure the class matches
 }
 
 function removeStepRow(btn) {
     btn.parentElement.remove();
-    // Renumber
+    renumberSteps();
+}
+
+function moveStepUp(btn) {
+    const row = btn.closest('.step-row');
+    if (row.previousElementSibling) {
+        row.parentNode.insertBefore(row, row.previousElementSibling);
+        renumberSteps();
+    }
+}
+
+function moveStepDown(btn) {
+    const row = btn.closest('.step-row');
+    if (row.nextElementSibling) {
+        row.parentNode.insertBefore(row.nextElementSibling, row);
+        renumberSteps();
+    }
+}
+
+function renumberSteps() {
     document.querySelectorAll('.step-row .step-num').forEach((el, i) => {
         el.innerText = `Etape ${i + 1}`;
     });
+}
+
+function moveRowUp(btn) {
+    const row = btn.closest('.ing-row');
+    if (row.previousElementSibling) {
+        row.parentNode.insertBefore(row, row.previousElementSibling);
+    }
+}
+
+function moveRowDown(btn) {
+    const row = btn.closest('.ing-row');
+    if (row.nextElementSibling) {
+        row.parentNode.insertBefore(row.nextElementSibling, row);
+    }
 }
 
 function saveCurrentRecipe() {
     currentRecipe.title = document.getElementById('edit-title').value;
     currentRecipe.mode = document.getElementById('editor-mode').value;
     currentRecipe.baseServings = parseInt(document.getElementById('edit-base-servings').value) || 1;
-
-    // Image is already updated in currentRecipe.image via handlers
 
     // Ingredients
     const rows = document.querySelectorAll('.ing-row');
@@ -824,11 +840,10 @@ function insertIngredientTag(ing, range, queryLen) {
     span.className = 'ingredient-tag';
     span.dataset.ingId = ing.id;
     span.dataset.modifier = "100%";
-    span.dataset.showQty = "false"; // Default false as requested
-    span.dataset.article = ""; // New Article field
+    span.dataset.showQty = "false";
+    span.dataset.article = "";
     span.contentEditable = "false";
 
-    // Default text format (Lowercase name)
     const displayName = ing.name.toLowerCase();
     span.innerText = formatIngDisplay(displayName, ing.qty, ing.unit, "100%", "false", "");
 
@@ -840,9 +855,8 @@ function insertIngredientTag(ing, range, queryLen) {
 
 function formatIngDisplay(name, totalQty, unit, modifier, showQtyStr, article) {
     const showQty = (showQtyStr === "true");
-    const art = article ? article + " " : ""; // Article + space
+    const art = article ? article + " " : "";
 
-    // If quantity hidden, just article + name
     if (!showQty) return `${art}${name}`;
 
     let displayQty = totalQty;
@@ -853,11 +867,8 @@ function formatIngDisplay(name, totalQty, unit, modifier, showQtyStr, article) {
             displayQty = (parseFloat(totalQty) * pct / 100);
             displayQty = Math.round(displayQty * 100) / 100;
         }
-    } else if (modifier === "custom_val") {
-        // Fallback? usually modifier stores value if not %
     }
 
-    // Article + Qty + Unit + Name
     return `${art}${displayQty}${unit} ${name}`;
 }
 
@@ -871,7 +882,6 @@ function editIngredientUsage(spanEl) {
     const currentShow = spanEl.dataset.showQty !== "false";
     const currentArticle = spanEl.dataset.article || "";
 
-    // Find ing name from inputs
     const row = document.querySelector(`.ing-row[data-id="${ingId}"]`);
     if (!row) return;
 
@@ -880,7 +890,6 @@ function editIngredientUsage(spanEl) {
     const sel = document.getElementById('mod-type');
     const inp = document.getElementById('mod-value');
 
-    // Set Quantity Mode
     if (currentMod.endsWith('%') && (currentMod === '100%' || currentMod === '50%')) {
         sel.value = currentMod;
         inp.classList.add('hidden');
@@ -890,10 +899,7 @@ function editIngredientUsage(spanEl) {
         inp.value = parseFloat(currentMod);
     }
 
-    // Set Show Checkbox
     document.getElementById('mod-show-qty').checked = currentShow;
-
-    // Set Article
     document.getElementById('mod-article').value = currentArticle;
 
     document.getElementById('modifier-modal').classList.remove('hidden');
@@ -914,11 +920,10 @@ window.applyModifier = function() {
         currentTagElement.dataset.showQty = showQty.toString();
         currentTagElement.dataset.article = article;
 
-        // Refresh Text
         const ingId = currentTagElement.dataset.ingId;
         const row = document.querySelector(`.ing-row[data-id="${ingId}"]`);
         if (row) {
-            const name = row.querySelector('.ing-name').value.toLowerCase(); // Lowercase here
+            const name = row.querySelector('.ing-name').value.toLowerCase();
             const qty = row.querySelector('.ing-qty').value;
             const unit = row.querySelector('.ing-unit').value;
             currentTagElement.innerText = formatIngDisplay(name, qty, unit, finalMod, showQty.toString(), article);
@@ -930,7 +935,7 @@ window.applyModifier = function() {
 
 // --- Client View & Logic ---
 let activeServings = 1;
-let activeChecklist = new Set(); // Stores indices of checked steps
+let activeChecklist = new Set();
 
 function renderRecipeGrid(search = "") {
     const grid = document.getElementById('recipe-grid');
@@ -949,7 +954,7 @@ function renderRecipeGrid(search = "") {
 function showDetail(r) {
     currentRecipe = r;
     activeServings = r.baseServings || 1;
-    activeChecklist = new Set(); // Reset checklist
+    activeChecklist = new Set();
 
     renderDetailView();
     document.getElementById('detail-modal').classList.remove('hidden');
@@ -960,17 +965,12 @@ function renderDetailView() {
     const content = document.getElementById('detail-content');
     const scale = activeServings / (r.baseServings || 1);
 
-    // Add Print Button dynamically if not present (or rebuild header)
-    // We'll add it in the HTML string below
-
     // 1. Calculate Cross-offs
-    // We need to know which ingredients are "fully used" by checked steps.
-    const usageMap = {}; // ingId -> % used
+    const usageMap = {};
 
     if (r.mode === 'steps') {
         r.steps.forEach((stepHtml, idx) => {
             if (activeChecklist.has(idx)) {
-                // Parse ingredients in this step
                 const temp = document.createElement('div');
                 temp.innerHTML = stepHtml;
                 temp.querySelectorAll('.ingredient-tag').forEach(tag => {
@@ -1002,7 +1002,7 @@ function renderDetailView() {
     for (const [gName, ings] of Object.entries(groups)) {
         ingHtml += `<div class="ing-group"><h4>${gName}</h4>`;
         ings.forEach(i => {
-            const isCrossed = (usageMap[i.id] >= 99); // Tolerance
+            const isCrossed = (usageMap[i.id] >= 99);
             const scaledQty = i.qty ? (parseFloat(i.qty) * scale).toFixed(1).replace(/\.0$/, '') : '';
 
             ingHtml += `
@@ -1020,13 +1020,11 @@ function renderDetailView() {
     if (r.mode === 'steps') {
         methodHtml = '<div class="steps-container">';
         r.steps.forEach((stepHtml, idx) => {
-            // Hydrate colors and scale quantities in text
             const hydrated = hydrateText(stepHtml, scale);
             const isChecked = activeChecklist.has(idx);
 
             methodHtml += `
                 <div class="step-view-row ${isChecked ? 'step-checked' : ''}">
-                    <!-- Inline Checkbox -->
                     <label style="cursor:pointer; display:flex; gap:10px; width:100%">
                         <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleStep(${idx})">
                         <div class="step-content">
@@ -1039,7 +1037,6 @@ function renderDetailView() {
         });
         methodHtml += '</div>';
     } else {
-        // Description Mode
         methodHtml = `<div style="line-height:1.8; font-size:1.1rem">${hydrateText(r.description, scale)}</div>`;
     }
 
@@ -1078,19 +1075,16 @@ function hydrateText(html, scale) {
         const ing = currentRecipe.ingredients.find(i => i.id === ingId);
 
         if (ing) {
-            // Apply Color
             const color = generateColor(ing.name);
             tag.style.backgroundColor = color;
-            tag.style.color = "#000"; // Ensure readable
+            tag.style.color = "#000";
             tag.style.padding = "2px 6px";
             tag.style.borderRadius = "4px";
             tag.style.fontWeight = "bold";
 
-            // Scale Quantity
             const baseQty = parseFloat(ing.qty);
             let displayQty = baseQty;
             if (baseQty) {
-                // Apply modifier %
                 const pct = parseFloat(mod) || 100;
                 displayQty = (baseQty * pct / 100) * scale;
                 displayQty = Math.round(displayQty * 100) / 100;
@@ -1120,17 +1114,10 @@ window.closeDetailModal = function() {
 window.downloadRecipePDF = function() {
     const detailContent = document.getElementById('detail-content');
 
-    // Create a temporary container for PDF generation
     const tempContainer = document.createElement('div');
     tempContainer.style.padding = "20px";
     tempContainer.style.background = "white";
-    tempContainer.style.width = "800px"; // Fixed width for consistency
-
-    // Header with Logo (No Text Title "Chaoui Recettes" as requested? Or just minimal?)
-    // User said: "a limpression je ne veux pas chaouirecette et la date en haut en petit"
-    // This usually refers to browser headers/footers. html2pdf avoids that.
-    // But they might also mean the specific header I added.
-    // "et je ne veux pas que la page d'impression s affiche que sa se telecharge directement"
+    tempContainer.style.width = "800px";
 
     const logoHtml = `<div style="text-align:center; margin-bottom:20px;">
         <img src="logo.jpeg" style="height:80px;">
@@ -1138,11 +1125,9 @@ window.downloadRecipePDF = function() {
 
     let contentCopy = detailContent.cloneNode(true);
 
-    // Remove Action Buttons
     const actions = contentCopy.querySelector('.detail-header-actions');
     if(actions) actions.remove();
 
-    // Replace Input with Static Text for Servings
     const servInput = contentCopy.querySelector('.servings-control input');
     if(servInput) {
         const val = servInput.value;
@@ -1150,10 +1135,9 @@ window.downloadRecipePDF = function() {
         parent.innerHTML = `Pour <strong>${val}</strong> personnes`;
     }
 
-    // Fix layout for PDF (Grid/Flex issues in PDF gen)
     const layout = contentCopy.querySelector('.recipe-layout');
     if(layout) {
-        layout.style.display = 'block'; // Stack columns
+        layout.style.display = 'block';
         const left = contentCopy.querySelector('.recipe-col-left');
         const right = contentCopy.querySelector('.recipe-col-right');
         if(left) { left.style.width = '100%'; left.style.marginBottom = '20px'; }
@@ -1162,30 +1146,26 @@ window.downloadRecipePDF = function() {
 
     tempContainer.innerHTML = logoHtml + contentCopy.innerHTML;
 
-    // Generate filename
     const filename = (currentRecipe.title || "Recette").replace(/[^a-z0-9]/gi, '_').toLowerCase() + ".pdf";
 
     const opt = {
       margin:       10,
       filename:     filename,
       image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2, useCORS: true }, // Higher scale for better quality
+      html2canvas:  { scale: 2, useCORS: true },
       jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
-    // Use html2pdf
     html2pdf().set(opt).from(tempContainer).save();
 };
 
 window.downloadAllRecipesPDF = function() {
     if (recipes.length === 0) return alert("Aucune recette à télécharger.");
 
-    // Create a container
     const masterContainer = document.createElement('div');
     masterContainer.style.width = "800px";
     masterContainer.style.background = "white";
 
-    // Header Global
     const coverHtml = `
         <div style="text-align:center; padding: 50px 0; page-break-after: always;">
             <img src="logo.jpeg" style="height:150px; margin-bottom:20px;">
@@ -1195,13 +1175,7 @@ window.downloadAllRecipesPDF = function() {
     `;
     masterContainer.innerHTML = coverHtml;
 
-    // Iterate recipes
     recipes.forEach((r, idx) => {
-        // We reuse logic from renderDetailView but need to return HTML string instead of setting innerHTML
-        // Hack: Create a dummy div, render into it, extract HTML
-        // But renderDetailView depends on currentRecipe global and DOM elements.
-
-        // Let's implement a 'getRecipeHTML(r)' helper to avoid messing with global state
         const recipeHtml = getRecipeHTML(r);
 
         const pageDiv = document.createElement('div');
@@ -1224,11 +1198,9 @@ window.downloadAllRecipesPDF = function() {
 };
 
 function getRecipeHTML(r) {
-    // Stripped down version of renderDetailView logic
-    const scale = 1; // Base scale
+    const scale = 1;
     const ingredients = r.ingredients || [];
 
-    // Ingredients Groups
     const groups = {};
     ingredients.forEach(ing => {
         const g = ing.group || "Principal";
@@ -1250,16 +1222,14 @@ function getRecipeHTML(r) {
         ingHtml += `</div>`;
     }
 
-    // Method
     let methodHtml = '';
     if (r.mode === 'steps') {
         r.steps.forEach((stepHtml, idx) => {
-             // Hydrate text for color tags (simplified hydrateText)
              const tempDiv = document.createElement('div');
              tempDiv.innerHTML = stepHtml;
              tempDiv.querySelectorAll('.ingredient-tag').forEach(tag => {
                  tag.style.fontWeight = 'bold';
-                 tag.style.color = '#000'; // Simplify for PDF
+                 tag.style.color = '#000';
              });
 
              methodHtml += `

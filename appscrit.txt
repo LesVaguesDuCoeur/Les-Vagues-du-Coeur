@@ -1,21 +1,37 @@
-function doGet(e) {
-  var docId = '1hj6uSP1ygTEK7B6Zf9AN4bwzIVgnqslC1csFj-XyRyA';
-  if (!e || !e.parameter || !e.parameter.content) {
-    return ContentService.createTextOutput("Erreur: contenu manquant");
-  }
+// Copiez ce code dans script.google.com
 
+function doPost(e) {
   var lock = LockService.getScriptLock();
   lock.tryLock(10000);
 
   try {
+    // 1. Get Content from POST body
+    var content = "";
+    if (e.postData && e.postData.contents) {
+       content = e.postData.contents;
+    } else if (e.parameter.content) {
+       content = e.parameter.content;
+    }
+
+    // 2. Target the Specific Google Doc
+    var docId = "1hj6uSP1ygTEK7B6Zf9AN4bwzIVgnqslC1csFj-XyRyA";
     var doc = DocumentApp.openById(docId);
     var body = doc.getBody();
+
+    // 3. Clear and Replace Content
     body.clear();
-    body.appendParagraph(e.parameter.content);
-    return ContentService.createTextOutput("Succès");
-  } catch(err) {
-    return ContentService.createTextOutput("Erreur: " + err.toString());
+    body.setText(content);
+
+    // 4. Return Success
+    return ContentService.createTextOutput("Success");
+
+  } catch (err) {
+    return ContentService.createTextOutput("Error: " + err.toString());
   } finally {
     lock.releaseLock();
   }
+}
+
+function doGet(e) {
+  return ContentService.createTextOutput("Use POST to update.");
 }
