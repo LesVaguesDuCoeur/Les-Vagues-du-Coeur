@@ -1,0 +1,102 @@
+GUIDE D'INSTALLATION ETAPE PAR ETAPE
+====================================
+
+OBJECTIF :
+Lorsque vous cliquez sur "Exporter pour Client" sur le site, le contenu du fichier texte généré doit remplacer automatiquement le contenu de votre Google Doc.
+
+ETAPE 1 : PREPARER LE GOOGLE DOC
+--------------------------------
+1. Ouvrez votre Google Doc : https://docs.google.com/document/d/1hj6uSP1ygTEK7B6Zf9AN4bwzIVgnqslC1csFj-XyRyA/edit
+2. Assurez-vous que vous avez les droits d'édition.
+
+ETAPE 2 : METTRE EN PLACE LE SCRIPT (Cerveau)
+---------------------------------------------
+1. Dans le Google Doc, cliquez sur le menu "Extensions" > "Apps Script".
+2. Effacez tout le code présent dans l'éditeur (le fichier Code.gs).
+3. Copiez et collez le code suivant EXACTEMENT tel quel :
+
+// DEBUT DU CODE A COPIER
+function doGet(e) {
+  // ID de votre document (NE PAS TOUCHER)
+  var docId = '1hj6uSP1ygTEK7B6Zf9AN4bwzIVgnqslC1csFj-XyRyA';
+
+  // Vérification de sécurité simple
+  if (!e || !e.parameter || !e.parameter.content) {
+    return ContentService.createTextOutput("Le script est en ligne ! Mais il manque le contenu à écrire.");
+  }
+
+  // Verrou pour éviter que deux personnes écrivent en même temps
+  var lock = LockService.getScriptLock();
+  // On attend jusqu'à 10 secondes pour avoir accès au doc
+  var success = lock.tryLock(10000);
+
+  if (!success) {
+    return ContentService.createTextOutput("Erreur: Le document est occupé, réessayez.");
+  }
+
+  try {
+    // Ouverture du document
+    var doc = DocumentApp.openById(docId);
+    var body = doc.getBody();
+
+    // ACTION : On vide tout et on remplace
+    body.clear();
+    body.appendParagraph(e.parameter.content);
+
+    // On force la sauvegarde immédiate
+    doc.saveAndClose();
+
+    return ContentService.createTextOutput("Succès : Document mis à jour !");
+  } catch(err) {
+    // En cas de pépin, on renvoie l'erreur
+    return ContentService.createTextOutput("Erreur technique : " + err.toString());
+  } finally {
+    // On libère le document quoi qu'il arrive
+    lock.releaseLock();
+  }
+}
+// FIN DU CODE A COPIER
+
+4. Cliquez sur l'icône de disquette pour Enregistrer (Ctrl+S).
+
+ETAPE 3 : DEPLOYER LE SCRIPT (TRES IMPORTANT)
+---------------------------------------------
+C'est ici que ça coince souvent. Suivez bien :
+
+1. En haut à droite, cliquez sur le bouton bleu "Déployer".
+2. Choisissez "Nouveau déploiement".
+3. Dans la fenêtre qui s'ouvre, cliquez sur la roue dentée (type de déploiement) et sélectionnez "Application Web".
+4. Remplissez les champs :
+   - Description : "Mise a jour auto" (ou ce que vous voulez)
+   - Exécuter en tant que : "Moi" (votre adresse email)
+   - Qui a accès : "Tout le monde" (C'est CRUCIAL, sinon le site ne pourra pas y accéder).
+5. Cliquez sur "Déployer".
+6. Google va vous demander une autorisation ("Autoriser l'accès").
+   - Cliquez sur "Autoriser".
+   - Choisissez votre compte Google.
+   - Si vous voyez un écran "Google hasn't verified this app" (Application non vérifiée) :
+     - Cliquez sur "Advanced" (Paramètres avancés) en bas à gauche.
+     - Cliquez sur "Go to ... (unsafe)" (Accéder à ... non sécurisé).
+     - Tapez "Continue" ou cliquez sur "Allow".
+7. Une fois fini, vous aurez une URL qui ressemble à "https://script.google.com/.../exec".
+8. COPIEZ CETTE URL.
+
+ETAPE 4 : VERIFICATION
+----------------------
+L'URL que vous m'avez donnée est :
+https://script.google.com/macros/s/AKfycbyn9JMOI2KL-qfjQXl32kbGQC379ADb-op_7CKN8XWAQNw2VGyaux88LvOfvTxdS6Xz/exec
+
+J'ai déjà mis cette URL dans le code du site. Si vous avez redéployé et obtenu une NOUVELLE URL différente, vous devez me la donner pour que je mette à jour le site. Si c'est la même, c'est parfait.
+
+ETAPE 5 : TESTER
+----------------
+1. Retournez sur votre site Chaoui Recettes (Espace Admin).
+2. Cliquez sur le bouton vert "Exporter pour Client (Fichier)".
+3. Le fichier texte va se télécharger sur votre ordinateur (c'est la sécurité).
+4. MAIS EN MEME TEMPS, le script va travailler en arrière-plan.
+5. Attendez 5 secondes.
+6. Allez voir votre Google Doc. Le texte devrait avoir changé tout seul !
+
+NOTE : Si rien ne se passe sur le Google Doc :
+- Vérifiez que vous avez bien mis "Qui a accès : Tout le monde" lors du déploiement.
+- Vérifiez que l'URL du script dans le code correspond bien à votre dernier déploiement.

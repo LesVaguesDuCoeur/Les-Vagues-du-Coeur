@@ -5,7 +5,7 @@ let isAuthenticated = false;
 
 // Config
 const ADMIN_HASH = "4f4d7c180a182dc83776c2426cc229affdc9fd37389cc90c278bd2ad5dea4e5b"; // SHA-256 of "15112000"
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwkWyCVfjJ0HTGrQewpmgz7YuOQzKZSXbGMceNlfm4PTnZlbdItvi8vnEvMCT4d7ZZ3/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyn9JMOI2KL-qfjQXl32kbGQC379ADb-op_7CKN8XWAQNw2VGyaux88LvOfvTxdS6Xz/exec";
 
 // --- Utilities ---
 function generateColor(str) {
