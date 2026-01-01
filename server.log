@@ -1,8 +1,7 @@
-npm error code ENOENT
-npm error syscall open
-npm error path /app/package.json
-npm error errno -2
-npm error enoent Could not read package.json: Error: ENOENT: no such file or directory, open '/app/package.json'
-npm error enoent This is related to npm not being able to find a file.
-npm error enoent
-npm error A complete log of this run can be found in: /home/jules/.npm/_logs/2025-12-29T17_00_51_804Z-debug-0.log
+127.0.0.1 - - [01/Jan/2026 23:27:33] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jan/2026 23:27:33] "GET /js/lib/xlsx.full.min.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jan/2026 23:27:33] "GET /logo.jpeg HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jan/2026 23:27:33] "GET /css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jan/2026 23:27:33] "GET /js/lib/html2canvas.min.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jan/2026 23:27:33] "GET /js/lib/html2pdf.bundle.min.js HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jan/2026 23:27:33] "GET /js/app.js HTTP/1.1" 200 -

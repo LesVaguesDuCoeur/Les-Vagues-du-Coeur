@@ -94,19 +94,31 @@ async function autoLoadDatabase(silent = true) {
             const text = await response.text();
             let importedRecipes = [];
             try {
+                // Try direct JSON parse first (for raw txt exports)
                 importedRecipes = JSON.parse(text);
             } catch (jsonErr) {
-                const marker = "SYSTEM DUMP FOLLOWS:";
-                const idx = text.indexOf(marker);
-                if (idx !== -1) {
-                    const start = idx + marker.length;
-                    const end = text.indexOf("========================================", start);
-                    const encoded = text.substring(start, end !== -1 ? end : undefined).trim();
+                // Fallback: try finding JSON array pattern if wrapped or contains BOM
+                const firstBracket = text.indexOf('[');
+                const lastBracket = text.lastIndexOf(']');
+                if (firstBracket !== -1 && lastBracket !== -1) {
                     try {
-                        const cleanEncoded = encoded.replace(/\s/g, '');
-                        const jsonStr = decodeURIComponent(escape(atob(cleanEncoded)));
-                        importedRecipes = JSON.parse(jsonStr);
-                    } catch (e) { console.error("Legacy parse error", e); }
+                        const sub = text.substring(firstBracket, lastBracket + 1);
+                        importedRecipes = JSON.parse(sub);
+                    } catch(e) {
+                        // Legacy handling
+                        const marker = "SYSTEM DUMP FOLLOWS:";
+                        const idx = text.indexOf(marker);
+                        if (idx !== -1) {
+                            const start = idx + marker.length;
+                            const end = text.indexOf("========================================", start);
+                            const encoded = text.substring(start, end !== -1 ? end : undefined).trim();
+                            try {
+                                const cleanEncoded = encoded.replace(/\s/g, '');
+                                const jsonStr = decodeURIComponent(escape(atob(cleanEncoded)));
+                                importedRecipes = JSON.parse(jsonStr);
+                            } catch (e2) { console.error("Legacy parse error", e2); }
+                        }
+                    }
                 }
             }
 
@@ -130,6 +142,8 @@ async function saveToDrive() {
     try {
         const content = JSON.stringify(recipes, null, 2);
 
+        // Sync disabled as per request - Admin must update the Google Doc manually
+        /*
         fetch(`${SCRIPT_URL}?action=replace`, {
             method: 'POST',
             mode: 'no-cors',
@@ -137,6 +151,7 @@ async function saveToDrive() {
             body: content
         }).then(() => console.log("Sync request sent"))
           .catch(err => console.error("Silent Sync Error:", err));
+        */
 
         downloadTextFile(content, "Rapport_Recette_Global.txt");
 
@@ -880,6 +895,60 @@ window.applyModifier = function() {
     }
     document.getElementById('modifier-modal').classList.add('hidden');
 };
+
+function hydrateText(htmlContent, scale) {
+    const temp = document.createElement('div');
+    temp.innerHTML = htmlContent;
+    temp.querySelectorAll('.ingredient-tag').forEach(tag => {
+        const ingId = tag.dataset.ingId;
+        const ing = currentRecipe.ingredients.find(i => i.id === ingId);
+        if (ing) {
+            const modifier = tag.dataset.modifier || "100%";
+            const showQty = (tag.dataset.showQty !== "false");
+            const article = tag.dataset.article || "";
+            let baseQty = parseFloat(ing.qty) || 0;
+            if (modifier.endsWith('%')) {
+                const pct = parseFloat(modifier);
+                if (!isNaN(pct)) baseQty = baseQty * (pct / 100);
+            }
+            const scaledQty = parseFloat((baseQty * scale).toFixed(2));
+            const color = generateColor(ing.name);
+            const text = showQty && ing.qty
+                ? `${article ? article + ' ' : ''}${scaledQty}${ing.unit} ${ing.name}`
+                : `${article ? article + ' ' : ''}${ing.name}`;
+
+            const span = document.createElement('span');
+            span.style.backgroundColor = color;
+            span.style.padding = "2px 5px";
+            span.style.borderRadius = "4px";
+            span.style.color = "#000";
+            span.style.fontWeight = "bold";
+            span.textContent = text;
+            tag.replaceWith(span);
+        }
+    });
+    return temp.innerHTML;
+}
+
+function downloadRecipePDF() {
+    const element = document.getElementById('detail-content');
+    const opt = {
+      margin: 10,
+      filename: `${currentRecipe.title}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    if (window.html2pdf) {
+        html2pdf().set(opt).from(element).save();
+    } else {
+        alert("Librairie PDF non chargée.");
+    }
+}
+
+function downloadAllRecipesPDF() {
+    alert("Fonctionnalité d'export global PDF en cours de développement.");
+}
 
 let activeServings = 1;
 let activeChecklist = new Set();
