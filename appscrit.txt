@@ -1,0 +1,41 @@
+function doGet(e) {
+  // === CONFIGURATION ===
+  // C'est l'ID de votre document Google Docs spécifique
+  var docId = '1hj6uSP1ygTEK7B6Zf9AN4bwzIVgnqslC1csFj-XyRyA';
+  // =====================
+
+  // Gestion des erreurs si on lance le script manuellement (bouton Exécuter)
+  if (!e || !e.parameter) {
+    return ContentService.createTextOutput("Le script fonctionne ! Utilisez le site HTML pour le tester.");
+  }
+
+  var doc = DocumentApp.openById(docId);
+  var body = doc.getBody();
+  var action = e.parameter.action;
+  var content = e.parameter.content;
+
+  // Verrou pour éviter les conflits d'écriture
+  var lock = LockService.getScriptLock();
+  lock.tryLock(10000); // Attend 10s max
+
+  try {
+    if (action === 'alphabet') {
+      body.appendParagraph('ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+    }
+    else if (action === 'random') {
+      body.appendParagraph('Nombre aléatoire : ' + Math.floor(Math.random() * 10000));
+    }
+    else if (action === 'clear') {
+      body.clear();
+    }
+    else if (action === 'replace') {
+      body.clear();
+      body.appendParagraph(content || "[Contenu vide]");
+    }
+    return ContentService.createTextOutput("Succès");
+  } catch (err) {
+    return ContentService.createTextOutput("Erreur: " + err.toString());
+  } finally {
+    lock.releaseLock();
+  }
+}
