@@ -5,7 +5,8 @@ let isAuthenticated = false;
 
 // Config
 const ADMIN_HASH = "4f4d7c180a182dc83776c2426cc229affdc9fd37389cc90c278bd2ad5dea4e5b"; // SHA-256 of "15112000"
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyn9JMOI2KL-qfjQXl32kbGQC379ADb-op_7CKN8XWAQNw2VGyaux88LvOfvTxdS6Xz/exec";
+// URL provided by user
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyfsvNeM37HrfE-Uo4ZEpfGg3nMb5pvChic_wEao3e2s1-MqxfM5Jn2f6Rgltkt17bg/exec";
 const DOC_EXPORT_URL = "https://docs.google.com/document/d/1hj6uSP1ygTEK7B6Zf9AN4bwzIVgnqslC1csFj-XyRyA/export?format=txt";
 
 // --- Utilities ---
@@ -58,7 +59,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Auto-load from Drive
     autoLoadDatabase();
+
+    // Log Visitor
+    logVisitor();
 });
+
+// --- Visitor Logging ---
+async function logVisitor() {
+    try {
+        // 1. Get IP
+        const ipRes = await fetch('https://api.ipify.org?format=json');
+        const ipData = await ipRes.json();
+        const ip = ipData.ip;
+
+        // 2. Prepare Data
+        const userAgent = navigator.userAgent;
+        const timestamp = new Date().toLocaleString('fr-FR');
+        const logString = `Adresse IP : ${ip} | User-Agent : ${userAgent} | Horodatage précis : ${timestamp}`;
+
+        // 3. Send to Script
+        // Action = log_visit
+        fetch(`${SCRIPT_URL}?action=log_visit`, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain' },
+            body: logString
+        }).then(() => console.log("Visite enregistrée silently"))
+          .catch(e => console.error("Log error", e));
+
+    } catch (err) {
+        console.error("Erreur Logging Visiteur:", err);
+    }
+}
 
 function refreshDatabase() {
     autoLoadDatabase(false);

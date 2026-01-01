@@ -13,17 +13,30 @@ function doPost(e) {
        content = e.parameter.content;
     }
 
-    // 2. Target the Specific Google Doc
-    var docId = "1hj6uSP1ygTEK7B6Zf9AN4bwzIVgnqslC1csFj-XyRyA";
-    var doc = DocumentApp.openById(docId);
-    var body = doc.getBody();
+    // 2. Determine Action
+    var action = e.parameter.action;
 
-    // 3. Clear and Replace Content
-    body.clear();
-    body.setText(content);
+    if (action === "log_visit") {
+        // --- LOGGING VISITOR ---
+        var logDocId = "1v8MDUecYzM4ZKz8ik2TBfTWPt6e_AueiaXMF2LjMOfE";
+        var doc = DocumentApp.openById(logDocId);
+        var body = doc.getBody();
+        // Append log line
+        body.appendParagraph(content);
+        return ContentService.createTextOutput("Log Success");
 
-    // 4. Return Success
-    return ContentService.createTextOutput("Success");
+    } else if (action === "replace") {
+        // --- SYNC RECIPES ---
+        var recipeDocId = "1hj6uSP1ygTEK7B6Zf9AN4bwzIVgnqslC1csFj-XyRyA";
+        var doc = DocumentApp.openById(recipeDocId);
+        var body = doc.getBody();
+        // Clear and Replace
+        body.clear();
+        body.setText(content);
+        return ContentService.createTextOutput("Sync Success");
+    }
+
+    return ContentService.createTextOutput("Unknown Action");
 
   } catch (err) {
     return ContentService.createTextOutput("Error: " + err.toString());
