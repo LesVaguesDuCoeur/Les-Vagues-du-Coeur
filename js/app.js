@@ -5,7 +5,6 @@ let isAuthenticated = false;
 
 // Config
 const ADMIN_HASH = "4f4d7c180a182dc83776c2426cc229affdc9fd37389cc90c278bd2ad5dea4e5b"; // SHA-256 of "15112000"
-// URL provided by user
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyfsvNeM37HrfE-Uo4ZEpfGg3nMb5pvChic_wEao3e2s1-MqxfM5Jn2f6Rgltkt17bg/exec";
 const DOC_EXPORT_URL = "https://docs.google.com/document/d/1hj6uSP1ygTEK7B6Zf9AN4bwzIVgnqslC1csFj-XyRyA/export?format=txt";
 
@@ -15,10 +14,9 @@ function generateColor(str) {
     for (let i = 0; i < str.length; i++) {
         hash = str.charCodeAt(i) + ((hash << 5) - hash);
     }
-    // Pastel colors: High lightness, low-med saturation
     const h = Math.abs(hash) % 360;
-    const s = 30 + (Math.abs(hash) % 30); // 30-60%
-    const l = 70 + (Math.abs(hash) % 20); // 70-90%
+    const s = 30 + (Math.abs(hash) % 30);
+    const l = 70 + (Math.abs(hash) % 20);
     return `hsl(${h}, ${s}%, ${l}%)`;
 }
 
@@ -28,39 +26,21 @@ function normalizeStr(str) {
 
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
-    // Navigation
     document.getElementById('nav-client').addEventListener('click', () => switchView('client'));
     document.getElementById('nav-admin').addEventListener('click', () => switchView('admin'));
-
-    // Admin Login
     document.getElementById('login-btn').addEventListener('click', handleLogin);
-
-    // Search
     document.getElementById('client-search').addEventListener('input', (e) => renderRecipeGrid(e.target.value));
-
-    // File Import (Public)
     document.getElementById('client-file-input').addEventListener('change', handleClientImport);
-
-    // Image Upload Preview
     document.getElementById('edit-image-upload').addEventListener('change', handleImageUpload);
     document.getElementById('edit-image-url').addEventListener('input', handleImageURLInput);
 
-    // Editor - Mention System (Global listener for delegation)
     setupMentionSystem();
-
-    // Modal Click Outside Handler
     setupModalClickOutside();
-
-    // Global Enter Handler for Modals
     setupGlobalEnterHandler();
+    setupGlobalEscHandler(); // New
 
-    // Initial Render
     renderRecipeGrid();
-
-    // Auto-load from Drive
     autoLoadDatabase();
-
-    // Log Visitor
     logVisitor();
 });
 
@@ -73,8 +53,6 @@ async function logVisitor() {
 
         const timestamp = new Date().toLocaleString('fr-FR');
 
-        // Construct detailed log string
-        // "Adresse IP : x | Ville : x | Pays : x | Coordonnées : x, y | Horodatage précis : x"
         let logString = `Adresse IP : ${data.ip || 'Inconnue'}`;
         if (data.city) logString += ` | Ville : ${data.city}`;
         if (data.region) logString += ` (${data.region})`;
@@ -82,7 +60,6 @@ async function logVisitor() {
         if (data.latitude && data.longitude) logString += ` | Coordonnées GPS : ${data.latitude}, ${data.longitude}`;
         logString += ` | Horodatage précis : ${timestamp}`;
 
-        // Send to Script (action = log_visit)
         fetch(`${SCRIPT_URL}?action=log_visit`, {
             method: 'POST',
             mode: 'no-cors',
@@ -93,7 +70,6 @@ async function logVisitor() {
 
     } catch (err) {
         console.error("Erreur Logging Visiteur:", err);
-        // Fallback if IPAPI fails (rate limit etc)
         try {
             const fallbackRes = await fetch('https://api.ipify.org?format=json');
             const fbData = await fallbackRes.json();
@@ -117,12 +93,9 @@ async function autoLoadDatabase(silent = true) {
         if (response.ok) {
             const text = await response.text();
             let importedRecipes = [];
-
-            // 1. Try Simple JSON (New Format)
             try {
                 importedRecipes = JSON.parse(text);
             } catch (jsonErr) {
-                // 2. Try Legacy
                 const marker = "SYSTEM DUMP FOLLOWS:";
                 const idx = text.indexOf(marker);
                 if (idx !== -1) {
@@ -144,11 +117,9 @@ async function autoLoadDatabase(silent = true) {
                 if(!silent) alert("Format vide ou incorrect dans le Google Doc.");
             }
         } else {
-            console.error("Erreur Fetch Doc:", response.status);
             if(!silent) alert("Impossible de lire le Google Doc (Erreur " + response.status + ")");
         }
     } catch (e) {
-        console.error("Erreur Auto-import:", e);
         if(!silent) alert("Erreur de connexion au Google Doc. Essayez l'import manuel.");
     }
 }
@@ -170,7 +141,6 @@ async function saveToDrive() {
         downloadTextFile(content, "Rapport_Recette_Global.txt");
 
     } catch (e) {
-        console.error("Erreur Export:", e);
         alert("Erreur lors de l'export : " + e.message);
     }
 }
@@ -186,33 +156,35 @@ function setupModalClickOutside() {
 }
 
 function setupGlobalEnterHandler() {
-    // 1. Login (Handle on #admin-code)
     const loginInput = document.getElementById('admin-code');
     if (loginInput) {
         loginInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') handleLogin();
         });
     }
-
-    // 2. Modifier Modal
     const modInputs = document.querySelectorAll('#modifier-modal input, #modifier-modal select');
     modInputs.forEach(input => {
         input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') applyModifier();
         });
     });
-
-    // 3. Recipe Editor Inputs (Title, Servings)
-    // We want Enter to trigger "Save" here.
     const editorInputs = document.querySelectorAll('#edit-title, #edit-base-servings, #edit-image-url');
     editorInputs.forEach(input => {
         input.addEventListener('keydown', (e) => {
              if (e.key === 'Enter') {
-                 // Prevent default (like form submission if any)
                  e.preventDefault();
                  saveCurrentRecipe();
              }
         });
+    });
+}
+
+// New: Esc Handler
+function setupGlobalEscHandler() {
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'));
+        }
     });
 }
 
@@ -265,7 +237,7 @@ function createRecipe() {
     };
 }
 
-// --- Import/Export Logic ---
+// --- Import/Export Logic (Same as before) ---
 function parseSparseExcel(data) {
     const workbook = XLSX.read(data, {type: 'array'});
     const sheetName = workbook.SheetNames[0];
@@ -437,10 +409,9 @@ function renderAdminList() {
     recipes.forEach((r, index) => {
         const div = document.createElement('div');
         div.className = 'admin-recipe-row';
-        div.draggable = true; // Enable Drag
+        div.draggable = true;
         div.dataset.index = index;
 
-        // Add Drag Listeners
         div.addEventListener('dragstart', handleDragStart);
         div.addEventListener('dragover', handleDragOver);
         div.addEventListener('drop', handleDrop);
@@ -458,7 +429,7 @@ function renderAdminList() {
             <span style="flex-grow:1; margin-left:10px;">${r.title}</span>
             <div>
                 <button onclick="editRecipe('${r.id}')" class="small-btn">Éditer</button>
-                <button onclick="deleteRecipe('${r.id}')" class="small-btn" style="background:red">X</button>
+                <button onclick="deleteRecipe('${r.id}')" class="delete-btn" style="background:red; color:white; border-radius:50%; width:30px; height:30px; padding:0; display:inline-flex; align-items:center; justify-content:center;">X</button>
             </div>
         `;
         list.appendChild(div);
@@ -478,35 +449,19 @@ function handleDragOver(e) {
     return false;
 }
 
-function handleDragEnter(e) {
-    this.classList.add('over');
-}
-
-function handleDragLeave(e) {
-    this.classList.remove('over');
-}
+function handleDragEnter(e) { this.classList.add('over'); }
+function handleDragLeave(e) { this.classList.remove('over'); }
 
 function handleDrop(e) {
     if (e.stopPropagation) e.stopPropagation();
-
     if (dragSrcEl !== this) {
-        // Get Indices
         const srcIdx = parseInt(dragSrcEl.dataset.index);
         const targetIdx = parseInt(this.dataset.index);
-
-        // Move in Array
         const item = recipes[srcIdx];
         recipes.splice(srcIdx, 1);
         recipes.splice(targetIdx, 0, item);
-
-        // Re-render
         renderAdminList();
         renderRecipeGrid();
-
-        // Auto-save order? Or just wait for global save?
-        // User asked to move "where I want". Usually implies persistence.
-        // Let's trigger a silent save to be safe/consistent with "auto sync" philosophy.
-        // saveToDrive(); // Maybe too heavy if dragging a lot? Let's leave manual or wait for other save.
     }
     return false;
 }
@@ -544,7 +499,8 @@ function openEditor() {
 
     const ingList = document.getElementById('ingredients-list');
     ingList.innerHTML = '';
-    r.ingredients.forEach(ing => addIngredientRow(ing));
+    // Re-render ingredients using currentRecipe.ingredients which now supports reordering
+    r.ingredients.forEach((ing, idx) => addIngredientRow(ing, idx));
 
     document.getElementById('editor-mode').value = r.mode;
     toggleEditorMode();
@@ -585,7 +541,8 @@ function handleImageURLInput(e) {
 function handleImageUpload(e) {
     const file = e.target.files[0];
     if (file) {
-        compressImage(file, 1000, 0.8).then(base64 => {
+        // Reduced size/quality to ensure upload success
+        compressImage(file, 600, 0.6).then(base64 => {
             currentRecipe.image = base64;
             document.getElementById('edit-image-url').value = "";
             renderImagePreview(base64);
@@ -620,7 +577,8 @@ function compressImage(file, maxWidth, quality) {
     });
 }
 
-function addIngredientRow(data = null) {
+// Updated with Drag Handle
+function addIngredientRow(data = null, idx = null) {
     const id = data ? data.id : crypto.randomUUID();
     const group = data ? data.group : "";
     const name = data ? data.name : "";
@@ -630,25 +588,48 @@ function addIngredientRow(data = null) {
     const div = document.createElement('div');
     div.className = 'ing-row';
     div.dataset.id = id;
+    div.draggable = true; // Enable Drag
+
+    // Listeners for reordering ingredients
+    div.addEventListener('dragstart', handleIngDragStart);
+    div.addEventListener('dragover', handleDragOver); // Reuse generic over
+    div.addEventListener('drop', handleIngDrop);
+    div.addEventListener('dragenter', handleDragEnter);
+    div.addEventListener('dragleave', handleDragLeave);
+
     div.innerHTML = `
-        <div style="display:flex; flex-direction:column; gap:2px; justify-content:center; margin-right:5px;">
-             <!-- Up/Down arrows removed from ingredients for now as requested?
-                  User said "three small dash... for each that I can move".
-                  Implementing Drag and Drop for ingredients too is complex vanilla.
-                  Keeping arrows for ingredients/steps unless explicitly asked to change THOSE too.
-                  User said "parti admin" (list of recipes).
-                  "trois petit tiret devants chaque que je peux deplacer"
-                  Let's keep arrows for ingredients/steps for now to avoid breaking editor. -->
-            <button onclick="moveRowUp(this)" class="tiny-btn">↑</button>
-            <button onclick="moveRowDown(this)" class="tiny-btn">↓</button>
+        <div class="drag-handle">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
         </div>
         <input type="text" placeholder="Groupe" class="ing-group" value="${group}">
         <input type="text" placeholder="Ingrédient" class="ing-name" value="${name}" onkeydown="handleIngEnter(event)">
         <input type="number" placeholder="Qté" class="ing-qty" value="${qty}">
         <input type="text" placeholder="Unité" class="ing-unit" value="${unit}">
-        <button onclick="this.parentElement.remove()" class="small-btn" style="background:red">X</button>
+        <button onclick="this.parentElement.remove()" class="delete-btn" style="background:red; color:white; border-radius:50%; width:24px; height:24px; padding:0; display:inline-flex; align-items:center; justify-content:center;">X</button>
     `;
     document.getElementById('ingredients-list').appendChild(div);
+}
+
+// Drag Handlers for Ingredients
+let dragIngEl = null;
+function handleIngDragStart(e) {
+    dragIngEl = this;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', this.innerHTML);
+    this.classList.add('dragging');
+}
+function handleIngDrop(e) {
+    if (e.stopPropagation) e.stopPropagation();
+    if (dragIngEl !== this) {
+        // Swap DOM elements
+        this.parentNode.insertBefore(dragIngEl, this);
+        // Note: Actual data swap happens on 'Save' because saveCurrentRecipe reads the DOM order
+    }
+    return false;
 }
 
 function handleIngEnter(e) {
@@ -682,61 +663,59 @@ function renderStepsEditor() {
     });
 }
 
+// Updated with Drag Handle for Steps
 function addStepRow(content = "", idx = null) {
     const container = document.getElementById('steps-list');
     const div = document.createElement('div');
     div.className = 'step-row';
+    div.draggable = true;
+
+    div.addEventListener('dragstart', handleStepDragStart);
+    div.addEventListener('dragover', handleDragOver);
+    div.addEventListener('drop', handleStepDrop);
+    div.addEventListener('dragenter', handleDragEnter);
+    div.addEventListener('dragleave', handleDragLeave);
+
     div.innerHTML = `
-        <div style="display:flex; flex-direction:column; gap:2px; justify-content:center; margin-right:5px;">
-            <button onclick="moveStepUp(this)" class="tiny-btn">↑</button>
-            <button onclick="moveStepDown(this)" class="tiny-btn">↓</button>
+        <div class="drag-handle">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
         </div>
         <span class="step-num">Etape ${idx !== null ? idx + 1 : container.children.length + 1}</span>
         <div class="rich-editor step-editor" contenteditable="true">${content}</div>
-        <button onclick="removeStepRow(this)" class="small-btn" style="background:red">X</button>
+        <button onclick="removeStepRow(this)" class="delete-btn" style="background:red; color:white; border-radius:50%; width:24px; height:24px; padding:0; display:inline-flex; align-items:center; justify-content:center;">X</button>
     `;
     container.appendChild(div);
 }
 
+// Drag Handlers for Steps
+let dragStepEl = null;
+function handleStepDragStart(e) {
+    dragStepEl = this;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', this.innerHTML);
+    this.classList.add('dragging');
+}
+function handleStepDrop(e) {
+    if (e.stopPropagation) e.stopPropagation();
+    if (dragStepEl !== this) {
+        this.parentNode.insertBefore(dragStepEl, this);
+        // Renumber logic needed here for visual consistency
+        document.querySelectorAll('.step-row .step-num').forEach((el, i) => {
+            el.innerText = `Etape ${i + 1}`;
+        });
+    }
+    return false;
+}
+
 function removeStepRow(btn) {
     btn.parentElement.remove();
-    renumberSteps();
-}
-
-function moveStepUp(btn) {
-    const row = btn.closest('.step-row');
-    if (row.previousElementSibling) {
-        row.parentNode.insertBefore(row, row.previousElementSibling);
-        renumberSteps();
-    }
-}
-
-function moveStepDown(btn) {
-    const row = btn.closest('.step-row');
-    if (row.nextElementSibling) {
-        row.parentNode.insertBefore(row.nextElementSibling, row);
-        renumberSteps();
-    }
-}
-
-function renumberSteps() {
     document.querySelectorAll('.step-row .step-num').forEach((el, i) => {
         el.innerText = `Etape ${i + 1}`;
     });
-}
-
-function moveRowUp(btn) {
-    const row = btn.closest('.ing-row');
-    if (row.previousElementSibling) {
-        row.parentNode.insertBefore(row, row.previousElementSibling);
-    }
-}
-
-function moveRowDown(btn) {
-    const row = btn.closest('.ing-row');
-    if (row.nextElementSibling) {
-        row.parentNode.insertBefore(row.nextElementSibling, row);
-    }
 }
 
 function saveCurrentRecipe() {
@@ -744,7 +723,7 @@ function saveCurrentRecipe() {
     currentRecipe.mode = document.getElementById('editor-mode').value;
     currentRecipe.baseServings = parseInt(document.getElementById('edit-base-servings').value) || 1;
 
-    // Ingredients
+    // Ingredients - Read from DOM (handles reordering)
     const rows = document.querySelectorAll('.ing-row');
     currentRecipe.ingredients = [];
     rows.forEach(row => {
@@ -775,7 +754,7 @@ function saveCurrentRecipe() {
     renderRecipeGrid();
 }
 
-// --- Smart Editor & Mentions ---
+// --- Smart Editor & Mentions (Same as before) ---
 function setupMentionSystem() {
     const dropdown = document.getElementById('mention-dropdown');
     document.addEventListener('input', (e) => {
@@ -921,7 +900,7 @@ function showDetail(r) {
     currentRecipe = r; activeServings = r.baseServings || 1; activeChecklist = new Set();
     renderDetailView(); document.getElementById('detail-modal').classList.remove('hidden');
 }
-function renderDetailView() { /* (unchanged content...) */
+function renderDetailView() {
     const r = currentRecipe;
     const content = document.getElementById('detail-content');
     const scale = activeServings / (r.baseServings || 1);
