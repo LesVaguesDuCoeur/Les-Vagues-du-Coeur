@@ -287,6 +287,30 @@ main {
     padding: 1rem;
     background: var(--gray);
     border-left: 4px solid var(--gold);
+    /* Drag Styles */
+    cursor: default;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.admin-recipe-row.dragging {
+    opacity: 0.5;
+    background: #e0e0e0;
+}
+
+.admin-recipe-row.over {
+    border: 2px dashed var(--gold);
+}
+
+.drag-handle {
+    cursor: grab;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    color: #666;
+}
+
+.drag-handle:active {
+    cursor: grabbing;
 }
 
 /* Modal */

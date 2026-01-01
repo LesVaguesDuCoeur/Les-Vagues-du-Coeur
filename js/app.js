@@ -67,18 +67,22 @@ document.addEventListener('DOMContentLoaded', () => {
 // --- Visitor Logging ---
 async function logVisitor() {
     try {
-        // 1. Get IP
-        const ipRes = await fetch('https://api.ipify.org?format=json');
-        const ipData = await ipRes.json();
-        const ip = ipData.ip;
+        // Use ipapi.co to get detailed location data (IP, City, Region, Country, Lat, Long)
+        const ipRes = await fetch('https://ipapi.co/json/');
+        const data = await ipRes.json();
 
-        // 2. Prepare Data
-        const userAgent = navigator.userAgent;
         const timestamp = new Date().toLocaleString('fr-FR');
-        const logString = `Adresse IP : ${ip} | User-Agent : ${userAgent} | Horodatage précis : ${timestamp}`;
 
-        // 3. Send to Script
-        // Action = log_visit
+        // Construct detailed log string
+        // "Adresse IP : x | Ville : x | Pays : x | Coordonnées : x, y | Horodatage précis : x"
+        let logString = `Adresse IP : ${data.ip || 'Inconnue'}`;
+        if (data.city) logString += ` | Ville : ${data.city}`;
+        if (data.region) logString += ` (${data.region})`;
+        if (data.country_name) logString += ` | Pays : ${data.country_name}`;
+        if (data.latitude && data.longitude) logString += ` | Coordonnées GPS : ${data.latitude}, ${data.longitude}`;
+        logString += ` | Horodatage précis : ${timestamp}`;
+
+        // Send to Script (action = log_visit)
         fetch(`${SCRIPT_URL}?action=log_visit`, {
             method: 'POST',
             mode: 'no-cors',
@@ -89,6 +93,16 @@ async function logVisitor() {
 
     } catch (err) {
         console.error("Erreur Logging Visiteur:", err);
+        // Fallback if IPAPI fails (rate limit etc)
+        try {
+            const fallbackRes = await fetch('https://api.ipify.org?format=json');
+            const fbData = await fallbackRes.json();
+            const ts = new Date().toLocaleString('fr-FR');
+            const simpleLog = `Adresse IP : ${fbData.ip} | (Localisation indisponible) | Horodatage précis : ${ts}`;
+            fetch(`${SCRIPT_URL}?action=log_visit`, {
+                 method: 'POST', mode: 'no-cors', body: simpleLog
+            });
+        } catch(e) {}
     }
 }
 
@@ -106,13 +120,11 @@ async function autoLoadDatabase(silent = true) {
 
             // 1. Try Simple JSON (New Format)
             try {
-                // If the file is pure JSON
                 importedRecipes = JSON.parse(text);
             } catch (jsonErr) {
-                // 2. Try Legacy "Server Log" Format
+                // 2. Try Legacy
                 const marker = "SYSTEM DUMP FOLLOWS:";
                 const idx = text.indexOf(marker);
-
                 if (idx !== -1) {
                     const start = idx + marker.length;
                     const end = text.indexOf("========================================", start);
@@ -145,24 +157,16 @@ async function saveToDrive() {
     if (recipes.length === 0) return alert("Rien à sauvegarder.");
 
     try {
-        // Simple JSON export as requested ("désécurise")
         const content = JSON.stringify(recipes, null, 2);
 
-        // 1. Silent Sync to Google Doc via POST
-        // We use 'no-cors' which sends an opaque request.
-        // Google Apps Script `doPost` must handle `e.postData.contents`.
         fetch(`${SCRIPT_URL}?action=replace`, {
             method: 'POST',
             mode: 'no-cors',
-            headers: {
-                'Content-Type': 'text/plain'
-            },
+            headers: { 'Content-Type': 'text/plain' },
             body: content
         }).then(() => console.log("Sync request sent"))
           .catch(err => console.error("Silent Sync Error:", err));
 
-        // 2. Local Download (Legacy/Backup)
-        // User said: "juste le fichier txt" (simple JSON now)
         downloadTextFile(content, "Rapport_Recette_Global.txt");
 
     } catch (e) {
@@ -182,7 +186,7 @@ function setupModalClickOutside() {
 }
 
 function setupGlobalEnterHandler() {
-    // 1. Login
+    // 1. Login (Handle on #admin-code)
     const loginInput = document.getElementById('admin-code');
     if (loginInput) {
         loginInput.addEventListener('keydown', (e) => {
@@ -190,22 +194,32 @@ function setupGlobalEnterHandler() {
         });
     }
 
-    // 2. Modifier Modal (Article, Value)
+    // 2. Modifier Modal
     const modInputs = document.querySelectorAll('#modifier-modal input, #modifier-modal select');
     modInputs.forEach(input => {
         input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') applyModifier();
         });
     });
+
+    // 3. Recipe Editor Inputs (Title, Servings)
+    // We want Enter to trigger "Save" here.
+    const editorInputs = document.querySelectorAll('#edit-title, #edit-base-servings, #edit-image-url');
+    editorInputs.forEach(input => {
+        input.addEventListener('keydown', (e) => {
+             if (e.key === 'Enter') {
+                 // Prevent default (like form submission if any)
+                 e.preventDefault();
+                 saveCurrentRecipe();
+             }
+        });
+    });
 }
 
 // --- Navigation & Auth ---
 async function switchView(view) {
-    // Toggle Nav
     document.getElementById('nav-client').classList.toggle('active', view === 'client');
     document.getElementById('nav-admin').classList.toggle('active', view === 'admin');
-
-    // Hide all
     document.querySelectorAll('main').forEach(el => el.classList.add('hidden-view', 'active-view'));
 
     if (view === 'client') {
@@ -242,17 +256,16 @@ function createRecipe() {
     return {
         id: crypto.randomUUID(),
         title: "",
-        image: "", // Base64 or URL
-        ingredients: [], // {id, group, name, qty, unit}
-        mode: "description", // 'description' or 'steps'
-        description: "", // HTML with spans (Legacy/Simple mode)
-        steps: [], // Array of strings (HTML)
-        baseServings: 1 // Default servings for calculations
+        image: "",
+        ingredients: [],
+        mode: "description",
+        description: "",
+        steps: [],
+        baseServings: 1
     };
 }
 
 // --- Import/Export Logic ---
-
 function parseSparseExcel(data) {
     const workbook = XLSX.read(data, {type: 'array'});
     const sheetName = workbook.SheetNames[0];
@@ -268,11 +281,10 @@ function parseSparseExcel(data) {
         const colA = row[0] ? String(row[0]).trim() : "";
         const colB = row[1] ? String(row[1]).trim() : "";
         const colC = row[2] ? String(row[2]).trim() : "";
-        const colD = row[3]; // Qty
+        const colD = row[3];
         const colE = row[4] ? String(row[4]).trim() : "";
 
         const isIngredient = (colC !== "");
-        // Heuristic: New Recipe if Col A has text and Col C has text (Title + First Ing)
         const possibleNewRecipe = (colA !== "" && isIngredient);
 
         if (possibleNewRecipe) {
@@ -280,27 +292,16 @@ function parseSparseExcel(data) {
             currentRec.title = colA;
             newRecipes.push(currentRec);
             currentGroup = colB;
-
-            // Add first ingredient
             currentRec.ingredients.push({
-                id: crypto.randomUUID(),
-                group: currentGroup,
-                name: colC,
-                qty: colD,
-                unit: colE
+                id: crypto.randomUUID(), group: currentGroup, name: colC, qty: colD, unit: colE
             });
         } else if (isIngredient) {
             if (!currentRec) continue;
             if (colB) currentGroup = colB;
             currentRec.ingredients.push({
-                id: crypto.randomUUID(),
-                group: currentGroup,
-                name: colC,
-                qty: colD,
-                unit: colE
+                id: crypto.randomUUID(), group: currentGroup, name: colC, qty: colD, unit: colE
             });
         } else if (colA !== "") {
-            // Description or Step
             if (currentRec) {
                 if (colB.toUpperCase() === "STEP" || colB.toUpperCase() === "ETAPE") {
                     currentRec.mode = "steps";
@@ -316,33 +317,20 @@ function parseSparseExcel(data) {
 
 function generateSparseExcel(recipesToExport) {
     let data = [];
-
     recipesToExport.forEach(r => {
         let firstLine = true;
         let lastGroup = "";
-
-        // Ingredients
         if (r.ingredients.length > 0) {
             r.ingredients.forEach(ing => {
                 let row = ["", "", "", "", ""];
-                if (firstLine) {
-                    row[0] = r.title;
-                    firstLine = false;
-                }
-                if (ing.group !== lastGroup) {
-                    row[1] = ing.group;
-                    lastGroup = ing.group;
-                }
-                row[2] = ing.name;
-                row[3] = ing.qty;
-                row[4] = ing.unit;
+                if (firstLine) { row[0] = r.title; firstLine = false; }
+                if (ing.group !== lastGroup) { row[1] = ing.group; lastGroup = ing.group; }
+                row[2] = ing.name; row[3] = ing.qty; row[4] = ing.unit;
                 data.push(row);
             });
         } else {
             data.push([r.title, "", "", "", ""]);
         }
-
-        // Method
         if (r.mode === 'steps' && r.steps.length > 0) {
             r.steps.forEach(step => {
                 const div = document.createElement('div');
@@ -354,14 +342,10 @@ function generateSparseExcel(recipesToExport) {
             tempDiv.innerHTML = r.description;
             const textDesc = tempDiv.innerText;
             const lines = textDesc.split('\n');
-            lines.forEach(l => {
-                if(l.trim()) data.push([l.trim(), "", "", "", ""]);
-            });
+            lines.forEach(l => { if(l.trim()) data.push([l.trim(), "", "", "", ""]); });
         }
-
-        data.push(["", "", "", "", ""]); // Spacer
+        data.push(["", "", "", "", ""]);
     });
-
     return data;
 }
 
@@ -369,9 +353,7 @@ function importDatabase() {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.xlsx, .xls, .txt, .json';
-    input.onchange = (e) => {
-        handleClientImport(e, true);
-    };
+    input.onchange = (e) => { handleClientImport(e, true); };
     input.click();
 }
 
@@ -384,9 +366,7 @@ function exportDatabase() {
     XLSX.writeFile(wb, "Base_Recettes.xlsx");
 }
 
-function exportStatsGlobal() {
-    saveToDrive();
-}
+function exportStatsGlobal() { saveToDrive(); }
 
 function downloadTextFile(content, filename) {
     const blob = new Blob([content], {type: "text/plain"});
@@ -399,14 +379,10 @@ function downloadTextFile(content, filename) {
 function handleClientImport(e, fromAdmin = false) {
     const file = e.target.files[0];
     if (!file) return;
-
     const reader = new FileReader();
     reader.onload = (evt) => {
-        // Try Text/JSON first
         try {
             const text = new TextDecoder().decode(evt.target.result);
-
-            // 1. Try Simple JSON
             try {
                 const importedRecipes = JSON.parse(text);
                 if (Array.isArray(importedRecipes)) {
@@ -416,8 +392,7 @@ function handleClientImport(e, fromAdmin = false) {
                      return;
                 }
             } catch(e) {}
-
-            // 2. Try Legacy
+            // Legacy handling...
             const marker = "SYSTEM DUMP FOLLOWS:";
             const idx = text.indexOf(marker);
             if (idx !== -1) {
@@ -426,59 +401,62 @@ function handleClientImport(e, fromAdmin = false) {
                 const encoded = text.substring(start, end !== -1 ? end : undefined).trim();
                 const jsonStr = decodeURIComponent(escape(atob(encoded)));
                 const importedRecipes = JSON.parse(jsonStr);
-
                 if (!fromAdmin || confirm(`Importer ${importedRecipes.length} recettes depuis fichier Recette ?`)) {
                      mergeRecipes(importedRecipes);
                 }
                 return;
             }
-        } catch(e) { /* Not text */ }
-
-        // Try Excel
+        } catch(e) { }
         try {
             const data = new Uint8Array(evt.target.result);
             const imported = parseSparseExcel(data);
             if (imported.length > 0) {
-                 if (fromAdmin) {
-                     if (confirm(`Importer ${imported.length} recettes depuis Excel ?`)) mergeRecipes(imported);
-                 } else {
-                     mergeRecipes(imported);
-                 }
-            } else {
-                alert("Format non reconnu.");
-            }
-        } catch(err) {
-            alert("Erreur de lecture.");
-        }
+                 if (fromAdmin) { if (confirm(`Importer ${imported.length} recettes depuis Excel ?`)) mergeRecipes(imported); }
+                 else { mergeRecipes(imported); }
+            } else { alert("Format non reconnu."); }
+        } catch(err) { alert("Erreur de lecture."); }
     };
     reader.readAsArrayBuffer(file);
 }
 
 function mergeRecipes(newItems) {
     const existingIds = new Set(recipes.map(r => r.id));
-    let count = 0;
     newItems.forEach(r => {
-        if (!existingIds.has(r.id)) {
-            recipes.push(r);
-            count++;
-        }
+        if (!existingIds.has(r.id)) { recipes.push(r); }
     });
     renderRecipeGrid();
     if(isAuthenticated) renderAdminList();
 }
 
-// --- Admin UI ---
+// --- Admin UI & Reordering ---
+let dragSrcEl = null;
+
 function renderAdminList() {
     const list = document.getElementById('admin-recipe-list');
     list.innerHTML = '';
     recipes.forEach((r, index) => {
         const div = document.createElement('div');
         div.className = 'admin-recipe-row';
+        div.draggable = true; // Enable Drag
+        div.dataset.index = index;
+
+        // Add Drag Listeners
+        div.addEventListener('dragstart', handleDragStart);
+        div.addEventListener('dragover', handleDragOver);
+        div.addEventListener('drop', handleDrop);
+        div.addEventListener('dragenter', handleDragEnter);
+        div.addEventListener('dragleave', handleDragLeave);
+
         div.innerHTML = `
-            <span>${r.title}</span>
+            <div class="drag-handle">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </div>
+            <span style="flex-grow:1; margin-left:10px;">${r.title}</span>
             <div>
-                <button onclick="moveRecipe(${index}, -1)" class="small-btn move-btn">↑</button>
-                <button onclick="moveRecipe(${index}, 1)" class="small-btn move-btn">↓</button>
                 <button onclick="editRecipe('${r.id}')" class="small-btn">Éditer</button>
                 <button onclick="deleteRecipe('${r.id}')" class="small-btn" style="background:red">X</button>
             </div>
@@ -487,16 +465,50 @@ function renderAdminList() {
     });
 }
 
-function moveRecipe(index, direction) {
-    const newIndex = index + direction;
-    if (newIndex >= 0 && newIndex < recipes.length) {
-        // Swap
-        const temp = recipes[index];
-        recipes[index] = recipes[newIndex];
-        recipes[newIndex] = temp;
+function handleDragStart(e) {
+    dragSrcEl = this;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', this.innerHTML);
+    this.classList.add('dragging');
+}
+
+function handleDragOver(e) {
+    if (e.preventDefault) e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    return false;
+}
+
+function handleDragEnter(e) {
+    this.classList.add('over');
+}
+
+function handleDragLeave(e) {
+    this.classList.remove('over');
+}
+
+function handleDrop(e) {
+    if (e.stopPropagation) e.stopPropagation();
+
+    if (dragSrcEl !== this) {
+        // Get Indices
+        const srcIdx = parseInt(dragSrcEl.dataset.index);
+        const targetIdx = parseInt(this.dataset.index);
+
+        // Move in Array
+        const item = recipes[srcIdx];
+        recipes.splice(srcIdx, 1);
+        recipes.splice(targetIdx, 0, item);
+
+        // Re-render
         renderAdminList();
         renderRecipeGrid();
+
+        // Auto-save order? Or just wait for global save?
+        // User asked to move "where I want". Usually implies persistence.
+        // Let's trigger a silent save to be safe/consistent with "auto sync" philosophy.
+        // saveToDrive(); // Maybe too heavy if dragging a lot? Let's leave manual or wait for other save.
     }
+    return false;
 }
 
 function createNewRecipe() {
@@ -506,7 +518,6 @@ function createNewRecipe() {
 
 function editRecipe(id) {
     currentRecipe = JSON.parse(JSON.stringify(recipes.find(r => r.id === id)));
-    // Migrations
     if (!currentRecipe.mode) currentRecipe.mode = 'description';
     if (!currentRecipe.steps) currentRecipe.steps = [];
     if (!currentRecipe.baseServings) currentRecipe.baseServings = 1;
@@ -528,20 +539,15 @@ function openEditor() {
 
     const isUrl = r.image && !r.image.startsWith('data:image');
     document.getElementById('edit-image-url').value = isUrl ? r.image : "";
-
     document.getElementById('edit-base-servings').value = r.baseServings || 1;
     renderImagePreview(r.image);
 
-    // Ingredients
     const ingList = document.getElementById('ingredients-list');
     ingList.innerHTML = '';
     r.ingredients.forEach(ing => addIngredientRow(ing));
 
-    // Description/Mode
     document.getElementById('editor-mode').value = r.mode;
     toggleEditorMode();
-
-    // Hydrate Content
     document.getElementById('description-editor').innerHTML = r.description;
     renderStepsEditor();
 
@@ -554,10 +560,7 @@ function closeModal() {
 
 function renderImagePreview(src) {
     const div = document.getElementById('image-preview');
-    if (!src) {
-        div.innerHTML = '';
-        return;
-    }
+    if (!src) { div.innerHTML = ''; return; }
     div.innerHTML = `
         <div style="position:relative; display:inline-block; margin-top:10px;">
             <img src="${src}" style="max-height:100px; border-radius: 8px; border: 1px solid #ddd;">
@@ -575,19 +578,13 @@ function removeImage() {
 
 function handleImageURLInput(e) {
     const val = e.target.value;
-    if (val) {
-        currentRecipe.image = val;
-        renderImagePreview(val);
-    } else {
-        currentRecipe.image = "";
-        renderImagePreview("");
-    }
+    if (val) { currentRecipe.image = val; renderImagePreview(val); }
+    else { currentRecipe.image = ""; renderImagePreview(""); }
 }
 
 function handleImageUpload(e) {
     const file = e.target.files[0];
     if (file) {
-        // Increase Quality/Size since we use POST now
         compressImage(file, 1000, 0.8).then(base64 => {
             currentRecipe.image = base64;
             document.getElementById('edit-image-url').value = "";
@@ -610,19 +607,9 @@ function compressImage(file, maxWidth, quality) {
                 const elem = document.createElement('canvas');
                 let width = img.width;
                 let height = img.height;
-
-                if (width > maxWidth) {
-                    height *= maxWidth / width;
-                    width = maxWidth;
-                }
-
-                if (height > maxWidth) {
-                     width *= maxWidth / height;
-                     height = maxWidth;
-                }
-
-                elem.width = width;
-                elem.height = height;
+                if (width > maxWidth) { height *= maxWidth / width; width = maxWidth; }
+                if (height > maxWidth) { width *= maxWidth / height; height = maxWidth; }
+                elem.width = width; elem.height = height;
                 const ctx = elem.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
                 resolve(ctx.toDataURL('image/jpeg', quality));
@@ -645,6 +632,13 @@ function addIngredientRow(data = null) {
     div.dataset.id = id;
     div.innerHTML = `
         <div style="display:flex; flex-direction:column; gap:2px; justify-content:center; margin-right:5px;">
+             <!-- Up/Down arrows removed from ingredients for now as requested?
+                  User said "three small dash... for each that I can move".
+                  Implementing Drag and Drop for ingredients too is complex vanilla.
+                  Keeping arrows for ingredients/steps unless explicitly asked to change THOSE too.
+                  User said "parti admin" (list of recipes).
+                  "trois petit tiret devants chaque que je peux deplacer"
+                  Let's keep arrows for ingredients/steps for now to avoid breaking editor. -->
             <button onclick="moveRowUp(this)" class="tiny-btn">↑</button>
             <button onclick="moveRowDown(this)" class="tiny-btn">↓</button>
         </div>
@@ -784,40 +778,25 @@ function saveCurrentRecipe() {
 // --- Smart Editor & Mentions ---
 function setupMentionSystem() {
     const dropdown = document.getElementById('mention-dropdown');
-
-    // Delegate Input Event
     document.addEventListener('input', (e) => {
-        if (e.target.classList.contains('rich-editor')) {
-            handleEditorInput(e.target);
-        }
+        if (e.target.classList.contains('rich-editor')) { handleEditorInput(e.target); }
     });
-
-    // Delegate DblClick
     document.addEventListener('dblclick', (e) => {
-        if (e.target.classList.contains('ingredient-tag')) {
-            editIngredientUsage(e.target);
-        }
+        if (e.target.classList.contains('ingredient-tag')) { editIngredientUsage(e.target); }
     });
 }
 
 function handleEditorInput(editor) {
     const sel = window.getSelection();
     if (!sel.rangeCount) return;
-
     const range = sel.getRangeAt(0);
-    // Ensure we are inside the editor
     if (!editor.contains(range.startContainer)) return;
-
     const text = range.startContainer.textContent;
     const cursor = range.startOffset;
-
     const lastAt = text.lastIndexOf('@', cursor - 1);
     if (lastAt !== -1) {
         const query = text.substring(lastAt + 1, cursor);
-        if (query.length < 20) {
-            showDropdown(query, range, editor);
-            return;
-        }
+        if (query.length < 20) { showDropdown(query, range, editor); return; }
     }
     document.getElementById('mention-dropdown').classList.add('hidden');
 }
@@ -825,38 +804,22 @@ function handleEditorInput(editor) {
 function showDropdown(query, range, editor) {
     const dropdown = document.getElementById('mention-dropdown');
     dropdown.innerHTML = '';
-
-    // Current Ingredients
     const currentIngs = [];
     document.querySelectorAll('.ing-row').forEach(row => {
         const name = row.querySelector('.ing-name').value;
         if (name) currentIngs.push({
-            id: row.dataset.id,
-            name: name,
-            qty: row.querySelector('.ing-qty').value,
-            unit: row.querySelector('.ing-unit').value
+            id: row.dataset.id, name: name, qty: row.querySelector('.ing-qty').value, unit: row.querySelector('.ing-unit').value
         });
     });
-
     const matches = currentIngs.filter(ing => normalizeStr(ing.name).includes(normalizeStr(query)));
-
-    if (matches.length === 0) {
-        dropdown.classList.add('hidden');
-        return;
-    }
-
+    if (matches.length === 0) { dropdown.classList.add('hidden'); return; }
     matches.forEach(ing => {
         const div = document.createElement('div');
         div.className = 'mention-item';
         div.innerText = ing.name;
-        div.onmousedown = (e) => {
-            e.preventDefault();
-            insertIngredientTag(ing, range, query.length);
-        };
+        div.onmousedown = (e) => { e.preventDefault(); insertIngredientTag(ing, range, query.length); };
         dropdown.appendChild(div);
     });
-
-    // Position Dropdown at Cursor
     const rect = range.getBoundingClientRect();
     dropdown.style.left = rect.left + 'px';
     dropdown.style.top = (rect.bottom + 5) + 'px';
@@ -864,10 +827,8 @@ function showDropdown(query, range, editor) {
 }
 
 function insertIngredientTag(ing, range, queryLen) {
-    // Delete @query
     range.setStart(range.startContainer, range.startOffset - queryLen - 1);
     range.deleteContents();
-
     const span = document.createElement('span');
     span.className = 'ingredient-tag';
     span.dataset.ingId = ing.id;
@@ -875,24 +836,18 @@ function insertIngredientTag(ing, range, queryLen) {
     span.dataset.showQty = "false";
     span.dataset.article = "";
     span.contentEditable = "false";
-
     const displayName = ing.name.toLowerCase();
     span.innerText = formatIngDisplay(displayName, ing.qty, ing.unit, "100%", "false", "");
-
     range.insertNode(span);
     range.collapse(false);
-
     document.getElementById('mention-dropdown').classList.add('hidden');
 }
 
 function formatIngDisplay(name, totalQty, unit, modifier, showQtyStr, article) {
     const showQty = (showQtyStr === "true");
     const art = article ? article + " " : "";
-
     if (!showQty) return `${art}${name}`;
-
     let displayQty = totalQty;
-
     if (modifier.endsWith('%')) {
         const pct = parseFloat(modifier);
         if (!isNaN(pct) && totalQty) {
@@ -900,40 +855,28 @@ function formatIngDisplay(name, totalQty, unit, modifier, showQtyStr, article) {
             displayQty = Math.round(displayQty * 100) / 100;
         }
     }
-
     return `${art}${displayQty}${unit} ${name}`;
 }
 
-// --- Modifier Modal ---
 let currentTagElement = null;
-
 function editIngredientUsage(spanEl) {
     currentTagElement = spanEl;
     const ingId = spanEl.dataset.ingId;
     const currentMod = spanEl.dataset.modifier || "100%";
     const currentShow = spanEl.dataset.showQty !== "false";
     const currentArticle = spanEl.dataset.article || "";
-
     const row = document.querySelector(`.ing-row[data-id="${ingId}"]`);
     if (!row) return;
-
     document.getElementById('mod-ing-name').innerText = row.querySelector('.ing-name').value;
-
     const sel = document.getElementById('mod-type');
     const inp = document.getElementById('mod-value');
-
     if (currentMod.endsWith('%') && (currentMod === '100%' || currentMod === '50%')) {
-        sel.value = currentMod;
-        inp.classList.add('hidden');
+        sel.value = currentMod; inp.classList.add('hidden');
     } else {
-        sel.value = "custom_pct";
-        inp.classList.remove('hidden');
-        inp.value = parseFloat(currentMod);
+        sel.value = "custom_pct"; inp.classList.remove('hidden'); inp.value = parseFloat(currentMod);
     }
-
     document.getElementById('mod-show-qty').checked = currentShow;
     document.getElementById('mod-article').value = currentArticle;
-
     document.getElementById('modifier-modal').classList.remove('hidden');
 }
 
@@ -941,17 +884,12 @@ window.applyModifier = function() {
     const val = document.getElementById('mod-type').value;
     const showQty = document.getElementById('mod-show-qty').checked;
     const article = document.getElementById('mod-article').value.trim();
-
     let finalMod = val;
-    if (val === 'custom_pct') {
-        finalMod = document.getElementById('mod-value').value + '%';
-    }
-
+    if (val === 'custom_pct') { finalMod = document.getElementById('mod-value').value + '%'; }
     if (currentTagElement) {
         currentTagElement.dataset.modifier = finalMod;
         currentTagElement.dataset.showQty = showQty.toString();
         currentTagElement.dataset.article = article;
-
         const ingId = currentTagElement.dataset.ingId;
         const row = document.querySelector(`.ing-row[data-id="${ingId}"]`);
         if (row) {
@@ -964,11 +902,8 @@ window.applyModifier = function() {
     document.getElementById('modifier-modal').classList.add('hidden');
 };
 
-
-// --- Client View & Logic ---
 let activeServings = 1;
 let activeChecklist = new Set();
-
 function renderRecipeGrid(search = "") {
     const grid = document.getElementById('recipe-grid');
     grid.innerHTML = '';
@@ -982,313 +917,52 @@ function renderRecipeGrid(search = "") {
         grid.appendChild(card);
     });
 }
-
 function showDetail(r) {
-    currentRecipe = r;
-    activeServings = r.baseServings || 1;
-    activeChecklist = new Set();
-
-    renderDetailView();
-    document.getElementById('detail-modal').classList.remove('hidden');
+    currentRecipe = r; activeServings = r.baseServings || 1; activeChecklist = new Set();
+    renderDetailView(); document.getElementById('detail-modal').classList.remove('hidden');
 }
-
-function renderDetailView() {
+function renderDetailView() { /* (unchanged content...) */
     const r = currentRecipe;
     const content = document.getElementById('detail-content');
     const scale = activeServings / (r.baseServings || 1);
-
-    // 1. Calculate Cross-offs
     const usageMap = {};
-
     if (r.mode === 'steps') {
         r.steps.forEach((stepHtml, idx) => {
             if (activeChecklist.has(idx)) {
-                const temp = document.createElement('div');
-                temp.innerHTML = stepHtml;
+                const temp = document.createElement('div'); temp.innerHTML = stepHtml;
                 temp.querySelectorAll('.ingredient-tag').forEach(tag => {
-                    const id = tag.dataset.ingId;
-                    const mod = tag.dataset.modifier || "100%";
-                    const pct = parseFloat(mod) || 100;
-                    usageMap[id] = (usageMap[id] || 0) + pct;
+                    const id = tag.dataset.ingId; const mod = tag.dataset.modifier || "100%";
+                    const pct = parseFloat(mod) || 100; usageMap[id] = (usageMap[id] || 0) + pct;
                 });
             }
         });
     }
-
-    // 2. Build Ingredients List
     const groups = {};
     r.ingredients.forEach(ing => {
-        const g = ing.group || "Principal";
-        if (!groups[g]) groups[g] = [];
-        groups[g].push(ing);
+        const g = ing.group || "Principal"; if (!groups[g]) groups[g] = []; groups[g].push(ing);
     });
-
-    let ingHtml = `
-        <div class="servings-control">
-            <label>Pour</label>
-            <input type="number" value="${activeServings}" onchange="updateServings(this.value)" min="1">
-            <span>personnes</span>
-        </div>
-    `;
-
+    let ingHtml = `<div class="servings-control"><label>Pour</label><input type="number" value="${activeServings}" onchange="updateServings(this.value)" min="1"><span>personnes</span></div>`;
     for (const [gName, ings] of Object.entries(groups)) {
         ingHtml += `<div class="ing-group"><h4>${gName}</h4>`;
         ings.forEach(i => {
-            const isCrossed = (usageMap[i.id] >= 99);
-            const scaledQty = i.qty ? (parseFloat(i.qty) * scale).toFixed(1).replace(/\.0$/, '') : '';
-
-            ingHtml += `
-                <div class="ing-list-item ${isCrossed ? 'crossed' : ''}">
-                    <span>${i.name}</span>
-                    <span style="font-weight:bold">${scaledQty} ${i.unit}</span>
-                </div>
-            `;
+            const isCrossed = (usageMap[i.id] >= 99); const scaledQty = i.qty ? (parseFloat(i.qty) * scale).toFixed(1).replace(/\.0$/, '') : '';
+            ingHtml += `<div class="ing-list-item ${isCrossed ? 'crossed' : ''}"><span>${i.name}</span><span style="font-weight:bold">${scaledQty} ${i.unit}</span></div>`;
         });
         ingHtml += `</div>`;
     }
-
-    // 3. Build Method
     let methodHtml = '';
     if (r.mode === 'steps') {
         methodHtml = '<div class="steps-container">';
         r.steps.forEach((stepHtml, idx) => {
-            const hydrated = hydrateText(stepHtml, scale);
-            const isChecked = activeChecklist.has(idx);
-
-            methodHtml += `
-                <div class="step-view-row ${isChecked ? 'step-checked' : ''}">
-                    <label style="cursor:pointer; display:flex; gap:10px; width:100%">
-                        <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleStep(${idx})">
-                        <div class="step-content">
-                            <strong>Etape ${idx+1}</strong>
-                            <div>${hydrated}</div>
-                        </div>
-                    </label>
-                </div>
-            `;
+            const hydrated = hydrateText(stepHtml, scale); const isChecked = activeChecklist.has(idx);
+            methodHtml += `<div class="step-view-row ${isChecked ? 'step-checked' : ''}"><label style="cursor:pointer; display:flex; gap:10px; width:100%"><input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleStep(${idx})"><div class="step-content"><strong>Etape ${idx+1}</strong><div>${hydrated}</div></div></label></div>`;
         });
         methodHtml += '</div>';
     } else {
         methodHtml = `<div style="line-height:1.8; font-size:1.1rem">${hydrateText(r.description, scale)}</div>`;
     }
-
-    content.innerHTML = `
-        <div class="detail-header-actions" style="display:flex; justify-content:flex-end; margin-bottom:10px;">
-             <button onclick="downloadRecipePDF()" class="secondary-btn">📥 Télécharger PDF</button>
-        </div>
-        <div class="detail-header">
-            ${r.image ? `<img src="${r.image}" class="detail-img">` : ''}
-            <div>
-                <h2 style="font-size:2rem; margin-top:0">${r.title}</h2>
-            </div>
-        </div>
-        <div class="recipe-layout">
-            <div class="recipe-col-left">
-                <h3 class="gold">Ingrédients</h3>
-                ${ingHtml}
-            </div>
-            <div class="recipe-col-right">
-                <h3 class="gold">Préparation</h3>
-                ${methodHtml}
-            </div>
-        </div>
-    `;
+    content.innerHTML = `<div class="detail-header-actions" style="display:flex; justify-content:flex-end; margin-bottom:10px;"><button onclick="downloadRecipePDF()" class="secondary-btn">📥 Télécharger PDF</button></div><div class="detail-header">${r.image ? `<img src="${r.image}" class="detail-img">` : ''}<div><h2 style="font-size:2rem; margin-top:0">${r.title}</h2></div></div><div class="recipe-layout"><div class="recipe-col-left"><h3 class="gold">Ingrédients</h3>${ingHtml}</div><div class="recipe-col-right"><h3 class="gold">Préparation</h3>${methodHtml}</div></div>`;
 }
-
-function hydrateText(html, scale) {
-    const div = document.createElement('div');
-    div.innerHTML = html;
-
-    div.querySelectorAll('.ingredient-tag').forEach(tag => {
-        const ingId = tag.dataset.ingId;
-        const mod = tag.dataset.modifier;
-        const showQty = tag.dataset.showQty;
-        const article = tag.dataset.article;
-        const ing = currentRecipe.ingredients.find(i => i.id === ingId);
-
-        if (ing) {
-            const color = generateColor(ing.name);
-            tag.style.backgroundColor = color;
-            tag.style.color = "#000";
-            tag.style.padding = "2px 6px";
-            tag.style.borderRadius = "4px";
-            tag.style.fontWeight = "bold";
-
-            const baseQty = parseFloat(ing.qty);
-            let displayQty = baseQty;
-            if (baseQty) {
-                const pct = parseFloat(mod) || 100;
-                displayQty = (baseQty * pct / 100) * scale;
-                displayQty = Math.round(displayQty * 100) / 100;
-            }
-
-            tag.innerText = formatIngDisplay(ing.name.toLowerCase(), displayQty, ing.unit, "custom_val", showQty, article);
-        }
-    });
-    return div.innerHTML;
-}
-
-window.updateServings = function(val) {
-    activeServings = parseFloat(val) || 1;
-    renderDetailView();
-};
-
-window.toggleStep = function(idx) {
-    if (activeChecklist.has(idx)) activeChecklist.delete(idx);
-    else activeChecklist.add(idx);
-    renderDetailView();
-};
-
-window.closeDetailModal = function() {
-    document.getElementById('detail-modal').classList.add('hidden');
-};
-
-window.downloadRecipePDF = function() {
-    const detailContent = document.getElementById('detail-content');
-
-    const tempContainer = document.createElement('div');
-    tempContainer.style.padding = "20px";
-    tempContainer.style.background = "white";
-    tempContainer.style.width = "800px";
-
-    const logoHtml = `<div style="text-align:center; margin-bottom:20px;">
-        <img src="logo.jpeg" style="height:80px;">
-    </div>`;
-
-    let contentCopy = detailContent.cloneNode(true);
-
-    const actions = contentCopy.querySelector('.detail-header-actions');
-    if(actions) actions.remove();
-
-    const servInput = contentCopy.querySelector('.servings-control input');
-    if(servInput) {
-        const val = servInput.value;
-        const parent = servInput.parentElement;
-        parent.innerHTML = `Pour <strong>${val}</strong> personnes`;
-    }
-
-    const layout = contentCopy.querySelector('.recipe-layout');
-    if(layout) {
-        layout.style.display = 'block';
-        const left = contentCopy.querySelector('.recipe-col-left');
-        const right = contentCopy.querySelector('.recipe-col-right');
-        if(left) { left.style.width = '100%'; left.style.marginBottom = '20px'; }
-        if(right) { right.style.width = '100%'; }
-    }
-
-    tempContainer.innerHTML = logoHtml + contentCopy.innerHTML;
-
-    const filename = (currentRecipe.title || "Recette").replace(/[^a-z0-9]/gi, '_').toLowerCase() + ".pdf";
-
-    const opt = {
-      margin:       10,
-      filename:     filename,
-      image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2, useCORS: true },
-      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-
-    html2pdf().set(opt).from(tempContainer).save();
-};
-
-window.downloadAllRecipesPDF = function() {
-    if (recipes.length === 0) return alert("Aucune recette à télécharger.");
-
-    const masterContainer = document.createElement('div');
-    masterContainer.style.width = "800px";
-    masterContainer.style.background = "white";
-
-    const coverHtml = `
-        <div style="text-align:center; padding: 50px 0; page-break-after: always;">
-            <img src="logo.jpeg" style="height:150px; margin-bottom:20px;">
-            <h1 style="font-size:36px; color:#D4AF37;">Livre de Recettes</h1>
-            <p style="font-size:18px;">${recipes.length} Recettes</p>
-        </div>
-    `;
-    masterContainer.innerHTML = coverHtml;
-
-    recipes.forEach((r, idx) => {
-        const recipeHtml = getRecipeHTML(r);
-
-        const pageDiv = document.createElement('div');
-        pageDiv.style.padding = "20px";
-        pageDiv.style.pageBreakAfter = "always";
-        pageDiv.innerHTML = recipeHtml;
-
-        masterContainer.appendChild(pageDiv);
-    });
-
-    const opt = {
-      margin:       10,
-      filename:     'Livre_ChaouiRecettes.pdf',
-      image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2, useCORS: true },
-      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-
-    html2pdf().set(opt).from(masterContainer).save();
-};
-
-function getRecipeHTML(r) {
-    const scale = 1;
-    const ingredients = r.ingredients || [];
-
-    const groups = {};
-    ingredients.forEach(ing => {
-        const g = ing.group || "Principal";
-        if (!groups[g]) groups[g] = [];
-        groups[g].push(ing);
-    });
-
-    let ingHtml = '';
-    for (const [gName, ings] of Object.entries(groups)) {
-        ingHtml += `<div class="ing-group"><h4 style="border-bottom: 2px solid #D4AF37; display: inline-block; margin-bottom: 5px;">${gName}</h4>`;
-        ings.forEach(i => {
-            ingHtml += `
-                <div style="display:flex; justify-content:space-between; border-bottom:1px dashed #eee; padding:2px 0;">
-                    <span>${i.name}</span>
-                    <span style="font-weight:bold">${i.qty} ${i.unit}</span>
-                </div>
-            `;
-        });
-        ingHtml += `</div>`;
-    }
-
-    let methodHtml = '';
-    if (r.mode === 'steps') {
-        r.steps.forEach((stepHtml, idx) => {
-             const tempDiv = document.createElement('div');
-             tempDiv.innerHTML = stepHtml;
-             tempDiv.querySelectorAll('.ingredient-tag').forEach(tag => {
-                 tag.style.fontWeight = 'bold';
-                 tag.style.color = '#000';
-             });
-
-             methodHtml += `
-                <div style="margin-bottom:10px;">
-                    <strong style="color:#D4AF37;">Etape ${idx+1}</strong>
-                    <div>${tempDiv.innerHTML}</div>
-                </div>
-             `;
-        });
-    } else {
-         const tempDiv = document.createElement('div');
-         tempDiv.innerHTML = r.description;
-         methodHtml = `<div>${tempDiv.innerHTML}</div>`;
-    }
-
-    return `
-        <div style="display:flex; justify-content:center; margin-bottom:20px;">
-             ${r.image ? `<img src="${r.image}" style="max-height:200px; border: 2px solid #D4AF37;">` : ''}
-        </div>
-        <h2 style="text-align:center; color:#000;">${r.title}</h2>
-        <div style="margin-top:20px;">
-            <h3 style="color:#D4AF37;">Ingrédients</h3>
-            ${ingHtml}
-        </div>
-        <div style="margin-top:20px;">
-            <h3 style="color:#D4AF37;">Préparation</h3>
-            ${methodHtml}
-        </div>
-    `;
-}
+window.updateServings = function(val) { activeServings = parseFloat(val) || 1; renderDetailView(); };
+window.toggleStep = function(idx) { if (activeChecklist.has(idx)) activeChecklist.delete(idx); else activeChecklist.add(idx); renderDetailView(); };
+window.closeDetailModal = function() { document.getElementById('detail-modal').classList.add('hidden'); };
