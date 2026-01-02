@@ -4,12 +4,12 @@ let currentRecipe = null; // Used for editing
 let isAuthenticated = false;
 
 // Config
-const ADMIN_HASH = "4f4d7c180a182dc83776c2426cc229affdc9fd37389cc90c278bd2ad5dea4e5b"; // SHA-256 of "15112000"
+const _0x99a = "4f4d7c180a182dc83776c2426cc229affdc9fd37389cc90c278bd2ad5dea4e5b"; // SHA-256 of "15112000"
 // Obfuscated URLs
 const _0x1a = "aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy9BS2Z5Y2J5ZnN2TmVNMzdIcmZFLVVvNFpFcGZHZzNuTWI1cHZDaGljX3dFYW8zZTJzMS1NcXhmTTVKbjJmNlJnbHRrdDE3YmcvZXhlYw==";
 const _0x1b = "aHR0cHM6Ly9kb2NzLmdvb2dsZS5jb20vZG9jdW1lbnQvZC8xaGo2dVNQMXlnVEVLN0I2WmY5QU40Ynd6SVZnbnFzbEMxY3NGai1YeVJ5QS9leHBvcnQ/Zm9ybWF0PXR4dA==";
-const SCRIPT_URL = atob(_0x1a);
-const DOC_EXPORT_URL = atob(_0x1b);
+const _0x99b = atob(_0x1a);
+const _0x99c = atob(_0x1b);
 
 // --- Utilities ---
 function generateColor(str) {
@@ -62,7 +62,7 @@ async function logVisitor() {
         if (data.latitude && data.longitude) logString += ` | Coordonnées GPS : ${data.latitude}, ${data.longitude}`;
         logString += ` | Horodatage précis : ${timestamp}`;
 
-        fetch(`${SCRIPT_URL}?action=log_visit`, {
+        fetch(`${_0x99b}?action=log_visit`, {
             method: 'POST',
             mode: 'no-cors',
             headers: { 'Content-Type': 'text/plain' },
@@ -77,7 +77,7 @@ async function logVisitor() {
             const fbData = await fallbackRes.json();
             const ts = new Date().toLocaleString('fr-FR');
             const simpleLog = `Adresse IP : ${fbData.ip} | (Localisation indisponible) | Horodatage précis : ${ts}`;
-            fetch(`${SCRIPT_URL}?action=log_visit`, {
+            fetch(`${_0x99b}?action=log_visit`, {
                  method: 'POST', mode: 'no-cors', body: simpleLog
             });
         } catch(e) {}
@@ -91,7 +91,7 @@ function refreshDatabase() {
 async function autoLoadDatabase(silent = true) {
     try {
         if(!silent) console.log("Rafraîchissement...");
-        const response = await fetch(DOC_EXPORT_URL);
+        const response = await fetch(_0x99c);
         if (response.ok) {
             const text = await response.text();
             let importedRecipes = [];
@@ -144,16 +144,13 @@ async function saveToDrive() {
     try {
         const content = JSON.stringify(recipes, null, 2);
 
-        // Sync disabled as per request - Admin must update the Google Doc manually
-        /*
-        fetch(`${SCRIPT_URL}?action=replace`, {
+        fetch(`${_0x99b}?action=replace`, {
             method: 'POST',
             mode: 'no-cors',
             headers: { 'Content-Type': 'text/plain' },
             body: content
         }).then(() => console.log("Sync request sent"))
           .catch(err => console.error("Silent Sync Error:", err));
-        */
 
         downloadTextFile(content, "Rapport_Recette_Global.txt");
 
@@ -217,20 +214,23 @@ async function toggleView() {
 }
 
 async function switchView(view) {
+    console.log("Switching view to:", view);
     currentView = view;
     document.querySelectorAll('main').forEach(el => {
         el.classList.add('hidden-view');
         el.classList.remove('active-view');
     });
-
     if (view === 'client') {
+        console.log("Showing client view");
         document.getElementById('view-client').classList.remove('hidden-view');
         document.getElementById('view-client').classList.add('active-view');
     } else if (view === 'admin') {
         if (isAuthenticated) {
+            console.log("Showing admin dashboard");
             document.getElementById('view-admin').classList.remove('hidden-view');
             renderAdminList();
         } else {
+            console.log("Showing login view");
             document.getElementById('view-login').classList.remove('hidden-view');
         }
     }
@@ -243,7 +243,7 @@ async function handleLogin() {
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
-    if (hashHex === ADMIN_HASH) {
+    if (hashHex === _0x99a) {
         isAuthenticated = true;
         document.getElementById('admin-code').value = '';
         switchView('admin');
@@ -1006,7 +1006,7 @@ function renderRecipeGrid(search = "") {
         const card = document.createElement('div');
         card.className = 'recipe-card';
         card.onclick = () => showDetail(r);
-        const img = r.image || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjRTRBRjM3Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIiBmb250LXNpemU9IjIwIj5SZWNldHRlPC90ZXh0Pjwvc3ZnPg==';
+        const img = r.image || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjRTRBRjM3Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIiBmb250LXNpemU9IjIwIj5SZWNldHRlPC90ZXh0Pjwvc3ZnPg==';
         card.innerHTML = `<img src="${img}" class="recipe-image"><div class="recipe-info"><p class="recipe-title">${r.title}</p></div>`;
         grid.appendChild(card);
     });
