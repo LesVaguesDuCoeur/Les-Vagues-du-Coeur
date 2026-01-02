@@ -5,8 +5,11 @@ let isAuthenticated = false;
 
 // Config
 const ADMIN_HASH = "4f4d7c180a182dc83776c2426cc229affdc9fd37389cc90c278bd2ad5dea4e5b"; // SHA-256 of "15112000"
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyfsvNeM37HrfE-Uo4ZEpfGg3nMb5pvChic_wEao3e2s1-MqxfM5Jn2f6Rgltkt17bg/exec";
-const DOC_EXPORT_URL = "https://docs.google.com/document/d/1hj6uSP1ygTEK7B6Zf9AN4bwzIVgnqslC1csFj-XyRyA/export?format=txt";
+// Obfuscated URLs
+const _0x1a = "aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy9BS2Z5Y2J5ZnN2TmVNMzdIcmZFLVVvNFpFcGZHZzNuTWI1cHZDaGljX3dFYW8zZTJzMS1NcXhmTTVKbjJmNlJnbHRrdDE3YmcvZXhlYw==";
+const _0x1b = "aHR0cHM6Ly9kb2NzLmdvb2dsZS5jb20vZG9jdW1lbnQvZC8xaGo2dVNQMXlnVEVLN0I2WmY5QU40Ynd6SVZnbnFzbEMxY3NGai1YeVJ5QS9leHBvcnQ/Zm9ybWF0PXR4dA==";
+const SCRIPT_URL = atob(_0x1a);
+const DOC_EXPORT_URL = atob(_0x1b);
 
 // --- Utilities ---
 function generateColor(str) {
@@ -26,8 +29,7 @@ function normalizeStr(str) {
 
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('nav-client').addEventListener('click', () => switchView('client'));
-    document.getElementById('nav-admin').addEventListener('click', () => switchView('admin'));
+    document.getElementById('main-logo-btn').addEventListener('click', toggleView);
     document.getElementById('login-btn').addEventListener('click', handleLogin);
     document.getElementById('client-search').addEventListener('input', (e) => renderRecipeGrid(e.target.value));
     document.getElementById('client-file-input').addEventListener('change', handleClientImport);
@@ -204,10 +206,22 @@ function setupGlobalEscHandler() {
 }
 
 // --- Navigation & Auth ---
+let currentView = 'client';
+
+async function toggleView() {
+    if (currentView === 'client') {
+        switchView('admin');
+    } else {
+        switchView('client');
+    }
+}
+
 async function switchView(view) {
-    document.getElementById('nav-client').classList.toggle('active', view === 'client');
-    document.getElementById('nav-admin').classList.toggle('active', view === 'admin');
-    document.querySelectorAll('main').forEach(el => el.classList.add('hidden-view', 'active-view'));
+    currentView = view;
+    document.querySelectorAll('main').forEach(el => {
+        el.classList.add('hidden-view');
+        el.classList.remove('active-view');
+    });
 
     if (view === 'client') {
         document.getElementById('view-client').classList.remove('hidden-view');
@@ -587,7 +601,7 @@ function compressImage(file, maxWidth, quality) {
                     elem.width = width; elem.height = height;
                     const ctx = elem.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
-                    resolve(ctx.toDataURL('image/jpeg', quality));
+                    resolve(elem.toDataURL('image/jpeg', quality));
                 } catch (e) {
                     reject(e);
                 }
