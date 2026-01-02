@@ -555,6 +555,8 @@ function handleImageURLInput(e) {
 
 function handleImageUpload(e) {
     const file = e.target.files[0];
+    // Reset file input so change event fires even if same file is selected again
+    e.target.value = '';
     if (file) {
         // Reduced size/quality to ensure upload success
         compressImage(file, 600, 0.6).then(base64 => {
@@ -563,7 +565,7 @@ function handleImageUpload(e) {
             renderImagePreview(base64);
         }).catch(err => {
             console.error("Image compression failed", err);
-            alert("Erreur lors du traitement de l'image.");
+            alert("Erreur lors du traitement de l'image : " + err.message);
         });
     }
 }
@@ -576,19 +578,23 @@ function compressImage(file, maxWidth, quality) {
             const img = new Image();
             img.src = event.target.result;
             img.onload = () => {
-                const elem = document.createElement('canvas');
-                let width = img.width;
-                let height = img.height;
-                if (width > maxWidth) { height *= maxWidth / width; width = maxWidth; }
-                if (height > maxWidth) { width *= maxWidth / height; height = maxWidth; }
-                elem.width = width; elem.height = height;
-                const ctx = elem.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
-                resolve(ctx.toDataURL('image/jpeg', quality));
+                try {
+                    const elem = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    if (width > maxWidth) { height *= maxWidth / width; width = maxWidth; }
+                    if (height > maxWidth) { width *= maxWidth / height; height = maxWidth; }
+                    elem.width = width; elem.height = height;
+                    const ctx = elem.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    resolve(ctx.toDataURL('image/jpeg', quality));
+                } catch (e) {
+                    reject(e);
+                }
             };
-            img.onerror = error => reject(error);
+            img.onerror = error => reject(new Error("Erreur de chargement de l'image"));
         };
-        reader.onerror = error => reject(error);
+        reader.onerror = error => reject(new Error("Erreur de lecture du fichier"));
     });
 }
 
@@ -632,17 +638,33 @@ function addIngredientRow(data = null, idx = null) {
 // Drag Handlers for Ingredients
 let dragIngEl = null;
 function handleIngDragStart(e) {
-    dragIngEl = this;
+    dragIngEl = this.closest('.ing-row'); // Ensure we grab the row
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/html', this.innerHTML);
     this.classList.add('dragging');
 }
 function handleIngDrop(e) {
     if (e.stopPropagation) e.stopPropagation();
-    if (dragIngEl !== this) {
-        // Swap DOM elements
-        this.parentNode.insertBefore(dragIngEl, this);
-        // Note: Actual data swap happens on 'Save' because saveCurrentRecipe reads the DOM order
+    const targetRow = this.closest('.ing-row');
+    if (dragIngEl && targetRow && dragIngEl !== targetRow) {
+        // More robust swap: insert dropped element before target
+        // If dropping below, it might need to go after.
+        // Simple logic: insert before this one.
+        // For better UX, we could calculate position, but simple reorder is usually enough if user drags precisely.
+
+        // Check if we are dropping on itself or children (should be handled by logic above but safe check)
+
+        const parent = targetRow.parentNode;
+        // Determine position
+        const bounding = targetRow.getBoundingClientRect();
+        const offset = bounding.y + (bounding.height / 2);
+        if (e.clientY - offset > 0) {
+             // Drop after
+             parent.insertBefore(dragIngEl, targetRow.nextSibling);
+        } else {
+             // Drop before
+             parent.insertBefore(dragIngEl, targetRow);
+        }
     }
     return false;
 }
@@ -709,15 +731,25 @@ function addStepRow(content = "", idx = null) {
 // Drag Handlers for Steps
 let dragStepEl = null;
 function handleStepDragStart(e) {
-    dragStepEl = this;
+    dragStepEl = this.closest('.step-row');
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/html', this.innerHTML);
     this.classList.add('dragging');
 }
 function handleStepDrop(e) {
     if (e.stopPropagation) e.stopPropagation();
-    if (dragStepEl !== this) {
-        this.parentNode.insertBefore(dragStepEl, this);
+    const targetRow = this.closest('.step-row');
+
+    if (dragStepEl && targetRow && dragStepEl !== targetRow) {
+        const parent = targetRow.parentNode;
+        const bounding = targetRow.getBoundingClientRect();
+        const offset = bounding.y + (bounding.height / 2);
+        if (e.clientY - offset > 0) {
+             parent.insertBefore(dragStepEl, targetRow.nextSibling);
+        } else {
+             parent.insertBefore(dragStepEl, targetRow);
+        }
+
         // Renumber logic needed here for visual consistency
         document.querySelectorAll('.step-row .step-num').forEach((el, i) => {
             el.innerText = `Etape ${i + 1}`;
