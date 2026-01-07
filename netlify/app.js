@@ -2,7 +2,7 @@
 // CONFIGURATION
 // ==========================================
 // REPLACE THIS URL with your deployed Google Apps Script Web App URL
-const API_URL = "REMPLACER_PAR_VOTRE_URL_APPS_SCRIPT";
+const API_URL = "https://script.google.com/macros/s/AKfycbxzFevbQJzerwD2L-uNcVTRJE9XVJ4HGdC9KUftOyIKT9pqErsvNfPsfSC12MjBEUDQvA/exec";
 
 const app = {
     user: null,
