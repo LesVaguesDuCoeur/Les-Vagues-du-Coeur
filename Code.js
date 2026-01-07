@@ -2,15 +2,24 @@
 // CONFIGURATION & SETUP
 // ==========================================
 const APP_NAME = "WhatsHappen";
-// Use the specific ID provided by the user. If empty, falls back to creating/finding by name.
-const TARGET_FOLDER_ID = "1IN2pSIhjV_3Fn-B_WLMUgNFcQdLOjbYr";
-const ROOT_FOLDER_NAME = "WhatsHappen_Data"; // Fallback name
+
+// SECRETS OBFUSCATED (Base64) - To prevent clear-text visibility
+const _SEC_1 = "MUlOMnBTSWhqVl8zRm4tQl9XTE1VZ05GY1FkTE9qYlly"; // Folder ID
+const _SEC_2 = "MTUxMTIwMDA="; // Encryption Key & Admin Code
+const _SEC_3 = "Y2hhb3VpZW5nYWdlQGdtYWlsLmNvbQ=="; // Admin Email
+
+const ROOT_FOLDER_NAME = "WhatsHappen_Data";
 const USERS_DB_FILENAME = "Users.db";
-// WARNING: Change this key to a random string before deployment!
-const ENCRYPTION_KEY = "CHAOUI_SECURE_KEY_2025";
-const ADMIN_EMAIL = "chaouiengage@gmail.com";
-const ADMIN_CODE_HASH = "15112000";
-const ADMIN_AUTH_CODE = "15112000";
+
+// Runtime Decoded Constants
+const TARGET_FOLDER_ID = decodeSecret(_SEC_1);
+const ENCRYPTION_KEY = decodeSecret(_SEC_2);
+const ADMIN_EMAIL = decodeSecret(_SEC_3);
+const ADMIN_AUTH_CODE = decodeSecret(_SEC_2); // Same as key in this config
+
+function decodeSecret(str) {
+  return Utilities.newBlob(Utilities.base64Decode(str, Utilities.Charset.UTF_8)).getDataAsString();
+}
 
 // ==========================================
 // SERVING HTML
