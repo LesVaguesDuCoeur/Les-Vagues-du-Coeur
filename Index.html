@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <title>WhatsHappen</title>
+    <?!= include('CSS'); ?>
+  </head>
+  <body>
+    <!-- SPLASH / LOADING -->
+    <div id="loader" class="loader-overlay">
+      <div class="spinner"></div>
+      <div class="loading-text">Connexion sécurisée en cours...</div>
+    </div>
+
+    <!-- NOTIFICATION AREA -->
+    <div id="toast-container"></div>
+
+    <!-- VIEW: LOGIN / REGISTER -->
+    <div id="view-auth" class="view active">
+      <div class="auth-container">
+        <div class="logo-area">
+          <img src="" id="auth-logo" class="app-logo" alt="ChaouiEngage">
+          <h1>CHAOUI ENGAGÉ</h1>
+          <p class="subtitle">Secure Messaging System</p>
+        </div>
+
+        <!-- LOGIN FORM -->
+        <div id="form-login" class="auth-form">
+          <h2>Connexion</h2>
+          <input type="email" id="login-email" placeholder="Email" required>
+          <input type="password" id="login-code" placeholder="Code (3 chiffres)" inputmode="numeric" required>
+          <button id="btn-login" class="gold-btn">Entrer</button>
+          <p class="switch-link" onclick="app.showRegister()">Nouveau membre ? S'inscrire</p>
+        </div>
+
+        <!-- REGISTER FORM -->
+        <div id="form-register" class="auth-form hidden">
+          <h2>Inscription</h2>
+          <input type="text" id="reg-firstname" placeholder="Prénom" required>
+          <input type="email" id="reg-email" placeholder="Email" required>
+          <input type="password" id="reg-code" placeholder="Code secret (3 chiffres)" inputmode="numeric" required>
+          <div class="info-text">Retenez bien ce code, il servira à vous connecter.</div>
+          <button id="btn-register" class="gold-btn">Valider l'inscription</button>
+          <p class="switch-link" onclick="app.showLogin()">Déjà inscrit ? Connexion</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW: DASHBOARD (CHAT LIST) -->
+    <div id="view-dashboard" class="view hidden">
+      <header class="app-header">
+        <div class="header-left">
+          <img src="" class="header-logo app-logo-small">
+          <span class="user-greeting" id="user-greeting">Bonjour</span>
+        </div>
+        <div class="header-right">
+          <button id="btn-refresh-list" class="icon-btn" title="Actualiser">↻</button>
+          <button id="btn-new-chat" class="gold-btn-small">+ Conversation</button>
+          <button id="btn-admin" class="gold-btn-small hidden">Admin</button>
+          <button id="btn-logout" class="icon-btn" title="Déconnexion">⏻</button>
+        </div>
+      </header>
+
+      <div class="content-area">
+        <div id="chat-list-container" class="list-container">
+          <!-- Chat items injected here -->
+          <div class="empty-state">Chargement des conversations...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW: NEW CONVERSATION -->
+    <div id="view-new-chat" class="view hidden">
+       <header class="app-header">
+        <button class="back-btn" onclick="app.showDashboard()">← Retour</button>
+        <h2>Nouvelle Conversation</h2>
+      </header>
+      <div class="content-area centered">
+        <div class="form-box">
+          <label>Participants (Emails séparés par des virgules)</label>
+          <input type="text" id="new-chat-emails" placeholder="ex: ami@test.com, autre@test.com">
+
+          <label>Durée de vie</label>
+          <div class="duration-options">
+            <button class="dur-btn selected" data-val="10min">10 min</button>
+            <button class="dur-btn" data-val="12h">12 H</button>
+            <button class="dur-btn" data-val="24h">24 H</button>
+            <button class="dur-btn" data-val="48h">48 H</button>
+            <button class="dur-btn" data-val="unlimited">Illimité</button>
+          </div>
+
+          <button id="btn-create-chat" class="gold-btn full-width">Lancer la conversation</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW: CHAT ROOM -->
+    <div id="view-chat" class="view hidden">
+      <header class="app-header chat-header">
+        <div class="header-left">
+          <button class="back-btn" onclick="app.showDashboard()">←</button>
+          <div class="chat-info">
+            <h3 id="chat-participants-names">...</h3>
+            <span id="chat-timer" class="timer-badge">--:--</span>
+          </div>
+        </div>
+        <div class="header-right">
+           <button id="btn-refresh-chat" class="icon-btn">↻</button>
+        </div>
+      </header>
+
+      <div id="messages-area" class="messages-area">
+        <!-- Messages go here -->
+      </div>
+
+      <footer class="chat-input-area">
+        <label for="file-input" class="attach-btn">📎</label>
+        <input type="file" id="file-input" class="hidden" accept="image/*,.pdf,.doc,.docx">
+        <input type="text" id="message-input" placeholder="Écrire un message..." autocomplete="off">
+        <button id="btn-send" class="send-btn">➤</button>
+      </footer>
+    </div>
+
+    <!-- VIEW: ADMIN -->
+    <div id="view-admin" class="view hidden">
+      <header class="app-header">
+        <button class="back-btn" onclick="app.showDashboard()">← Retour</button>
+        <h2>Administration ChaouiEngagé</h2>
+      </header>
+      <div class="content-area">
+        <div class="admin-stats">
+          <!-- Stats here -->
+        </div>
+        <h3>Utilisateurs</h3>
+        <table id="admin-users-table">
+          <thead>
+            <tr><th>Email</th><th>Prénom</th><th>Droits Création</th><th>Action</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <?!= include('JS'); ?>
+  </body>
+</html>
