@@ -16,7 +16,7 @@ const ADMIN_AUTH_CODE = "15112000";
 // SERVING HTML
 // ==========================================
 function doGet(e) {
-  return HtmlService.createTemplateFromFile('Index')
+  return HtmlService.createTemplateFromFile('index')
     .evaluate()
     .setTitle(APP_NAME)
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)

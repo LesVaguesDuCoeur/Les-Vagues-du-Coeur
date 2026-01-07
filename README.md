@@ -21,9 +21,9 @@ Le code a été généré en 4 fichiers distincts pour respecter la structure Go
    - Copiez tout le contenu du fichier `Code.js` fourni dans ce dépôt.
    - Collez-le dans le fichier `Code.gs` par défaut de l'éditeur Google.
    - **Important** : Modifiez la constante `ENCRYPTION_KEY` au début du fichier avec une clé secrète complexe de votre choix.
-2. **Index.html** :
-   - Créez un nouveau fichier HTML (bouton `+` -> HTML) et nommez-le `Index`.
-   - Copiez-collez le contenu de `Index.html`.
+2. **index.html** :
+   - Créez un nouveau fichier HTML (bouton `+` -> HTML) et nommez-le `index` (en minuscules).
+   - Copiez-collez le contenu de `index.html`.
 3. **CSS.html** :
    - Créez un nouveau fichier HTML nommé `CSS`.
    - Copiez-collez le contenu de `CSS.html`.
