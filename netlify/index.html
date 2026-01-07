@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>WhatsHappen</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
@@ -13,7 +13,7 @@
         <!-- LOADING -->
         <div id="loader" class="loader-overlay">
             <div class="spinner"></div>
-            <p>Connexion...</p>
+            <p>Chargement...</p>
         </div>
 
         <!-- AUTH VIEW -->
@@ -44,7 +44,9 @@
         <div id="view-dashboard" class="view hidden">
             <header>
                 <div class="user-profile">
-                    <div class="avatar" id="user-initial">?</div>
+                    <div class="logo-circle-small logo-circle"> <!-- Clickable for Admin -->
+                        <div class="avatar" id="user-initial">?</div>
+                    </div>
                     <span id="user-greeting">Bonjour</span>
                 </div>
                 <div class="actions">
@@ -54,15 +56,14 @@
             </header>
 
             <div class="tabs">
-                <button class="tab-btn active">Conversations</button>
-                <button id="btn-admin" class="tab-btn hidden" onclick="app.showAdmin()">Admin</button>
+                <span class="tab-active">Conversations</span>
             </div>
 
             <div id="chat-list" class="list-area">
                 <!-- Chats injected here -->
             </div>
 
-            <button class="fab-btn" onclick="app.showNewChat()">+</button>
+            <button id="btn-create-fab" class="fab-btn hidden" onclick="app.showNewChat()">+</button>
         </div>
 
         <!-- NEW CHAT VIEW -->
@@ -73,9 +74,10 @@
             </header>
             <div class="form-area">
                 <label>Participants (Emails)</label>
-                <input type="text" id="new-chat-emails" placeholder="ami@test.com, autre@test.com">
+                <input type="text" id="new-chat-emails" placeholder="ami@mail.com">
+                <p style="font-size:0.7rem; color:#888; margin-bottom:20px">Pour plusieurs, séparez par des virgules.</p>
 
-                <label>Durée</label>
+                <label>Durée de vie</label>
                 <div class="chips">
                     <span class="chip selected" data-val="10min">10 min</span>
                     <span class="chip" data-val="12h">12 H</span>
@@ -94,7 +96,6 @@
                 <button class="back-btn" onclick="app.showDashboard()">←</button>
                 <div class="chat-meta">
                     <h3 id="chat-title">...</h3>
-                    <small id="chat-timer">--:--</small>
                 </div>
                 <button id="btn-refresh-chat" class="icon-btn">↻</button>
             </header>
@@ -105,7 +106,7 @@
 
             <div class="input-area">
                 <label for="file-input" class="attach-btn">📎</label>
-                <input type="file" id="file-input" hidden>
+                <input type="file" id="file-input" hidden accept="image/*">
                 <input type="text" id="message-input" placeholder="Message..." autocomplete="off">
                 <button id="btn-send" class="send-btn">➤</button>
             </div>
@@ -119,9 +120,7 @@
             </header>
             <div class="list-area" id="admin-list"></div>
         </div>
-
     </div>
-
     <script src="logo.js"></script>
     <script src="app.js"></script>
 </body>

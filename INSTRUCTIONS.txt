@@ -1,0 +1,65 @@
+================================================================================
+MANUEL D'INSTALLATION - WHATS HAPPEN (API MODE)
+================================================================================
+
+PROJET : WhatsHappen (Netlify Frontend + Google Drive Backend)
+ADMIN  : chaouiengage@gmail.com
+CODE   : 15112000
+
+--------------------------------------------------------------------------------
+PARTIE 1 : GOOGLE APPS SCRIPT (Le Cerveau)
+--------------------------------------------------------------------------------
+1. Allez sur votre projet : https://script.google.com
+2. Ouvrez le fichier `Code.gs`.
+3. Effacez TOUT le contenu existant.
+4. Copiez-collez le contenu du fichier `Code.gs` fourni dans ce dossier.
+   (Le code contient déjà vos identifiants cryptés et l'ID du dossier Drive).
+
+5. DÉPLOYER EN TANT QU'API :
+   - Cliquez sur le bouton bleu "Déployer" > "Nouveau déploiement".
+   - Type : "Application Web".
+   - Description : "API V2".
+   - Exécuter en tant que : "Moi" (votre adresse email).
+   - Qui peut accéder : "Tout le monde" (C'est OBLIGATOIRE pour que le site Netlify puisse s'y connecter).
+   - Cliquez sur "Déployer".
+   - Copiez l'URL (qui finit par `/exec`).
+
+   ⚠️ IMPORTANT : Si l'URL change, vous devrez la mettre à jour dans le fichier `netlify/app.js` (ligne 5).
+   Pour garder la même URL à l'avenir : Bouton "Déployer" > "Gérer les déploiements" > Crayon (Modifier) > "Nouvelle version" > "Déployer".
+
+6. ACTIVER LE NETTOYAGE AUTOMATIQUE (Autodestruction) :
+   - Dans le menu de gauche, cliquez sur l'icône Horloge ("Déclencheurs").
+   - "Ajouter un déclencheur".
+   - Fonction : `cleanUpExpiredChats`.
+   - Source : `Axé sur le temps`.
+   - Type : `Minuteur`.
+   - Fréquence : `Toutes les minutes`.
+   - Enregistrez.
+
+--------------------------------------------------------------------------------
+PARTIE 2 : NETLIFY (Le Visuel)
+--------------------------------------------------------------------------------
+1. Sur votre ordinateur, vous avez le dossier `netlify` (qui contient index.html, style.css, app.js, logo.js).
+2. Allez sur https://app.netlify.com/drop
+3. Glissez-déposez tout le dossier `netlify` dans la zone.
+4. Votre site est en ligne !
+
+--------------------------------------------------------------------------------
+GUIDE UTILISATEUR
+--------------------------------------------------------------------------------
+LOGIN ADMIN :
+- Email : chaouiengage@gmail.com
+- Code  : 15112000
+-> Cela débloquera l'accès à la console Admin (en cliquant sur le Logo une fois connecté) et le bouton "+" pour créer des chats.
+
+LOGIN UTILISATEUR LAMBDA :
+- Inscription : Email + Prénom + Code à 3 chiffres (de leur choix).
+- Par défaut, ils ne peuvent PAS créer de conversation (bouton "+" invisible).
+- Vous devez aller dans l'Admin pour cocher "Autoriser création" à côté de leur nom.
+
+LOGO :
+- J'ai mis un logo doré par défaut dans `logo.js`.
+- Si vous voulez mettre votre propre image : Convertissez votre image en Base64 sur un site (ex: base64-image.de), copiez le texte, et remplacez le contenu entre guillemets dans `netlify/logo.js`.
+
+SECURITE :
+- Aucun lien Drive n'est visible. Tout est chiffré dans les fichiers .txt/.doc sur le Drive.

@@ -1,7 +1,7 @@
 // ==========================================
 // CONFIGURATION
 // ==========================================
-// REPLACE THIS URL with your deployed Google Apps Script Web App URL
+// URL de votre API Google Apps Script (Version /exec)
 const API_URL = "https://script.google.com/macros/s/AKfycbxzFevbQJzerwD2L-uNcVTRJE9XVJ4HGdC9KUftOyIKT9pqErsvNfPsfSC12MjBEUDQvA/exec";
 
 const app = {
@@ -11,12 +11,13 @@ const app = {
 
     init: function() {
         this.setupListeners();
-        // Load Logo from external file
-        if (typeof LOGO_BASE64 !== 'undefined') {
+
+        // Chargement du Logo
+        if (typeof LOGO_BASE64 !== 'undefined' && LOGO_BASE64.length > 20) {
             document.getElementById('app-logo').src = LOGO_BASE64;
         }
 
-        // Check session
+        // Vérification session locale
         const savedUser = localStorage.getItem('wh_user');
         if (savedUser) {
             try {
@@ -44,12 +45,19 @@ const app = {
         document.getElementById('message-input').onkeypress = (e) => { if(e.key === 'Enter') this.sendMessage(); };
         document.getElementById('btn-refresh-chat').onclick = () => this.loadMessages(this.currentChatId);
 
-        // Anti-Screenshot
+        // Clic sur le logo pour Admin
+        document.querySelector('.logo-circle').onclick = () => {
+            if (this.user && (this.user.isAdmin || this.user.email === 'chaouiengage@gmail.com')) {
+                this.showAdmin();
+            }
+        };
+
+        // Sécurité Visuelle
         window.addEventListener('blur', () => document.body.classList.add('blurred'));
         window.addEventListener('focus', () => document.body.classList.remove('blurred'));
         document.addEventListener('contextmenu', event => event.preventDefault());
 
-        // Chips
+        // Sélection durée
         document.querySelectorAll('.chip').forEach(c => {
             c.onclick = () => {
                 document.querySelectorAll('.chip').forEach(x => x.classList.remove('selected'));
@@ -62,11 +70,6 @@ const app = {
     // API CALLER
     // ==========================================
     api: async function(action, payload = {}) {
-        if (!API_URL || API_URL.includes("REMPLACER")) {
-            alert("Veuillez configurer l'URL de l'API dans app.js");
-            return;
-        }
-
         const body = { action, ...payload };
         if (this.user && this.user.token) {
             body.token = this.user.token;
@@ -74,6 +77,7 @@ const app = {
         }
 
         try {
+            // Appel POST simple (fetch gère le redirect GAS)
             const res = await fetch(API_URL, {
                 method: 'POST',
                 body: JSON.stringify(body)
@@ -81,15 +85,14 @@ const app = {
             const data = await res.json();
 
             if (data.error) {
-                // If session expired
-                if (data.error.includes("Session")) {
+                if (data.error.includes("Session") || data.error.includes("invalide")) {
                     this.logout();
                 }
                 throw new Error(data.error);
             }
             return data;
         } catch (e) {
-            console.error("API Error", e);
+            console.error("Erreur API:", e);
             throw e;
         }
     },
@@ -146,15 +149,14 @@ const app = {
             const list = document.getElementById('chat-list');
             list.innerHTML = '';
 
-            if (res.chats.length === 0) {
-                list.innerHTML = '<div style="text-align:center;color:#666;margin-top:20px">Aucune conversation</div>';
+            if (!res.chats || res.chats.length === 0) {
+                list.innerHTML = '<div style="text-align:center;color:#666;margin-top:20px;font-size:0.8rem">Aucune conversation active.<br>Demandez à un Admin de vous écrire.</div>';
                 return;
             }
 
             res.chats.forEach(chat => {
                 const el = document.createElement('div');
                 el.className = 'chat-card';
-                // Add unread logic if needed
 
                 let lastMsg = "Nouvelle conversation";
                 if (chat.lastMessage) {
@@ -163,18 +165,16 @@ const app = {
                     lastMsg = `${sender}: ${content}`;
                 }
 
-                // Timer logic
-                let timeLeft = "";
+                let timeLeft = "∞";
                 if (chat.expiresAt) {
                     const diff = new Date(chat.expiresAt) - new Date();
                     if (diff > 0) {
                         const mins = Math.floor(diff / 60000);
-                        timeLeft = `${mins}m`;
+                        const hours = Math.floor(mins / 60);
+                        timeLeft = hours > 0 ? `${hours}h${mins%60}` : `${mins}m`;
                     } else {
                         timeLeft = "Expiré";
                     }
-                } else {
-                    timeLeft = "∞";
                 }
 
                 el.innerHTML = `
@@ -183,7 +183,7 @@ const app = {
                         <p>${lastMsg}</p>
                     </div>
                     <div class="card-meta">
-                        <div>${timeLeft}</div>
+                        <div style="margin-bottom:5px">⏳ ${timeLeft}</div>
                         <div>➔</div>
                     </div>
                 `;
@@ -191,7 +191,7 @@ const app = {
                 list.appendChild(el);
             });
         } catch (e) {
-            console.log("Polling error (silent)");
+            console.log("Polling silencieux...");
         }
     },
 
@@ -200,7 +200,7 @@ const app = {
         const durationChip = document.querySelector('.chip.selected');
         const duration = durationChip ? durationChip.dataset.val : '24h';
 
-        if (!emails[0]) return alert("Email requis");
+        if (!emails[0]) return alert("Veuillez mettre un email.");
 
         try {
             this.toggleLoader(true);
@@ -220,7 +220,6 @@ const app = {
         this.currentChatId = chatId;
         this.showView('view-chat');
         this.loadMessages(chatId);
-        // Poll faster inside chat
         this.stopPolling();
         this.pollingInterval = setInterval(() => this.loadMessages(chatId), 4000);
     },
@@ -233,7 +232,7 @@ const app = {
 
             document.getElementById('chat-title').textContent = res.participantNames;
 
-            // Rebuild simplistic (optimized: usually one would append)
+            // Pour éviter le scintillement, on pourrait diff-check, mais simple clear ici
             area.innerHTML = '';
 
             res.messages.forEach(msg => {
@@ -247,16 +246,19 @@ const app = {
                 div.innerHTML = `
                     <div class="msg-name">${msg.senderName}</div>
                     ${content}
+                    <div style="font-size:0.6rem; opacity:0.5; text-align:right; margin-top:2px">
+                       ${new Date(msg.timestamp).toLocaleTimeString().slice(0,5)}
+                    </div>
                 `;
                 area.appendChild(div);
             });
 
-            // Auto scroll if needed
-            if (area.scrollHeight - area.scrollTop - area.clientHeight < 100) {
+            // Auto scroll bas
+            if (area.scrollHeight - area.scrollTop - area.clientHeight < 200) {
                area.scrollTop = area.scrollHeight;
             }
         } catch (e) {
-            console.log("Chat poll error");
+            // ignorer erreurs polling
         }
     },
 
@@ -270,7 +272,8 @@ const app = {
             const reader = new FileReader();
             reader.onload = async (e) => {
                 const base64 = e.target.result;
-                const type = file.type.startsWith('image/') ? 'image' : 'file'; // Basic
+                // type simple check
+                const type = 'image';
                 await this.sendPayload(base64, type);
                 fileInput.value = '';
             };
@@ -295,20 +298,65 @@ const app = {
     },
 
     // ==========================================
-    // UI HELPERS
+    // ADMIN
+    // ==========================================
+    showAdmin: async function() {
+        this.showView('view-admin');
+        try {
+            const res = await this.api('adminGetUsers');
+            const list = document.getElementById('admin-list');
+            list.innerHTML = res.users.map(u => `
+                <div class="chat-card" style="cursor:default;">
+                    <div class="card-content">
+                        <h4>${u.firstName} ${u.isAdmin ? '👑' : ''}</h4>
+                        <p>${u.email}</p>
+                    </div>
+                    <div class="card-meta">
+                        <label class="switch-label">
+                           <input type="checkbox" ${u.permissions?.canCreateChat ? 'checked' : ''}
+                            onchange="app.toggleRights('${u.email}', this.checked)">
+                           Création
+                        </label>
+                    </div>
+                </div>
+            `).join('');
+        } catch(e) {
+            alert("Accès refusé");
+            this.showDashboard();
+        }
+    },
+
+    toggleRights: async function(email, canCreate) {
+        try {
+            await this.api('adminUpdateUserRights', { targetEmail: email, canCreate: canCreate });
+        } catch(e) {
+            alert("Erreur mise à jour");
+        }
+    },
+
+    // ==========================================
+    // UI UTILS
     // ==========================================
     showView: function(viewId) {
         document.querySelectorAll('.view').forEach(v => v.classList.remove('active', 'hidden'));
         document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
-        document.getElementById(viewId).classList.remove('hidden');
-        document.getElementById(viewId).classList.add('active');
+
+        const target = document.getElementById(viewId);
+        target.classList.remove('hidden');
+        target.classList.add('active');
 
         if (viewId === 'view-dashboard') {
-            document.getElementById('user-initial').textContent = this.user.firstName.charAt(0);
+            document.getElementById('user-initial').textContent = this.user.firstName.charAt(0).toUpperCase();
             document.getElementById('user-greeting').textContent = this.user.firstName;
-            if (this.user.isAdmin || this.user.email === 'chaouiengage@gmail.com') {
-                document.getElementById('btn-admin').classList.remove('hidden');
+
+            // Gestion Bouton Créer (+)
+            const fab = document.getElementById('btn-create-fab');
+            if (this.user.permissions?.canCreateChat || this.user.isAdmin) {
+                fab.classList.remove('hidden');
+            } else {
+                fab.classList.add('hidden');
             }
+
             this.stopPolling();
             this.loadConversations();
             this.pollingInterval = setInterval(() => this.loadConversations(), 10000);
@@ -331,32 +379,12 @@ const app = {
     showDashboard: function() { this.showView('view-dashboard'); },
     showNewChat: function() { this.showView('view-new-chat'); },
 
-    showAdmin: async function() {
-        this.showView('view-admin');
-        const res = await this.api('adminGetUsers');
-        const list = document.getElementById('admin-list');
-        list.innerHTML = res.users.map(u => `
-            <div class="chat-card">
-                <div class="card-content">
-                    <h4>${u.firstName}</h4>
-                    <p>${u.email}</p>
-                </div>
-                <div class="card-meta">
-                    ${u.permissions?.canCreateChat ? 'ADMIN' : 'USER'}
-                </div>
-            </div>
-        `).join('');
-    },
-
     toggleLoader: function(show) {
         const l = document.getElementById('loader');
-        if (show) l.classList.remove('hidden');
-        else l.classList.add('hidden');
+        if (show) l.classList.remove('hidden'); else l.classList.add('hidden');
     },
 
-    stopPolling: function() {
-        if (this.pollingInterval) clearInterval(this.pollingInterval);
-    }
+    stopPolling: function() { if (this.pollingInterval) clearInterval(this.pollingInterval); }
 };
 
 window.onload = () => app.init();
