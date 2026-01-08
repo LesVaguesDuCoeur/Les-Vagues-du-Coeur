@@ -1,0 +1,387 @@
+<script>
+// ==========================================
+// WAHTSHAPPEN - FRONTEND LOGIC
+// ==========================================
+
+const app = {
+  state: {
+    token: localStorage.getItem('wh_token'),
+    email: localStorage.getItem('wh_email'),
+    user: null, // Full user object
+    currentChatId: null,
+    pollingInterval: null
+  },
+
+  init: function() {
+    // Anti-screenshot: Blur when window loses focus
+    window.addEventListener('blur', () => document.body.classList.add('blurred'));
+    window.addEventListener('focus', () => document.body.classList.remove('blurred'));
+
+    // Disable right click
+    document.addEventListener('contextmenu', event => event.preventDefault());
+
+    if (this.state.token && this.state.email) {
+      this.loadDashboard();
+    } else {
+      this.nav('login');
+    }
+  },
+
+  // NAVIGATION
+  nav: function(viewId) {
+    document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+    document.getElementById('view-' + viewId).classList.add('active');
+
+    // Stop polling if leaving conversation
+    if (viewId !== 'conversation' && this.state.pollingInterval) {
+      clearInterval(this.state.pollingInterval);
+      this.state.pollingInterval = null;
+    }
+
+    if (viewId === 'admin') {
+      this.loadAdminUsers();
+    }
+  },
+
+  loading: function(show, msg) {
+    const el = document.getElementById('loading');
+    if (show) {
+      el.classList.remove('hidden');
+      if (msg) document.getElementById('loading-text').innerText = msg;
+    } else {
+      el.classList.add('hidden');
+    }
+  },
+
+  // AUTH
+  login: function() {
+    const email = document.getElementById('login-email').value;
+    const code = document.getElementById('login-code').value;
+    if (!email || !code) return alert("Remplissez tout.");
+
+    this.loading(true, "Connexion...");
+    google.script.run
+      .withSuccessHandler(res => {
+        this.loading(false);
+        if (res.success) {
+          this.saveSession(res.token, email, res.user);
+          this.loadDashboard();
+        } else {
+          alert("Erreur: " + res.error);
+        }
+      })
+      .withFailureHandler(e => { this.loading(false); alert("Server Error: " + e); })
+      .apiLogin(email, code);
+  },
+
+  register: function() {
+    const fn = document.getElementById('reg-firstname').value;
+    const em = document.getElementById('reg-email').value;
+    const co = document.getElementById('reg-code').value;
+    if (!fn || !em || !co) return alert("Tout remplir SVP.");
+
+    this.loading(true, "Inscription...");
+    google.script.run
+      .withSuccessHandler(res => {
+        this.loading(false);
+        if (res.success) {
+          this.saveSession(res.token, em, res.user);
+          this.loadDashboard();
+        } else {
+          alert("Erreur: " + res.error);
+        }
+      })
+      .apiRegister(em, fn, co);
+  },
+
+  saveSession: function(token, email, user) {
+    this.state.token = token;
+    this.state.email = email;
+    this.state.user = user;
+    localStorage.setItem('wh_token', token);
+    localStorage.setItem('wh_email', email);
+  },
+
+  logout: function() {
+    localStorage.clear();
+    location.reload();
+  },
+
+  // DASHBOARD
+  loadDashboard: function() {
+    this.nav('dashboard');
+    this.refreshChats();
+  },
+
+  refreshChats: function() {
+    this.loading(true);
+    google.script.run
+      .withSuccessHandler(res => {
+        this.loading(false);
+        if (res.success) {
+          this.state.user = res.user; // Update rights
+
+          // Logic: Admin Logic
+          if (res.user.isAdmin) {
+             document.getElementById('main-logo-btn').classList.remove('hidden');
+          } else {
+             document.getElementById('main-logo-btn').classList.add('hidden');
+          }
+
+          // Logic: Create Button
+          if (res.user.isAdmin || res.user.canCreate) {
+             document.getElementById('btn-create-chat').classList.remove('hidden');
+          } else {
+             document.getElementById('btn-create-chat').classList.add('hidden');
+          }
+
+          this.renderChatList(res.chats);
+        } else {
+          if (res.error.includes("Session")) this.logout();
+          else alert(res.error);
+        }
+      })
+      .apiGetState(this.state.token, this.state.email);
+  },
+
+  renderChatList: function(chats) {
+    const list = document.getElementById('chat-list');
+    list.innerHTML = "";
+    if (chats.length === 0) {
+      list.innerHTML = "<div style='text-align:center;color:#888'>Aucune conversation.</div>";
+      return;
+    }
+
+    chats.forEach(chat => {
+      const div = document.createElement('div');
+      div.className = 'item';
+
+      // Calculate remaining time
+      let timeStr = "Actif";
+      if (chat.expiresAt) {
+        const diff = new Date(chat.expiresAt) - new Date();
+        if (diff > 0) {
+           const mins = Math.floor(diff / 60000);
+           const hrs = Math.floor(mins / 60);
+           timeStr = hrs > 0 ? `${hrs}h restants` : `${mins} min restants`;
+        } else {
+           timeStr = "Expiré";
+        }
+      } else {
+        timeStr = "Illimité";
+      }
+
+      div.innerHTML = `
+        <div class="name">${chat.names.join(', ')}</div>
+        <div class="meta">${timeStr}</div>
+      `;
+      div.onclick = () => this.openChat(chat.id, chat.names, chat.expiresAt);
+      list.appendChild(div);
+    });
+  },
+
+  // CREATE CHAT
+  showNewChatModal: function() {
+    if (!this.state.user.canCreate && !this.state.user.isAdmin) {
+      return alert("Vous n'avez pas le droit de créer des conversations. Contactez l'admin.");
+    }
+    document.getElementById('modal-new-chat').classList.remove('hidden');
+  },
+
+  hideModal: function(id) {
+    document.getElementById(id).classList.add('hidden');
+  },
+
+  createChat: function() {
+    const emailsStr = document.getElementById('new-chat-emails').value;
+    const duration = document.getElementById('new-chat-duration').value;
+
+    if (!emailsStr) return alert("Emails requis.");
+    const emails = emailsStr.split(',').map(s => s.trim()).filter(s => s);
+
+    this.loading(true);
+    google.script.run
+      .withSuccessHandler(res => {
+        this.loading(false);
+        if (res.success) {
+          this.hideModal('modal-new-chat');
+          this.refreshChats();
+        } else {
+          alert("Erreur: " + res.error);
+        }
+      })
+      .apiCreateChat(this.state.token, this.state.email, emails, duration);
+  },
+
+  // CONVERSATION
+  openChat: function(chatId, names, expiresAt) {
+    this.state.currentChatId = chatId;
+    this.nav('conversation');
+
+    // Header Info
+    const cleanNames = names.filter(n => n !== this.state.user.firstName); // Filter me out if possible, but names array might not match exactly 1:1 if generic
+    document.getElementById('chat-names').innerText = names.join(', ');
+
+    this.refreshMessages();
+
+    // Polling every 5s
+    if (this.state.pollingInterval) clearInterval(this.state.pollingInterval);
+    this.state.pollingInterval = setInterval(() => this.refreshMessages(true), 5000);
+  },
+
+  refreshMessages: function(silent) {
+    if (!silent) this.loading(true);
+    google.script.run
+      .withSuccessHandler(res => {
+        if (!silent) this.loading(false);
+        if (res.success) {
+          this.renderMessages(res.messages);
+          // Update timer logic?
+        }
+      })
+      .apiGetMessages(this.state.token, this.state.email, this.state.currentChatId);
+  },
+
+  renderMessages: function(msgs) {
+    const container = document.getElementById('message-container');
+    container.innerHTML = "";
+
+    msgs.forEach(m => {
+      const div = document.createElement('div');
+      const isMe = (m.sender === this.state.email);
+      div.className = `msg ${isMe ? 'me' : 'them'}`;
+
+      let content = "";
+      if (m.type === 'image' || m.type === 'file') {
+        content = `<img src="${m.content}" onclick="alert('Image cryptée')">`; // Base64
+      } else {
+        content = m.content; // Already escaped text?
+      }
+
+      div.innerHTML = `
+        <span class="sender">${isMe ? 'Moi' : m.senderName}</span>
+        ${content}
+      `;
+      container.appendChild(div);
+    });
+    // Scroll to bottom
+    container.scrollTop = container.scrollHeight;
+  },
+
+  sendMessage: function() {
+    const input = document.getElementById('msg-input');
+    const txt = input.value.trim();
+    if (!txt) return;
+
+    input.value = ""; // optimistic clear
+    google.script.run
+      .withSuccessHandler(res => {
+        if (res.success) this.refreshMessages(true);
+        else alert("Erreur envoi");
+      })
+      .apiSendMessage(this.state.token, this.state.email, this.state.currentChatId, txt, 'text');
+  },
+
+  handleFileUpload: function(elem) {
+    const file = elem.files[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) return alert("Fichier trop lourd (Max 2Mo)"); // GAS Limit
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const base64 = e.target.result;
+      this.loading(true, "Envoi image...");
+      google.script.run
+        .withSuccessHandler(res => {
+          this.loading(false);
+          elem.value = "";
+          if (res.success) this.refreshMessages(true);
+          else alert("Erreur upload");
+        })
+        .apiSendMessage(this.state.token, this.state.email, this.state.currentChatId, base64, 'image');
+    };
+    reader.readAsDataURL(file);
+  },
+
+  // --- ADMIN FUNCTIONS ---
+  loadAdminUsers: function() {
+    this.loading(true, "Chargement Users...");
+    google.script.run
+      .withSuccessHandler(res => {
+        this.loading(false);
+        if (res.success) this.renderAdminList(res.users);
+        else alert("Erreur: " + res.error);
+      })
+      .apiAdminGetUsers(this.state.token, this.state.email);
+  },
+
+  renderAdminList: function(users) {
+    const list = document.getElementById('admin-user-list');
+    list.innerHTML = "";
+
+    users.forEach(u => {
+      const div = document.createElement('div');
+      div.className = 'item';
+      div.style.borderLeft = u.canCreate ? "3px solid var(--gold)" : "3px solid transparent";
+
+      div.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div class="name">${u.firstName} (${u.email})</div>
+            <div class="meta">Inscrit: ${new Date(u.registeredAt).toLocaleDateString()}</div>
+             <div class="meta">Droit Création: <strong>${u.canCreate ? "OUI" : "NON"}</strong></div>
+          </div>
+          <div style="display:flex;gap:5px;flex-direction:column">
+            <button style="font-size:10px;padding:5px" onclick="app.adminToggleRight('${u.email}', ${!u.canCreate})">
+              ${u.canCreate ? "Retirer Droit" : "Donner Droit"}
+            </button>
+            <button style="font-size:10px;padding:5px;background:#555" onclick="app.adminResetPwd('${u.email}')">Reset MDP</button>
+            <button style="font-size:10px;padding:5px;background:#800" onclick="app.adminDelete('${u.email}')">Supprimer</button>
+          </div>
+        </div>
+      `;
+      list.appendChild(div);
+    });
+  },
+
+  adminToggleRight: function(targetEmail, newState) {
+    this.loading(true);
+    google.script.run
+      .withSuccessHandler(res => {
+        this.loading(false);
+        if(res.success) this.loadAdminUsers();
+        else alert(res.error);
+      })
+      .apiAdminUpdateUser(this.state.token, this.state.email, targetEmail, newState);
+  },
+
+  adminDelete: function(targetEmail) {
+    if(!confirm("Supprimer " + targetEmail + " ?")) return;
+    this.loading(true);
+    google.script.run
+      .withSuccessHandler(res => {
+        this.loading(false);
+        if(res.success) this.loadAdminUsers();
+        else alert(res.error);
+      })
+      .apiAdminDeleteUser(this.state.token, this.state.email, targetEmail);
+  },
+
+  adminResetPwd: function(targetEmail) {
+    if(!confirm("Reset code pour " + targetEmail + " ?")) return;
+    this.loading(true);
+    google.script.run
+      .withSuccessHandler(res => {
+        this.loading(false);
+        if(res.success) alert("Nouveau Code pour " + targetEmail + " : " + res.newCode);
+        else alert(res.error);
+      })
+      .apiAdminResetPassword(this.state.token, this.state.email, targetEmail);
+  }
+
+};
+
+// Start
+window.onload = () => app.init();
+</script>

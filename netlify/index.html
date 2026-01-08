@@ -1,131 +1,21 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>WhatsHappen</title>
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+  <meta charset="utf-8">
+  <title>Déploiement WhatsHappen</title>
+  <style>
+    body { background: #000; color: #D4AF37; font-family: sans-serif; text-align: center; padding: 50px; }
+    h1 { margin-bottom: 20px; }
+    p { color: #ccc; }
+    .box { border: 1px solid #D4AF37; padding: 20px; display: inline-block; margin-top: 20px; }
+  </style>
 </head>
 <body>
-    <div class="glass-container">
-
-        <!-- LOADING -->
-        <div id="loader" class="loader-overlay">
-            <div class="spinner"></div>
-            <p>Chargement...</p>
-        </div>
-
-        <!-- AUTH VIEW -->
-        <div id="view-auth" class="view active">
-            <div class="logo-circle">
-                <img id="app-logo" src="" alt="Logo">
-            </div>
-            <h1>CHAOUI ENGAGÉ</h1>
-            <p class="subtitle">Messagerie Sécurisée & Éphémère</p>
-
-            <form id="form-login" class="auth-form">
-                <input type="email" id="login-email" placeholder="Email" required>
-                <input type="password" id="login-code" placeholder="Code (3 chiffres)" inputmode="numeric" required>
-                <button type="submit" class="btn-gold">Connexion</button>
-                <p class="link" onclick="app.showRegister()">Créer un compte</p>
-            </form>
-
-            <form id="form-register" class="auth-form hidden">
-                <input type="text" id="reg-firstname" placeholder="Prénom" required>
-                <input type="email" id="reg-email" placeholder="Email" required>
-                <input type="password" id="reg-code" placeholder="Code (3 chiffres)" inputmode="numeric" required>
-                <button type="submit" class="btn-gold">S'inscrire</button>
-                <p class="link" onclick="app.showLogin()">Retour Connexion</p>
-            </form>
-        </div>
-
-        <!-- DASHBOARD VIEW -->
-        <div id="view-dashboard" class="view hidden">
-            <header>
-                <div class="user-profile">
-                    <div class="logo-circle-small logo-circle" id="btn-admin-access"> <!-- Clickable for Admin -->
-                        <div class="avatar" id="user-initial">?</div>
-                    </div>
-                    <span id="user-greeting">Bonjour</span>
-                </div>
-                <div class="actions">
-                    <button id="btn-refresh" class="icon-btn" title="Actualiser">↻</button>
-                    <button id="btn-logout" class="icon-btn" title="Déconnexion">⏻</button>
-                </div>
-            </header>
-
-            <div class="tabs">
-                <span class="tab-active">Conversations</span>
-            </div>
-
-            <div id="chat-list" class="list-area">
-                <!-- Chats injected here -->
-            </div>
-
-            <button id="btn-create-fab" class="fab-btn hidden" onclick="app.showNewChat()">+</button>
-        </div>
-
-        <!-- NEW CHAT VIEW -->
-        <div id="view-new-chat" class="view hidden">
-            <header>
-                <button class="back-btn" onclick="app.showDashboard()">←</button>
-                <h2>Nouvelle Conversation</h2>
-            </header>
-            <div class="form-area">
-                <label>Participants (Emails)</label>
-                <input type="text" id="new-chat-emails" placeholder="ami@mail.com">
-                <p style="font-size:0.7rem; color:#888; margin-bottom:20px">Pour plusieurs, séparez par des virgules.</p>
-
-                <label>Durée de vie</label>
-                <div class="chips">
-                    <span class="chip selected" data-val="10min">10 min</span>
-                    <span class="chip" data-val="12h">12 H</span>
-                    <span class="chip" data-val="24h">24 H</span>
-                    <span class="chip" data-val="48h">48 H</span>
-                    <span class="chip" data-val="unlimited">∞</span>
-                </div>
-
-                <button id="btn-create-chat" class="btn-gold full">Lancer</button>
-            </div>
-        </div>
-
-        <!-- CHAT ROOM VIEW -->
-        <div id="view-chat" class="view hidden">
-            <header class="chat-header">
-                <button class="back-btn" onclick="app.showDashboard()">←</button>
-                <div class="chat-meta">
-                    <h3 id="chat-title">...</h3>
-                    <small id="chat-timer-display" style="display:block; font-size:0.7rem; color:var(--gold);"></small>
-                </div>
-                <div class="header-actions">
-                    <button id="btn-add-member" class="icon-btn" style="margin-right:10px;">+</button>
-                    <button id="btn-refresh-chat" class="icon-btn">↻</button>
-                </div>
-            </header>
-
-            <div id="messages-area" class="messages-container">
-                <!-- Messages -->
-            </div>
-
-            <div class="input-area">
-                <label for="file-input" class="attach-btn">📎</label>
-                <input type="file" id="file-input" hidden accept="image/*">
-                <input type="text" id="message-input" placeholder="Message..." autocomplete="off">
-                <button id="btn-send" class="send-btn">➤</button>
-            </div>
-        </div>
-
-        <!-- ADMIN VIEW -->
-        <div id="view-admin" class="view hidden">
-            <header>
-                <button class="back-btn" onclick="app.showDashboard()">←</button>
-                <h2>Administration</h2>
-            </header>
-            <div class="list-area" id="admin-list"></div>
-        </div>
-    </div>
-    <script src="logo.js"></script>
-    <script src="app.js"></script>
+  <h1>WhatsHappen V3</h1>
+  <div class="box">
+    <p>Cette application a été mise à jour vers une architecture <strong>100% Google Apps Script</strong>.</p>
+    <p>Netlify n'est plus nécessaire ni supporté pour des raisons de sécurité et de conformité (Pas de tiers).</p>
+    <p>Veuillez utiliser le lien de déploiement fourni par Google Apps Script ("Application Web").</p>
+  </div>
 </body>
 </html>
