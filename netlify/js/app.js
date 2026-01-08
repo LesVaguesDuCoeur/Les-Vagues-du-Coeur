@@ -3,8 +3,8 @@
 // ==========================================
 
 const CONFIG = {
-  // IMPORTANT: Replace this with your Google Apps Script Web App URL
-  API_URL: "https://script.google.com/macros/s/AKfycbyC2u_.../exec"
+  // Configured URL as requested
+  API_URL: "https://script.google.com/macros/s/AKfycbxzFevbQJzerwD2L-uNcVTRJE9XVJ4HGdC9KUftOyIKT9pqErsvNfPsfSC12MjBEUDQvA/exec"
 };
 
 const app = {
@@ -17,11 +17,6 @@ const app = {
   },
 
   init: function() {
-    // Check if API URL is set
-    if (CONFIG.API_URL.includes("AKfycby")) {
-      alert("Attention: Vous devez configurer l'URL de l'API dans js/app.js !");
-    }
-
     // Anti-screenshot
     window.addEventListener('blur', () => document.body.classList.add('blurred'));
     window.addEventListener('focus', () => document.body.classList.remove('blurred'));
@@ -160,12 +155,13 @@ const app = {
       this.state.user = res.user;
 
       // Admin Access via Logo
+      const logoBtn = document.getElementById('main-logo-btn');
       if (res.user.isAdmin) {
-         document.getElementById('main-logo-btn').classList.remove('hidden');
-         document.getElementById('main-logo-btn').style.cursor = "pointer";
-         document.getElementById('main-logo-btn').onclick = () => this.nav('admin');
+         logoBtn.classList.remove('hidden');
+         logoBtn.style.cursor = "pointer";
+         logoBtn.onclick = () => this.nav('admin');
       } else {
-         document.getElementById('main-logo-btn').classList.add('hidden');
+         logoBtn.classList.add('hidden');
       }
 
       // Create Rights
