@@ -16,16 +16,11 @@ const USERS_DB_FILENAME = "Users.db";
 // --- API HANDLER ---
 
 function doGet(e) {
-  // Simple check or Echo
   return createJSONOutput({ status: "Online", message: "Use POST requests." });
 }
 
 function doPost(e) {
   const lock = LockService.getScriptLock();
-  // We use lock only for critical sections inside functions, or globally here?
-  // Global lock here ensures strict serialization but might be slow.
-  // Let's use fine-grained locks inside functions where needed (Register/Create).
-  // But for "Chat Append", we need speed.
 
   try {
     if (!e.postData || !e.postData.contents) throw new Error("No data");
@@ -34,8 +29,12 @@ function doPost(e) {
     let result = {};
 
     switch (action) {
+      // AUTH
       case 'login':
         result = apiLogin(request.email, request.code);
+        break;
+      case 'changePassword':
+        result = apiChangePassword(request.email, request.oldCode, request.newCode);
         break;
       case 'register':
         result = apiRegister(request.email, request.firstName, request.code);
@@ -43,6 +42,8 @@ function doPost(e) {
       case 'getState':
         result = apiGetState(request.token, request.email);
         break;
+
+      // CHAT
       case 'createChat':
         result = apiCreateChat(request.token, request.email, request.participants, request.duration);
         break;
@@ -52,13 +53,16 @@ function doPost(e) {
       case 'getMessages':
         result = apiGetMessages(request.token, request.email, request.chatId);
         break;
+      case 'addParticipant':
+        result = apiAddParticipant(request.token, request.email, request.chatId, request.targetEmail);
+        break;
 
-      // Admin
+      // ADMIN
       case 'adminGetUsers':
         result = apiAdminGetUsers(request.token, request.email);
         break;
       case 'adminUpdateUser':
-        result = apiAdminUpdateUser(request.token, request.email, request.targetEmail, request.canCreate);
+        result = apiAdminUpdateUser(request.token, request.email, request.targetEmail, request.canCreate, request.isAdmin);
         break;
       case 'adminDeleteUser':
         result = apiAdminDeleteUser(request.token, request.email, request.targetEmail);
@@ -80,33 +84,52 @@ function doPost(e) {
 
 function createJSONOutput(data) {
   return ContentService.createTextOutput(JSON.stringify(data))
-    .setMimeType(ContentService.MimeType.JSON)
-    // CORS HEADERS FOR NETLIFY
-    // Note: GAS doesn't support setting headers directly on ContentService in all contexts,
-    // but returning JSONP or simple JSON usually works if client handles it.
-    // However, strictly speaking, GAS Web Apps don't allow custom headers.
-    // The standard workaround is that the Browser follows the redirect.
-    // We rely on the fact that we don't need 'Access-Control-Allow-Origin' if we use the standard GAS `text/plain` hack
-    // OR we hope the user uses a proxy?
-    // NO: Simple POST to GAS Exec URL from fetch() usually follows redirects.
-    // We will assume standard fetch() usage.
-    ;
+    .setMimeType(ContentService.MimeType.JSON);
 }
 
-// --- LOGIC FUNCTIONS (Same as V3 Pure, but returning Objects) ---
+// --- CORE LOGIC ---
 
 function apiLogin(email, code) {
   const db = readUsersDb();
   const user = db.users.find(u => u.email === email.toLowerCase().trim());
   if (!user) throw new Error("Utilisateur inconnu.");
 
+  // Check Password
   if (user.code !== code.toString()) throw new Error("Code incorrect.");
+
+  // Check Temporary Password
+  if (user.mustChangePassword) {
+    return { success: true, requireNewPassword: true };
+  }
 
   const token = Utilities.getUuid();
   user.token = token;
   writeUsersDb(db);
 
   return { success: true, token: token, user: sanitizeUser(user) };
+}
+
+function apiChangePassword(email, oldCode, newCode) {
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(10000);
+    const db = readUsersDb();
+    const user = db.users.find(u => u.email === email.toLowerCase().trim());
+    if (!user) throw new Error("Utilisateur inconnu.");
+
+    if (user.code !== oldCode.toString()) throw new Error("Ancien code incorrect.");
+
+    user.code = newCode.toString();
+    user.mustChangePassword = false;
+
+    const token = Utilities.getUuid();
+    user.token = token;
+    writeUsersDb(db);
+
+    return { success: true, token: token, user: sanitizeUser(user) };
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 function apiRegister(email, firstName, code) {
@@ -119,6 +142,7 @@ function apiRegister(email, firstName, code) {
 
     let isAdmin = false;
     let canCreate = false;
+    // Super Admin Hardcoded Logic
     if (cleanEmail === ADMIN_EMAIL && code.toString() === ADMIN_CODE_HASH) {
       isAdmin = true;
       canCreate = true;
@@ -131,7 +155,8 @@ function apiRegister(email, firstName, code) {
       isAdmin: isAdmin,
       canCreate: canCreate,
       activeChats: [],
-      registeredAt: new Date().toISOString()
+      registeredAt: new Date().toISOString(),
+      mustChangePassword: false
     };
 
     db.users.push(newUser);
@@ -155,7 +180,7 @@ function apiCreateChat(token, email, participants, durationStr) {
   const lock = LockService.getScriptLock();
   try {
     lock.waitLock(30000);
-    const db = readUsersDb(); // Re-read
+    const db = readUsersDb();
     const user = db.users.find(u => u.email === email && u.token === token);
     if (!user) throw new Error("Session invalide");
     if (!user.canCreate && !user.isAdmin) throw new Error("Droit refusé");
@@ -171,7 +196,8 @@ function apiCreateChat(token, email, participants, durationStr) {
       }
     });
 
-    if (validEmails.length < 2) throw new Error("Il faut au moins 1 destinataire valide.");
+    // Allow single user chat (notes) or requires 2? Prompt says "messagerie". Let's allow 1.
+    // if (validEmails.length < 2) throw new Error("Il faut au moins 1 destinataire valide.");
 
     let expiresAt = null;
     if (durationStr !== 'unlimited') {
@@ -261,6 +287,47 @@ function apiGetMessages(token, email, chatId) {
   return { success: true, messages: messages, meta: meta };
 }
 
+function apiAddParticipant(token, email, chatId, targetEmail) {
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(10000);
+    const user = validateUser(token, email);
+    // Security: Only Admin or CanCreate can add people
+    if (!user.isAdmin && !user.canCreate) throw new Error("Droit refusé: Seuls les créateurs peuvent ajouter.");
+
+    const db = readUsersDb();
+    const target = db.users.find(u => u.email === targetEmail.toLowerCase().trim());
+    if (!target) throw new Error("Utilisateur introuvable.");
+
+    const doc = DocumentApp.openById(chatId);
+    const body = doc.getBody();
+    const metaEnc = body.getParagraphs()[0].getText();
+    const meta = JSON.parse(decrypt(metaEnc));
+
+    if (!meta.participants.includes(user.email)) throw new Error("Accès refusé.");
+    if (meta.participants.includes(target.email)) throw new Error("Déjà participant.");
+
+    meta.participants.push(target.email);
+    meta.participantNames.push(target.firstName);
+
+    // Update Meta
+    body.getParagraphs()[0].setText(encrypt(JSON.stringify(meta)));
+    doc.saveAndClose();
+
+    // Indexing
+    if (!target.activeChats) target.activeChats = [];
+    target.activeChats.push(chatId);
+    writeUsersDb(db);
+
+    // System Msg
+    apiSendMessage(token, email, chatId, `a ajouté ${target.firstName}`, 'system');
+
+    return { success: true };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
 // --- ADMIN ---
 
 function apiAdminGetUsers(token, email) {
@@ -268,20 +335,35 @@ function apiAdminGetUsers(token, email) {
   if (!user.isAdmin) throw new Error("Admin only");
   const db = readUsersDb();
   return { success: true, users: db.users.map(u => ({
-    email: u.email, firstName: u.firstName, canCreate: u.canCreate, registeredAt: u.registeredAt
+    email: u.email,
+    firstName: u.firstName,
+    canCreate: u.canCreate,
+    isAdmin: u.isAdmin,
+    registeredAt: u.registeredAt
   })) };
 }
 
-function apiAdminUpdateUser(token, email, targetEmail, canCreate) {
+function apiAdminUpdateUser(token, email, targetEmail, canCreate, makeAdmin) {
   const lock = LockService.getScriptLock();
   try {
     lock.waitLock(10000);
     const user = validateUser(token, email);
     if (!user.isAdmin) throw new Error("Admin only");
+
     const db = readUsersDb();
     const t = db.users.find(u => u.email === targetEmail);
     if (!t) throw new Error("User not found");
-    t.canCreate = canCreate;
+
+    // Protection: Cannot remove Super Admin rights
+    if (t.email === ADMIN_EMAIL) {
+       // Allow update but enforce Admin/Create = true
+       t.isAdmin = true;
+       t.canCreate = true;
+    } else {
+       if (makeAdmin !== undefined) t.isAdmin = makeAdmin;
+       if (canCreate !== undefined) t.canCreate = canCreate;
+    }
+
     writeUsersDb(db);
     return { success: true };
   } finally {
@@ -295,7 +377,9 @@ function apiAdminDeleteUser(token, email, targetEmail) {
     lock.waitLock(10000);
     const user = validateUser(token, email);
     if (!user.isAdmin) throw new Error("Admin only");
-    if (email === targetEmail) throw new Error("Self delete error");
+    if (email === targetEmail) throw new Error("Impossible de se supprimer soi-même.");
+    if (targetEmail === ADMIN_EMAIL) throw new Error("Impossible de supprimer le Super Admin.");
+
     const db = readUsersDb();
     db.users = db.users.filter(u => u.email !== targetEmail);
     writeUsersDb(db);
@@ -314,10 +398,13 @@ function apiAdminResetPassword(token, email, targetEmail) {
     const db = readUsersDb();
     const t = db.users.find(u => u.email === targetEmail);
     if (!t) throw new Error("User not found");
-    const newCode = Math.floor(1000 + Math.random() * 9000).toString();
-    t.code = newCode;
+
+    const tempCode = Math.floor(1000 + Math.random() * 9000).toString();
+    t.code = tempCode;
+    t.mustChangePassword = true; // FORCE CHANGE
+
     writeUsersDb(db);
-    return { success: true, newCode: newCode };
+    return { success: true, newCode: tempCode };
   } finally {
     lock.releaseLock();
   }
@@ -354,7 +441,13 @@ function validateUser(token, email) {
 }
 
 function sanitizeUser(u) {
-  return { firstName: u.firstName, email: u.email, isAdmin: u.isAdmin, canCreate: u.canCreate };
+  return {
+    firstName: u.firstName,
+    email: u.email,
+    isAdmin: u.isAdmin,
+    canCreate: u.canCreate,
+    mustChangePassword: u.mustChangePassword
+  };
 }
 
 function getChatsForUser(user) {

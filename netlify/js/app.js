@@ -66,11 +66,15 @@ const app = {
     fetch(CONFIG.API_URL, {
       method: 'POST',
       body: JSON.stringify(data),
-      // No CORS headers here, GAS handles it or browser follows redirect
     })
     .then(r => r.json())
     .then(res => {
       if (res.success) {
+        // Special case: Temporary Password
+        if (res.requireNewPassword) {
+          this.showChangePasswordModal(payload.email, payload.code);
+          return;
+        }
         onSuccess(res);
       } else {
         this.loading(false);
@@ -99,6 +103,20 @@ const app = {
       this.loading(false);
       this.saveSession(res.token, email, res.user);
       this.loadDashboard();
+    });
+  },
+
+  showChangePasswordModal: function(email, oldCode) {
+    this.loading(false);
+    const newCode = prompt("Ceci est votre première connexion avec ce code temporaire.\nVeuillez définir votre nouveau Code Secret :");
+    if (!newCode) return;
+
+    this.loading(true, "Mise à jour...");
+    this.callApi('changePassword', { email: email, oldCode: oldCode, newCode: newCode }, (res) => {
+       this.loading(false);
+       alert("Mot de passe modifié avec succès !");
+       this.saveSession(res.token, email, res.user);
+       this.loadDashboard();
     });
   },
 
@@ -141,12 +159,16 @@ const app = {
       this.loading(false);
       this.state.user = res.user;
 
+      // Admin Access via Logo
       if (res.user.isAdmin) {
          document.getElementById('main-logo-btn').classList.remove('hidden');
+         document.getElementById('main-logo-btn').style.cursor = "pointer";
+         document.getElementById('main-logo-btn').onclick = () => this.nav('admin');
       } else {
          document.getElementById('main-logo-btn').classList.add('hidden');
       }
 
+      // Create Rights
       if (res.user.isAdmin || res.user.canCreate) {
          document.getElementById('btn-create-chat').classList.remove('hidden');
       } else {
@@ -293,7 +315,6 @@ const app = {
   handleFileUpload: function(elem) {
     const file = elem.files[0];
     if (!file) return;
-
     if (file.size > 2 * 1024 * 1024) return alert("Fichier trop lourd (Max 2Mo)");
 
     const reader = new FileReader();
@@ -315,6 +336,24 @@ const app = {
     reader.readAsDataURL(file);
   },
 
+  // NEW: Add Participant Logic
+  addParticipant: function() {
+     const email = prompt("Email du participant à ajouter :");
+     if (!email) return;
+
+     this.loading(true);
+     this.callApi('addParticipant', {
+        token: this.state.token,
+        email: this.state.email,
+        chatId: this.state.currentChatId,
+        targetEmail: email
+     }, (res) => {
+        this.loading(false);
+        alert("Ajouté !");
+        this.refreshMessages(true);
+     });
+  },
+
   // --- ADMIN FUNCTIONS ---
   loadAdminUsers: function() {
     this.loading(true, "Chargement Users...");
@@ -331,20 +370,33 @@ const app = {
     users.forEach(u => {
       const div = document.createElement('div');
       div.className = 'item';
-      div.style.borderLeft = u.canCreate ? "3px solid var(--gold)" : "3px solid transparent";
+      div.style.borderLeft = u.isAdmin ? "3px solid #f00" : (u.canCreate ? "3px solid var(--gold)" : "3px solid transparent");
 
       div.innerHTML = `
         <div style="display:flex;justify-content:space-between;align-items:center">
           <div>
             <div class="name">${u.firstName} (${u.email})</div>
+            <div class="meta">
+               ${u.isAdmin ? "<strong style='color:red'>ADMIN</strong>" : ""}
+               ${u.canCreate ? "CRÉATEUR" : ""}
+            </div>
             <div class="meta">Inscrit: ${new Date(u.registeredAt).toLocaleDateString()}</div>
-             <div class="meta">Droit Création: <strong>${u.canCreate ? "OUI" : "NON"}</strong></div>
           </div>
           <div style="display:flex;gap:5px;flex-direction:column">
+            <!-- Toggle Creator -->
             <button style="font-size:10px;padding:5px" onclick="app.adminToggleRight('${u.email}', ${!u.canCreate})">
-              ${u.canCreate ? "Retirer Droit" : "Donner Droit"}
+              ${u.canCreate ? "Retirer Création" : "Donner Création"}
             </button>
+
+            <!-- Toggle Admin -->
+            <button style="font-size:10px;padding:5px;border:1px solid red;color:red" onclick="app.adminToggleAdmin('${u.email}', ${!u.isAdmin})">
+              ${u.isAdmin ? "Retirer Admin" : "Nommer Admin"}
+            </button>
+
+            <!-- Reset -->
             <button style="font-size:10px;padding:5px;background:#555" onclick="app.adminResetPwd('${u.email}')">Reset MDP</button>
+
+            <!-- Delete -->
             <button style="font-size:10px;padding:5px;background:#800" onclick="app.adminDelete('${u.email}')">Supprimer</button>
           </div>
         </div>
@@ -366,8 +418,22 @@ const app = {
     });
   },
 
+  adminToggleAdmin: function(targetEmail, newState) {
+    if (newState && !confirm("ATTENTION: Vous allez donner les PLEINS POUVOIRS à " + targetEmail)) return;
+    this.loading(true);
+    this.callApi('adminUpdateUser', {
+      token: this.state.token,
+      email: this.state.email,
+      targetEmail: targetEmail,
+      isAdmin: newState
+    }, (res) => {
+      this.loading(false);
+      this.loadAdminUsers();
+    });
+  },
+
   adminDelete: function(targetEmail) {
-    if(!confirm("Supprimer " + targetEmail + " ?")) return;
+    if(!confirm("Supprimer DÉFINITIVEMENT " + targetEmail + " ?")) return;
     this.loading(true);
     this.callApi('adminDeleteUser', {
       token: this.state.token,
@@ -380,7 +446,7 @@ const app = {
   },
 
   adminResetPwd: function(targetEmail) {
-    if(!confirm("Reset code pour " + targetEmail + " ?")) return;
+    if(!confirm("Reset code pour " + targetEmail + " ?\nIl devra le changer à la connexion.")) return;
     this.loading(true);
     this.callApi('adminResetPassword', {
       token: this.state.token,
@@ -388,7 +454,7 @@ const app = {
       targetEmail: targetEmail
     }, (res) => {
       this.loading(false);
-      alert("Nouveau Code pour " + targetEmail + " : " + res.newCode);
+      alert("Nouveau Code Temporaire pour " + targetEmail + " : " + res.newCode);
     });
   }
 

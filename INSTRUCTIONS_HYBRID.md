@@ -1,45 +1,43 @@
-# Instructions de Déploiement "WhatsHappen" (Hybrid)
+# Instructions de Déploiement "WhatsHappen" (Hybrid V4)
 
-Cette architecture utilise **Google Apps Script** pour le Backend (Base de données, Cryptage) et **Netlify** pour le Frontend (Site Web).
+Cette version inclut la gestion avancée des administrateurs, les mots de passe temporaires, et la protection du Super Admin.
 
 ## Étape 1 : Déploiement du Backend (Google Apps Script)
 
-1.  Allez sur [script.google.com](https://script.google.com) et ouvrez votre projet.
-2.  **Code.gs** : Copiez le contenu du fichier `Code.gs`.
-3.  **CryptoJS.gs** : Assurez-vous que ce fichier est présent (librairie de cryptage).
+1.  Allez sur [script.google.com](https://script.google.com).
+2.  **Code.gs** : Copiez tout le contenu du fichier `Code.gs`.
+3.  **CryptoJS.gs** : Assurez-vous que ce fichier est présent (librairie).
 4.  **Déployer** :
-    *   Cliquez sur **Déployer** > **Nouveau déploiement**.
+    *   Bouton bleu **Déployer** > **Nouveau déploiement**.
     *   Type : **Application Web**.
     *   Exécuter en tant que : **Moi**.
-    *   Qui peut accéder : **Tout le monde** (Important pour que Netlify puisse y accéder).
-    *   Cliquez sur **Déployer**.
-5.  **Copiez l'URL de l'application Web** (elle se termine par `/exec`). Gardez-la précieusement.
+    *   Qui peut accéder : **Tout le monde**.
+    *   Validez et copiez l'URL `/exec`.
 
 ## Étape 2 : Configuration du Frontend (Netlify)
 
-1.  Ouvrez le fichier local `netlify/js/app.js`.
-2.  Tout en haut du fichier, trouvez la ligne :
+1.  Ouvrez `netlify/js/app.js` sur votre ordinateur.
+2.  Remplacez l'URL `API_URL` par celle copiée à l'étape 1.
     ```javascript
     const CONFIG = {
-      API_URL: "https://script.google.com/macros/s/AKfycbyC2u_.../exec"
+      API_URL: "https://script.google.com/macros/s/...../exec"
     };
     ```
-3.  **Remplacez l'URL** par celle que vous avez copiée à l'étape 1.
-4.  Sauvegardez le fichier.
 
-## Étape 3 : Déploiement du Site (Netlify)
+## Étape 3 : Mise en ligne
 
-1.  Prenez le dossier `netlify/` complet.
-2.  Déposez-le sur Netlify (Drag & Drop) ou via Git.
-3.  Votre site est en ligne !
+1.  Envoyez le dossier `netlify/` sur Netlify.
 
 ---
 
-**Reset de la Base de Données (En cas de crash)**
-Si vous avez des erreurs de cryptage dues aux versions précédentes :
-1.  Dans Apps Script, lancez la fonction `resetDatabase`.
-2.  Cela nettoiera les fichiers corrompus.
+**Fonctionnalités Admin :**
+*   **Accès :** Cliquez sur le logo "ChaouiEngagé" en haut à gauche (visible uniquement si Admin).
+*   **Gestion :**
+    *   **Nommer Admin :** Permet de donner les pleins pouvoirs à un autre membre.
+    *   **Donner Création :** Autorise un membre à créer des conversations.
+    *   **Reset MDP :** Génère un code temporaire. L'utilisateur devra obligatoirement le changer à sa prochaine connexion.
+    *   **Supprimer :** Efface définitivement l'utilisateur.
+*   **Super Admin :** L'email `chaouiengage@gmail.com` est protégé (ne peut être supprimé ni perdre ses droits).
 
-**Administration**
-*   Email : `chaouiengage@gmail.com`
-*   Code : `15112000`
+**Groupes :**
+*   Seuls les Admins ou les Créateurs peuvent ajouter des participants (+) dans une conversation.
