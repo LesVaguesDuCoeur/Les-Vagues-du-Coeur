@@ -196,11 +196,12 @@ header {
 
 /* Chat Room */
 .chat-header {
-    display: flex; align-items: center;
+    display: flex; align-items: center; justify-content: space-between;
     padding-bottom: 10px; border-bottom: 1px solid #222;
 }
-.chat-meta h3 { font-size: 1rem; }
-.chat-meta small { color: var(--gold); }
+.chat-meta { flex: 1; text-align: center; }
+.chat-meta h3 { font-size: 1rem; margin-bottom: 2px; }
+.header-actions { display: flex; align-items: center; }
 
 .messages-container {
     flex: 1;
@@ -244,7 +245,8 @@ header {
     border: 1px solid #333;
 }
 .input-area input { flex: 1; background: transparent; border: none; color: white; outline: none; font-size: 1rem; }
-.attach-btn, .send-btn { background: none; border: none; font-size: 1.4rem; cursor: pointer; color: var(--gold); padding: 5px; }
+.send-btn { background: none; border: none; font-size: 1.4rem; cursor: pointer; color: var(--gold); padding: 5px; transition: opacity 0.3s; }
+.send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
 /* Admin Switch */
 .switch-label {

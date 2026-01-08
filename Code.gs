@@ -60,6 +60,9 @@ function doPost(e) {
       case 'sendMessage':
         result = sendMessage(request.token, request.chatId, request.email, request.content, request.type);
         break;
+      case 'addParticipant':
+        result = addParticipant(request.token, request.chatId, request.email, request.targetEmail);
+        break;
       case 'adminGetUsers':
         result = { users: adminGetUsers(request.token, request.email) };
         break;
@@ -344,6 +347,38 @@ function sendMessage(token, chatId, senderEmail, content, type) {
 
   body.setText(encrypt(JSON.stringify(data)));
   doc.saveAndClose();
+
+  return { success: true };
+}
+
+function addParticipant(token, chatId, userEmail, targetEmail) {
+  validateSession(userEmail, token);
+
+  const doc = DocumentApp.openById(chatId);
+  const body = doc.getBody();
+  const text = body.getText();
+  const data = JSON.parse(decrypt(text));
+
+  // Check if requester is in chat or admin
+  if (!data.participants.includes(userEmail.toLowerCase().trim())) {
+     // Check if admin
+     const db = readUsersDb();
+     const u = db.users.find(x => x.email === userEmail);
+     if (!u || !u.isAdmin) throw new Error("Accès refusé");
+  }
+
+  const db = readUsersDb();
+  const target = db.users.find(u => u.email === targetEmail.toLowerCase().trim());
+  if (!target) throw new Error("Cet email n'est pas inscrit.");
+
+  if (!data.participants.includes(target.email)) {
+    data.participants.push(target.email);
+    body.setText(encrypt(JSON.stringify(data)));
+    doc.saveAndClose();
+
+    // Add system message
+    sendMessage(token, chatId, userEmail, `a ajouté ${target.firstName}`, 'system');
+  }
 
   return { success: true };
 }
