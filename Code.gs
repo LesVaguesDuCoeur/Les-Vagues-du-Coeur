@@ -6,12 +6,9 @@
 
 const APP_NAME = "WhatsHappen";
 
-// --- SECRETS OBFUSCATED (Base64 to hide from casual view) ---
-// Folder ID: 1IN2pSIhjV_3Fn-B_WLMUgNFcQdLOjbYr
+// --- CONFIGURATION ---
 const _SEC_1 = "MUlOMnBTSWhqVl8zRm4tQl9XTE1VZ05GY1FkTE9qYlly";
-// Admin Code & Key: 15112000
 const _SEC_2 = "MTUxMTIwMDA=";
-// Admin Email: chaouiengage@gmail.com
 const _SEC_3 = "Y2hhb3VpZW5nYWdlQGdtYWlsLmNvbQ==";
 
 const USERS_DB_FILENAME = "Users.db";
@@ -237,7 +234,7 @@ function createConversation(token, creatorEmail, participantEmails, durationStr)
     else missingEmails.push(pEmail);
   });
 
-  // if (missingEmails.length > 0) throw new Error("Emails introuvables: " + missingEmails.join(", "));
+  if (missingEmails.length > 0) throw new Error("Emails introuvables: " + missingEmails.join(", "));
 
   // Expiry
   const now = new Date();

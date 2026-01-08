@@ -1,15 +1,18 @@
 // ==========================================
-// CONFIGURATION & SETUP
+// WAHTSHAPPEN - BACKEND API (Google Apps Script)
 // ==========================================
+// Architecture: Drive-as-Database | Encryption: Enabled
+// ==========================================
+
 const APP_NAME = "WhatsHappen";
 
-// SECRETS OBFUSCATED (Base64)
-const _SEC_1 = "MUlOMnBTSWhqVl8zRm4tQl9XTE1VZ05GY1FkTE9qYlly"; // Folder ID
-const _SEC_2 = "MTUxMTIwMDA="; // Encryption Key & Admin Code
-const _SEC_3 = "Y2hhb3VpZW5nYWdlQGdtYWlsLmNvbQ=="; // Admin Email
+// --- CONFIGURATION ---
+const _SEC_1 = "MUlOMnBTSWhqVl8zRm4tQl9XTE1VZ05GY1FkTE9qYlly";
+const _SEC_2 = "MTUxMTIwMDA=";
+const _SEC_3 = "Y2hhb3VpZW5nYWdlQGdtYWlsLmNvbQ==";
 
-const ROOT_FOLDER_NAME = "WhatsHappen_Data";
 const USERS_DB_FILENAME = "Users.db";
+const ROOT_FOLDER_NAME = "WhatsHappen_Data";
 
 // Runtime Decoded Constants
 const TARGET_FOLDER_ID = decodeSecret(_SEC_1);
@@ -22,12 +25,13 @@ function decodeSecret(str) {
 }
 
 // ==========================================
-// API HANDLER (POST)
+// API HANDLER (POST) - Main Entry Point
 // ==========================================
 function doPost(e) {
-  // CORS support
+  // We use a global lock to prevent file corruption during concurrent writes
   const lock = LockService.getScriptLock();
-  lock.waitLock(30000); // Global lock to prevent race conditions at entry
+  // Wait up to 30s for other requests to finish
+  lock.waitLock(30000);
 
   try {
     const request = JSON.parse(e.postData.contents);
@@ -53,6 +57,9 @@ function doPost(e) {
       case 'sendMessage':
         result = sendMessage(request.token, request.chatId, request.email, request.content, request.type);
         break;
+      case 'addParticipant':
+        result = addParticipant(request.token, request.chatId, request.email, request.targetEmail);
+        break;
       case 'adminGetUsers':
         result = { users: adminGetUsers(request.token, request.email) };
         break;
@@ -63,6 +70,7 @@ function doPost(e) {
         throw new Error("Action inconnue");
     }
 
+    // JSON Response
     return ContentService.createTextOutput(JSON.stringify(result))
       .setMimeType(ContentService.MimeType.JSON);
 
@@ -74,10 +82,9 @@ function doPost(e) {
   }
 }
 
-// OPTIONS for CORS (Preflight)
+// Support GET for testing connectivity
 function doGet(e) {
-  // Minimal output for setup check
-  return ContentService.createTextOutput("WhatsHappen API is running.");
+  return ContentService.createTextOutput("WhatsHappen API is running. Use POST to interact.");
 }
 
 // ==========================================
@@ -88,7 +95,7 @@ function getOrCreateRootFolder() {
     try {
       return DriveApp.getFolderById(TARGET_FOLDER_ID);
     } catch(e) {
-      console.log("Folder ID invalid or inaccessible, falling back to name search.");
+      // Fallback
     }
   }
   const folders = DriveApp.getFoldersByName(ROOT_FOLDER_NAME);
@@ -101,6 +108,7 @@ function getUsersDbFile() {
   const files = root.getFilesByName(USERS_DB_FILENAME);
   if (files.hasNext()) return files.next();
 
+  // Create new Encrypted DB
   const initialData = {
     users: [],
     config: { allowRegistration: true }
@@ -127,16 +135,16 @@ function writeUsersDb(data) {
 }
 
 // ==========================================
-// LOGIC (Refined for API)
+// CORE LOGIC
 // ==========================================
 function registerUser(email, firstName, code) {
-  // Logic remains same, lock handled in doPost for API safety
   const db = readUsersDb();
   email = email.toLowerCase().trim();
 
   const existing = db.users.find(u => u.email === email);
   if (existing) throw new Error("Cet email est déjà inscrit.");
 
+  // Check Admin Code or Standard Format
   const isSpecialAdmin = (code.toString() === ADMIN_AUTH_CODE);
   if (!isSpecialAdmin && (!code || code.toString().length !== 3)) {
     throw new Error("Le code doit faire exactement 3 chiffres.");
@@ -145,9 +153,11 @@ function registerUser(email, firstName, code) {
   const newUser = {
     email: email,
     firstName: firstName,
-    authCode: encrypt(code.toString()),
+    authCode: encrypt(code.toString()), // Store encrypted
     isAdmin: (email === ADMIN_EMAIL && code.toString() === ADMIN_AUTH_CODE),
-    permissions: { canCreateChat: (email === ADMIN_EMAIL) },
+    permissions: {
+      canCreateChat: (email === ADMIN_EMAIL) // Only admin can create by default
+    },
     registeredAt: new Date().toISOString()
   };
 
@@ -166,10 +176,13 @@ function loginUser(email, code) {
   const decryptedCode = decrypt(user.authCode);
   if (decryptedCode !== code.toString()) throw new Error("Code incorrect.");
 
+  // Auto-promote admin if email matches
   if (email === ADMIN_EMAIL && !user.isAdmin) {
     user.isAdmin = true;
+    user.permissions.canCreateChat = true;
   }
 
+  // Session Token
   const token = Utilities.getUuid();
   if (!user.sessions) user.sessions = [];
   user.sessions.push(token);
@@ -202,19 +215,17 @@ function validateSession(email, token) {
 
 function createConversation(token, creatorEmail, participantEmails, durationStr) {
   const creator = validateSession(creatorEmail, token);
-
-  // Reload DB for participants check
   const db = readUsersDb();
 
+  // Permission Check
   if (!creator.isAdmin && !creator.permissions.canCreateChat) {
-    throw new Error("Droit de création refusé.");
+    throw new Error("Vous n'avez pas le droit de créer une conversation.");
   }
 
+  // Validate emails
   const validParticipants = [creatorEmail];
-  const missingEmails = [];
-
-  // Ensure array
   const emailsList = Array.isArray(participantEmails) ? participantEmails : [participantEmails];
+  const missingEmails = [];
 
   emailsList.forEach(pEmail => {
     if(!pEmail) return;
@@ -225,6 +236,7 @@ function createConversation(token, creatorEmail, participantEmails, durationStr)
 
   if (missingEmails.length > 0) throw new Error("Emails introuvables: " + missingEmails.join(", "));
 
+  // Expiry
   const now = new Date();
   let expiryDate = null;
   if (durationStr !== 'unlimited') {
@@ -232,8 +244,9 @@ function createConversation(token, creatorEmail, participantEmails, durationStr)
     expiryDate = new Date(now.getTime() + minutes * 60000);
   }
 
+  // Create Doc
   const root = getOrCreateRootFolder();
-  const docName = `Chat_${new Date().getTime()}_${Math.floor(Math.random()*1000)}`;
+  const docName = `Chat_${new Date().getTime()}`;
   const doc = DocumentApp.create(docName);
   const file = DriveApp.getFileById(doc.getId());
   file.moveTo(root);
@@ -246,21 +259,9 @@ function createConversation(token, creatorEmail, participantEmails, durationStr)
     messages: []
   };
 
+  // Initial Save (Encrypted)
   doc.getBody().setText(encrypt(JSON.stringify(chatData)));
   doc.saveAndClose();
-
-  // Email notifications
-  validParticipants.forEach(pEmail => {
-    if (pEmail !== creatorEmail) {
-      try {
-        MailApp.sendEmail({
-          to: pEmail,
-          subject: "Nouveau message sur WhatsHappen",
-          htmlBody: `Bonjour,<br><br>Vous avez été ajouté à une nouvelle conversation sécurisée par ${creator.firstName}.<br>Connectez-vous pour voir le message.`
-        });
-      } catch (e) {}
-    }
-  });
 
   return { success: true, chatId: doc.getId() };
 }
@@ -299,7 +300,7 @@ function getMessages(token, chatId, userEmail) {
     const text = doc.getBody().getText();
     const data = JSON.parse(decrypt(text));
 
-    if (!data.participants.includes(userEmail.toLowerCase().trim())) throw new Error("Access Denied");
+    if (!data.participants.includes(userEmail.toLowerCase().trim())) throw new Error("Accès Refusé");
 
     const db = readUsersDb();
     const messages = data.messages.map(m => {
@@ -311,14 +312,12 @@ function getMessages(token, chatId, userEmail) {
       };
     });
 
-    return {
-      messages: messages,
-      expiresAt: data.expiresAt,
-      participantNames: data.participants.map(p => {
-        const u = db.users.find(user => user.email === p);
-        return u ? u.firstName : p;
-      }).join(", ")
-    };
+    const names = data.participants.map(p => {
+       const u = db.users.find(user => user.email === p);
+       return u ? u.firstName : p;
+    }).join(", ");
+
+    return { messages: messages, participantNames: names };
   } catch (e) {
     throw new Error("Erreur chat: " + e.message);
   }
@@ -326,14 +325,14 @@ function getMessages(token, chatId, userEmail) {
 
 function sendMessage(token, chatId, senderEmail, content, type) {
   validateSession(senderEmail, token);
-  if (type === 'text') {
-    content = content.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  }
 
   const doc = DocumentApp.openById(chatId);
   const body = doc.getBody();
   const text = body.getText();
   const data = JSON.parse(decrypt(text));
+
+  // Sanitize text
+  if(type === 'text') content = content.replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
   data.messages.push({
     id: new Date().getTime().toString(),
@@ -346,17 +345,37 @@ function sendMessage(token, chatId, senderEmail, content, type) {
   body.setText(encrypt(JSON.stringify(data)));
   doc.saveAndClose();
 
-  // Notify others
-  const others = data.participants.filter(p => p !== senderEmail);
-  others.forEach(pEmail => {
-     try {
-        MailApp.sendEmail({
-          to: pEmail,
-          subject: "Nouveau message sur WhatsHappen",
-          htmlBody: `Bonjour,<br><br>Vous avez reçu un nouveau message.<br>Connectez-vous pour le lire.`
-        });
-      } catch (e) {}
-  });
+  return { success: true };
+}
+
+function addParticipant(token, chatId, userEmail, targetEmail) {
+  validateSession(userEmail, token);
+
+  const doc = DocumentApp.openById(chatId);
+  const body = doc.getBody();
+  const text = body.getText();
+  const data = JSON.parse(decrypt(text));
+
+  // Check if requester is in chat or admin
+  if (!data.participants.includes(userEmail.toLowerCase().trim())) {
+     // Check if admin
+     const db = readUsersDb();
+     const u = db.users.find(x => x.email === userEmail);
+     if (!u || !u.isAdmin) throw new Error("Accès refusé");
+  }
+
+  const db = readUsersDb();
+  const target = db.users.find(u => u.email === targetEmail.toLowerCase().trim());
+  if (!target) throw new Error("Cet email n'est pas inscrit.");
+
+  if (!data.participants.includes(target.email)) {
+    data.participants.push(target.email);
+    body.setText(encrypt(JSON.stringify(data)));
+    doc.saveAndClose();
+
+    // Add system message
+    sendMessage(token, chatId, userEmail, `a ajouté ${target.firstName}`, 'system');
+  }
 
   return { success: true };
 }
@@ -381,6 +400,9 @@ function adminUpdateUserRights(token, adminEmail, targetEmail, canCreate) {
   throw new Error("User not found");
 }
 
+// ==========================================
+// TOOLS: ENCRYPTION & CLEANUP
+// ==========================================
 function parseDuration(str) {
   if (str.endsWith("min")) return parseInt(str);
   if (str.endsWith("h")) return parseInt(str) * 60;
