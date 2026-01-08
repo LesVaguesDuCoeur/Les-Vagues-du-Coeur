@@ -13,7 +13,9 @@ const app = {
     email: localStorage.getItem('wh_email'),
     user: null,
     currentChatId: null,
-    pollingInterval: null
+    pollingInterval: null,
+    timerInterval: null, // New: For local countdown
+    currentExpiresAt: null // New: To track expiry in chat
   },
 
   init: function() {
@@ -34,9 +36,17 @@ const app = {
     document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
     document.getElementById('view-' + viewId).classList.add('active');
 
-    if (viewId !== 'conversation' && this.state.pollingInterval) {
-      clearInterval(this.state.pollingInterval);
-      this.state.pollingInterval = null;
+    // Clear Polling when leaving chat
+    if (viewId !== 'conversation') {
+      if (this.state.pollingInterval) {
+        clearInterval(this.state.pollingInterval);
+        this.state.pollingInterval = null;
+      }
+      // Clear Timer
+      if (this.state.timerInterval) {
+        clearInterval(this.state.timerInterval);
+        this.state.timerInterval = null;
+      }
     }
 
     if (viewId === 'admin') {
@@ -243,15 +253,42 @@ const app = {
   // CONVERSATION
   openChat: function(chatId, names, expiresAt) {
     this.state.currentChatId = chatId;
+    this.state.currentExpiresAt = expiresAt ? new Date(expiresAt) : null;
     this.nav('conversation');
 
     const cleanNames = names.filter(n => n !== this.state.user.firstName);
     document.getElementById('chat-names').innerText = names.join(', ');
 
     this.refreshMessages();
+    this.updateChatTimer(); // Initial call
 
     if (this.state.pollingInterval) clearInterval(this.state.pollingInterval);
     this.state.pollingInterval = setInterval(() => this.refreshMessages(true), 5000);
+
+    if (this.state.timerInterval) clearInterval(this.state.timerInterval);
+    this.state.timerInterval = setInterval(() => this.updateChatTimer(), 1000);
+  },
+
+  updateChatTimer: function() {
+    const el = document.getElementById('chat-timer');
+    if (!this.state.currentExpiresAt) {
+      el.innerText = "Illimité";
+      return;
+    }
+
+    const now = new Date();
+    const diff = this.state.currentExpiresAt - now;
+
+    if (diff <= 0) {
+      el.innerText = "Expiré";
+      return;
+    }
+
+    const hrs = Math.floor(diff / 3600000);
+    const mins = Math.floor((diff % 3600000) / 60000);
+    const secs = Math.floor((diff % 60000) / 1000);
+
+    el.innerText = `${hrs}h ${mins}m ${secs}s`;
   },
 
   refreshMessages: function(silent) {
