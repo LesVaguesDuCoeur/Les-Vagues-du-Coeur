@@ -3,15 +3,27 @@
 // ==========================================
 // Architecture: Hybrid (Netlify Frontend <-> GAS API)
 // Database: Google Drive (Docs as DB)
-// Security: Native Encryption (No external libraries)
+// Security: Native Encryption (No external libraries) | Secrets Obfuscated
 // ==========================================
 
-// --- CONSTANTS ---
-const FOLDER_ID = "1IN2pSIhjV_3Fn-B_WLMUgNFcQdLOjbYr";
-const ADMIN_EMAIL = "chaouiengage@gmail.com";
-const ADMIN_CODE_HASH = "15112000";
-const SECRET_KEY = "ChaouiSecretKeyV2_Native";
+// --- CONFIGURATION (OBFUSCATED) ---
+// Base64 Encoded to prevent casual reading in the editor
+const _SEC_1 = "MUlOMnBTSWhqVl8zRm4tQl9XTE1VZ05GY1FkTE9qYlly";
+const _SEC_2 = "MTUxMTIwMDA=";
+const _SEC_3 = "Y2hhb3VpZW5nYWdlQGdtYWlsLmNvbQ==";
+const _SEC_KEY = "Q2hhb3VpU2VjcmV0S2V5VjJfTmF0aXZl";
+
+// Runtime Decoded
+const FOLDER_ID = decodeSecret(_SEC_1);
+const ADMIN_CODE_HASH = decodeSecret(_SEC_2);
+const ADMIN_EMAIL = decodeSecret(_SEC_3);
+const SECRET_KEY = decodeSecret(_SEC_KEY);
+
 const USERS_DB_FILENAME = "Users.db";
+
+function decodeSecret(str) {
+  return Utilities.newBlob(Utilities.base64Decode(str, Utilities.Charset.UTF_8)).getDataAsString();
+}
 
 // --- API HANDLER ---
 
@@ -42,9 +54,13 @@ function doPost(e) {
       case 'getState':
         result = apiGetState(request.token, request.email);
         break;
+      case 'getConversations': // Alias for frontend compat
+        result = { chats: apiGetState(request.token, request.email).chats };
+        break;
 
       // CHAT
-      case 'createChat':
+      case 'createChat': // Alias
+      case 'createConversation':
         result = apiCreateChat(request.token, request.email, request.participants, request.duration);
         break;
       case 'sendMessage':
@@ -61,7 +77,8 @@ function doPost(e) {
       case 'adminGetUsers':
         result = apiAdminGetUsers(request.token, request.email);
         break;
-      case 'adminUpdateUser':
+      case 'adminUpdateUser': // Alias
+      case 'adminUpdateUserRights':
         result = apiAdminUpdateUser(request.token, request.email, request.targetEmail, request.canCreate, request.isAdmin);
         break;
       case 'adminDeleteUser':
@@ -72,7 +89,7 @@ function doPost(e) {
         break;
 
       default:
-        throw new Error("Unknown action");
+        throw new Error("Unknown action: " + action);
     }
 
     return createJSONOutput(result);
@@ -142,7 +159,7 @@ function apiRegister(email, firstName, code) {
 
     let isAdmin = false;
     let canCreate = false;
-    // Super Admin Hardcoded Logic
+    // Super Admin Logic
     if (cleanEmail === ADMIN_EMAIL && code.toString() === ADMIN_CODE_HASH) {
       isAdmin = true;
       canCreate = true;
@@ -204,10 +221,14 @@ function apiCreateChat(token, email, participants, durationStr) {
       if (durationStr === '12h') mins = 12 * 60;
       if (durationStr === '24h') mins = 24 * 60;
       if (durationStr === '48h') mins = 48 * 60;
+      // Compat with other format
+      if (durationStr.endsWith('h')) mins = parseInt(durationStr) * 60;
+      if (durationStr.endsWith('m')) mins = parseInt(durationStr);
+
       if (mins > 0) expiresAt = new Date(now.getTime() + mins * 60000).toISOString();
     }
 
-    const root = DriveApp.getFolderById(FOLDER_ID);
+    const root = getFolder();
     const docName = `CHAT_${new Date().getTime()}_${Utilities.getUuid()}`;
     const doc = DocumentApp.create(docName);
     const file = DriveApp.getFileById(doc.getId());
@@ -233,7 +254,7 @@ function apiCreateChat(token, email, participants, durationStr) {
       }
     });
     writeUsersDb(db);
-    return { success: true };
+    return { success: true, chatId: doc.getId() };
   } finally {
     lock.releaseLock();
   }
@@ -278,10 +299,12 @@ function apiGetMessages(token, email, chatId) {
     const txt = paras[i].getText();
     if (!txt) continue;
     try {
-      messages.push(JSON.parse(decrypt(txt)));
+      const m = JSON.parse(decrypt(txt));
+      m.isMe = (m.sender === email); // Add isMe flag for frontend compat
+      messages.push(m);
     } catch (e) {}
   }
-  return { success: true, messages: messages, meta: meta };
+  return { success: true, messages: messages, participantNames: meta.participantNames.join(', '), meta: meta };
 }
 
 function apiAddParticipant(token, email, chatId, targetEmail) {
@@ -336,7 +359,8 @@ function apiAdminGetUsers(token, email) {
     firstName: u.firstName,
     canCreate: u.canCreate,
     isAdmin: u.isAdmin,
-    registeredAt: u.registeredAt
+    registeredAt: u.registeredAt,
+    permissions: { canCreateChat: u.canCreate } // Compat
   })) };
 }
 
@@ -442,7 +466,8 @@ function sanitizeUser(u) {
     email: u.email,
     isAdmin: u.isAdmin,
     canCreate: u.canCreate,
-    mustChangePassword: u.mustChangePassword
+    mustChangePassword: u.mustChangePassword,
+    permissions: { canCreateChat: u.canCreate } // Compat
   };
 }
 
@@ -459,7 +484,24 @@ function getChatsForUser(user) {
       if (meta.expiresAt && now > new Date(meta.expiresAt)) {
         doc.setTrashed(true);
       } else {
-        results.push({ id: meta.id, names: meta.participantNames, expiresAt: meta.expiresAt });
+        // Fetch last message for preview
+        let lastMsg = null;
+        const paras = doc.getBody().getParagraphs();
+        if (paras.length > 1) {
+             const lastTxt = paras[paras.length-1].getText();
+             if(lastTxt) {
+                 try { lastMsg = JSON.parse(decrypt(lastTxt)); } catch(e){}
+             }
+        }
+
+        results.push({
+            id: meta.id,
+            names: meta.participantNames, // Back compat
+            participants: meta.participants,
+            participantNames: meta.participantNames.join(', '),
+            expiresAt: meta.expiresAt,
+            lastMessage: lastMsg
+        });
         validIds.push(id);
       }
     } catch(e) {}
@@ -513,9 +555,16 @@ function setupTrigger() {
 }
 
 function cleanUpExpiredChats() {
-  const files = getFolder().getFiles();
+  const root = getFolder();
+  const files = root.getFiles();
   const now = new Date();
+
+  // Safety limit
+  const startTime = new Date().getTime();
+
   while (files.hasNext()) {
+    if (new Date().getTime() - startTime > 280000) break;
+
     const f = files.next();
     if (f.getName() === USERS_DB_FILENAME) continue;
     try {
