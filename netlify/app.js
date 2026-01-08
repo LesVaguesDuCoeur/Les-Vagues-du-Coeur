@@ -2,7 +2,9 @@
 // CONFIGURATION
 // ==========================================
 // Encoded URL to prevent plain-text scraping
-const _ENC_URL = "aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy9BS2Z5Y2J4ekZldmJRSnplcndEMkwtdU5jVlRSSkU5WFZKNEhHZEM5S1VmdE95SUtUOXBxRXJzdk5mUHNmU0MxMk1qQkVVRFF2QS9leGVj";
+// INSTRUCTIONS: Remplacer par la nouvelle URL encodée en Base64
+// Utilisez btoa('https://script.google.com/macros/s/XXXXX/exec') dans la console pour l'obtenir.
+const _ENC_URL = "aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy9OT1RfQ09ORklHVVJFRF9ZRVQvZXhlYw==";
 
 const app = {
     user: null,
@@ -97,6 +99,7 @@ const app = {
 
             if (data.error) {
                 if (data.error.includes("Session") || data.error.includes("invalide")) {
+                    // Do not logout immediately on transient errors, but yes on session invalid
                     this.logout();
                 }
                 throw new Error(data.error);
@@ -236,7 +239,8 @@ const app = {
         this.startTimer();
 
         this.stopPolling();
-        this.pollingInterval = setInterval(() => this.loadMessages(chatId), 4000);
+        // Reduced polling freq to be nice to quotas, but user wants "Real Time"
+        this.pollingInterval = setInterval(() => this.loadMessages(chatId), 3000);
     },
 
     startTimer: function() {

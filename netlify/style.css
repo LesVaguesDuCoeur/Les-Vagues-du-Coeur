@@ -18,12 +18,19 @@ body {
     justify-content: center;
     align-items: center;
     overflow: hidden;
+    /* Anti-Screenshot / Privacy Measures */
     -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
     user-select: none;
+    -webkit-touch-callout: none;
 }
 
 /* Anti-Screenshot Blur Effect */
-body.blurred { filter: blur(20px); pointer-events: none; }
+body.blurred {
+    filter: blur(20px);
+    pointer-events: none;
+}
 
 /* Glass Container */
 .glass-container {

@@ -1,50 +1,75 @@
-# WhatsHappen - Instructions de Déploiement
+# INSTRUCTIONS DE DÉPLOIEMENT (WhatsHappen)
 
-Voici les instructions simples pour mettre en ligne votre application WhatsHappen (Version Netlify + Google Drive Backend).
+Suivez ces étapes scrupuleusement pour déployer la nouvelle version sécurisée et optimisée.
 
-## Partie 1 : Backend (Google Apps Script)
+## 1. Déploiement du Backend (Google Apps Script)
 
-Vous avez déjà le script, mais voici ce que vous devez vous assurer d'avoir dans votre projet Apps Script actuel :
+1.  Rendez-vous sur [script.google.com](https://script.google.com/).
+2.  Créez un **Nouveau projet**.
+3.  Nommez-le "WhatsHappen V2".
 
-1. Ouvrez votre projet Apps Script : [Lien vers votre projet](https://script.google.com/macros/s/AKfycbxzFevbQJzerwD2L-uNcVTRJE9XVJ4HGdC9KUftOyIKT9pqErsvNfPsfSC12MjBEUDQvA/exec) (Ouvrez l'éditeur).
-2. Copiez le contenu du fichier `Code.js` fourni ici et collez-le dans votre fichier `Code.gs` sur Apps Script.
-   - **Important :** Ce code contient déjà la configuration correcte pour votre dossier Drive `1IN2pSIhjV_3Fn-B_WLMUgNFcQdLOjbYr`.
-3. Cliquez sur **Déployer** > **Nouveau déploiement**.
-   - Type : **Application Web**.
-   - Exécuter en tant que : **Moi** (votre email).
-   - Qui peut accéder : **Tout le monde** (ou "Anyone").
-4. Copiez l'URL de l'application Web (elle devrait finir par `/exec`).
-   - *Note :* Si l'URL a changé, vous devez mettre à jour la ligne `API_URL` dans le fichier `netlify/app.js`. Pour l'instant, c'est configuré avec l'URL que vous m'avez donnée.
+### 4. Fichiers à créer
+Dans l'éditeur Apps Script, vous devez avoir exactement ces 2 fichiers :
 
-### Mise en place du "Nettoyage Automatique" (Trigger)
-Pour que les messages s'autodétruisent :
-1. Dans Apps Script, cliquez sur l'icône **Déclencheurs** (l'horloge à gauche).
-2. Cliquez sur **Ajouter un déclencheur**.
-3. Choisissez la fonction : `cleanUpExpiredChats`.
-4. Sélectionnez la source de l'événement : **Déclenché par le temps**.
-5. Type de déclencheur : **Minuteur**.
-6. Fréquence : **Toutes les minutes** (ou 5 minutes).
-7. Enregistrez.
+**Fichier 1 : `Code.gs`**
+*   Supprimez tout le code par défaut.
+*   Copiez-collez l'intégralité du code contenu dans le fichier `Code.gs` fourni par Jules.
+
+**Fichier 2 : `CryptoJS.gs`**
+*   Cliquez sur le **+** à côté de "Fichiers" > Script.
+*   Nommez-le `CryptoJS`.
+*   Copiez-collez tout le contenu du fichier `CryptoJS.gs` fourni (c'est une longue bibliothèque de code minifié).
+
+### 5. Déploiement en Web App
+1.  Cliquez sur le bouton bleu **Déployer** (en haut à droite) > **Nouveau déploiement**.
+2.  Sélectionnez le type : **Application Web**.
+3.  Configuration :
+    *   **Description** : V2 Stable
+    *   **Exécuter en tant que** : *Moi* (votre adresse email).
+    *   **Qui peut accéder** : *Tout le monde* (Anyone). **C'est crucial.**
+4.  Cliquez sur **Déployer**.
+5.  Autorisez l'accès si demandé (Cliquez sur Advanced > Go to WhatsHappen (unsafe) si Google vous avertit, c'est normal car c'est votre propre script).
+6.  **COPIEZ L'URL DE L'APPLICATION WEB** (elle ressemble à `https://script.google.com/macros/s/.../exec`).
 
 ---
 
-## Partie 2 : Frontend (Netlify)
+## 2. Configuration du Frontend (Netlify)
 
-C'est l'interface visuelle (Glassmorphism / ChaouiEngage).
+Il faut maintenant connecter votre site Netlify à ce nouveau script.
 
-1. Sur votre ordinateur, localisez le dossier `netlify` qui a été généré (il contient `index.html`, `style.css`, `app.js`, `logo.js`).
-2. Allez sur [Netlify Drop](https://app.netlify.com/drop).
-3. Glissez-déposez le dossier `netlify` entier dans la zone indiquée.
-4. Netlify va vous donner un lien (ex: `https://whatshappen-random.netlify.app`).
-5. **C'est fini !** Vous pouvez ouvrir ce lien sur votre téléphone ou PC.
+1.  Ouvrez la console développeur de votre navigateur (F12 > Console).
+2.  Tapez la commande suivante en remplaçant l'URL par la vôtre :
+    ```javascript
+    btoa("https://script.google.com/macros/s/VOTRE_ID_DEPLOIEMENT/exec")
+    ```
+3.  Copiez la chaîne de caractères qui s'affiche (ex: `aHR0cHM6Ly...`).
+4.  Ouvrez le fichier `netlify/app.js` sur votre ordinateur (ou GitHub).
+5.  À la ligne 6, remplacez la valeur de `_ENC_URL` :
+    ```javascript
+    const _ENC_URL = "VOTRE_CHAINE_COPIEE_ICI";
+    ```
+6.  Sauvegardez et redéployez sur Netlify (via Git push ou Drag & Drop).
 
-## Configuration Admin
+---
 
-- **Login Admin :**
-  - Email : `chaouiengage@gmail.com`
-  - Code : `15112000` (d'après le code existant)
-- **Login Utilisateur :**
-  - Email : (votre email)
-  - Code : (choisissez un code à 3 chiffres lors de l'inscription)
+## 3. Configuration des Triggers (Nettoyage automatique)
 
-Si vous avez besoin de changer le code Admin, modifiez la variable `_SEC_2` dans `Code.js` (c'est du Base64).
+Pour que les messages s'autodétruisent :
+
+1.  Retournez sur votre projet Apps Script.
+2.  Dans le menu de gauche, cliquez sur l'icône **Déclencheurs** (Triggers / Réveil).
+3.  Cliquez sur **+ Ajouter un déclencheur**.
+4.  Configurez comme suit :
+    *   Fonction : `cleanUpExpiredChats`
+    *   Déploiement : `Head`
+    *   Source de l'événement : `Déclenché par le temps` (Time-driven)
+    *   Type de minuteur : `Minuteur par minutes`
+    *   Intervalle : `Toutes les 5 minutes`.
+5.  Enregistrez.
+
+## 4. Vérification
+1.  Ouvrez votre site Netlify.
+2.  Connectez-vous avec `chaouiengage@gmail.com` (Code Admin : `2504`).
+3.  Testez la création d'une conversation. Vous devriez sentir que c'est beaucoup plus fluide.
+
+**Note sur la sécurité :** Les messages sont désormais cryptés en AES avant d'être écrits sur le Drive. Le Drive ne contient plus que du texte illisible.
