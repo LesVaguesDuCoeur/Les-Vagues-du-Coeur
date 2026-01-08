@@ -1,23 +1,30 @@
-<script>
 // ==========================================
-// WAHTSHAPPEN - FRONTEND LOGIC
+// WAHTSHAPPEN - FRONTEND LOGIC (NETLIFY)
 // ==========================================
+
+const CONFIG = {
+  // IMPORTANT: Replace this with your Google Apps Script Web App URL
+  API_URL: "https://script.google.com/macros/s/AKfycbyC2u_.../exec"
+};
 
 const app = {
   state: {
     token: localStorage.getItem('wh_token'),
     email: localStorage.getItem('wh_email'),
-    user: null, // Full user object
+    user: null,
     currentChatId: null,
     pollingInterval: null
   },
 
   init: function() {
-    // Anti-screenshot: Blur when window loses focus
+    // Check if API URL is set
+    if (CONFIG.API_URL.includes("AKfycby")) {
+      alert("Attention: Vous devez configurer l'URL de l'API dans js/app.js !");
+    }
+
+    // Anti-screenshot
     window.addEventListener('blur', () => document.body.classList.add('blurred'));
     window.addEventListener('focus', () => document.body.classList.remove('blurred'));
-
-    // Disable right click
     document.addEventListener('contextmenu', event => event.preventDefault());
 
     if (this.state.token && this.state.email) {
@@ -32,7 +39,6 @@ const app = {
     document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
     document.getElementById('view-' + viewId).classList.add('active');
 
-    // Stop polling if leaving conversation
     if (viewId !== 'conversation' && this.state.pollingInterval) {
       clearInterval(this.state.pollingInterval);
       this.state.pollingInterval = null;
@@ -53,6 +59,35 @@ const app = {
     }
   },
 
+  // API CALL HELPER
+  callApi: function(action, payload, onSuccess) {
+    const data = { action: action, ...payload };
+
+    fetch(CONFIG.API_URL, {
+      method: 'POST',
+      body: JSON.stringify(data),
+      // No CORS headers here, GAS handles it or browser follows redirect
+    })
+    .then(r => r.json())
+    .then(res => {
+      if (res.success) {
+        onSuccess(res);
+      } else {
+        this.loading(false);
+        if (res.error && res.error.includes("Session")) {
+          this.logout();
+        } else {
+          alert("Erreur: " + res.error);
+        }
+      }
+    })
+    .catch(e => {
+      this.loading(false);
+      console.error(e);
+      alert("Erreur de connexion serveur.");
+    });
+  },
+
   // AUTH
   login: function() {
     const email = document.getElementById('login-email').value;
@@ -60,18 +95,11 @@ const app = {
     if (!email || !code) return alert("Remplissez tout.");
 
     this.loading(true, "Connexion...");
-    google.script.run
-      .withSuccessHandler(res => {
-        this.loading(false);
-        if (res.success) {
-          this.saveSession(res.token, email, res.user);
-          this.loadDashboard();
-        } else {
-          alert("Erreur: " + res.error);
-        }
-      })
-      .withFailureHandler(e => { this.loading(false); alert("Server Error: " + e); })
-      .apiLogin(email, code);
+    this.callApi('login', { email: email, code: code }, (res) => {
+      this.loading(false);
+      this.saveSession(res.token, email, res.user);
+      this.loadDashboard();
+    });
   },
 
   register: function() {
@@ -81,17 +109,11 @@ const app = {
     if (!fn || !em || !co) return alert("Tout remplir SVP.");
 
     this.loading(true, "Inscription...");
-    google.script.run
-      .withSuccessHandler(res => {
-        this.loading(false);
-        if (res.success) {
-          this.saveSession(res.token, em, res.user);
-          this.loadDashboard();
-        } else {
-          alert("Erreur: " + res.error);
-        }
-      })
-      .apiRegister(em, fn, co);
+    this.callApi('register', { email: em, firstName: fn, code: co }, (res) => {
+      this.loading(false);
+      this.saveSession(res.token, em, res.user);
+      this.loadDashboard();
+    });
   },
 
   saveSession: function(token, email, user) {
@@ -115,33 +137,24 @@ const app = {
 
   refreshChats: function() {
     this.loading(true);
-    google.script.run
-      .withSuccessHandler(res => {
-        this.loading(false);
-        if (res.success) {
-          this.state.user = res.user; // Update rights
+    this.callApi('getState', { token: this.state.token, email: this.state.email }, (res) => {
+      this.loading(false);
+      this.state.user = res.user;
 
-          // Logic: Admin Logic
-          if (res.user.isAdmin) {
-             document.getElementById('main-logo-btn').classList.remove('hidden');
-          } else {
-             document.getElementById('main-logo-btn').classList.add('hidden');
-          }
+      if (res.user.isAdmin) {
+         document.getElementById('main-logo-btn').classList.remove('hidden');
+      } else {
+         document.getElementById('main-logo-btn').classList.add('hidden');
+      }
 
-          // Logic: Create Button
-          if (res.user.isAdmin || res.user.canCreate) {
-             document.getElementById('btn-create-chat').classList.remove('hidden');
-          } else {
-             document.getElementById('btn-create-chat').classList.add('hidden');
-          }
+      if (res.user.isAdmin || res.user.canCreate) {
+         document.getElementById('btn-create-chat').classList.remove('hidden');
+      } else {
+         document.getElementById('btn-create-chat').classList.add('hidden');
+      }
 
-          this.renderChatList(res.chats);
-        } else {
-          if (res.error.includes("Session")) this.logout();
-          else alert(res.error);
-        }
-      })
-      .apiGetState(this.state.token, this.state.email);
+      this.renderChatList(res.chats);
+    });
   },
 
   renderChatList: function(chats) {
@@ -156,7 +169,6 @@ const app = {
       const div = document.createElement('div');
       div.className = 'item';
 
-      // Calculate remaining time
       let timeStr = "Actif";
       if (chat.expiresAt) {
         const diff = new Date(chat.expiresAt) - new Date();
@@ -182,9 +194,7 @@ const app = {
 
   // CREATE CHAT
   showNewChatModal: function() {
-    if (!this.state.user.canCreate && !this.state.user.isAdmin) {
-      return alert("Vous n'avez pas le droit de créer des conversations. Contactez l'admin.");
-    }
+    if (!this.state.user.canCreate && !this.state.user.isAdmin) return;
     document.getElementById('modal-new-chat').classList.remove('hidden');
   },
 
@@ -200,17 +210,16 @@ const app = {
     const emails = emailsStr.split(',').map(s => s.trim()).filter(s => s);
 
     this.loading(true);
-    google.script.run
-      .withSuccessHandler(res => {
-        this.loading(false);
-        if (res.success) {
-          this.hideModal('modal-new-chat');
-          this.refreshChats();
-        } else {
-          alert("Erreur: " + res.error);
-        }
-      })
-      .apiCreateChat(this.state.token, this.state.email, emails, duration);
+    this.callApi('createChat', {
+      token: this.state.token,
+      email: this.state.email,
+      participants: emails,
+      duration: duration
+    }, (res) => {
+      this.loading(false);
+      this.hideModal('modal-new-chat');
+      this.refreshChats();
+    });
   },
 
   // CONVERSATION
@@ -218,28 +227,25 @@ const app = {
     this.state.currentChatId = chatId;
     this.nav('conversation');
 
-    // Header Info
-    const cleanNames = names.filter(n => n !== this.state.user.firstName); // Filter me out if possible, but names array might not match exactly 1:1 if generic
+    const cleanNames = names.filter(n => n !== this.state.user.firstName);
     document.getElementById('chat-names').innerText = names.join(', ');
 
     this.refreshMessages();
 
-    // Polling every 5s
     if (this.state.pollingInterval) clearInterval(this.state.pollingInterval);
     this.state.pollingInterval = setInterval(() => this.refreshMessages(true), 5000);
   },
 
   refreshMessages: function(silent) {
     if (!silent) this.loading(true);
-    google.script.run
-      .withSuccessHandler(res => {
-        if (!silent) this.loading(false);
-        if (res.success) {
-          this.renderMessages(res.messages);
-          // Update timer logic?
-        }
-      })
-      .apiGetMessages(this.state.token, this.state.email, this.state.currentChatId);
+    this.callApi('getMessages', {
+      token: this.state.token,
+      email: this.state.email,
+      chatId: this.state.currentChatId
+    }, (res) => {
+      if (!silent) this.loading(false);
+      this.renderMessages(res.messages);
+    });
   },
 
   renderMessages: function(msgs) {
@@ -253,9 +259,9 @@ const app = {
 
       let content = "";
       if (m.type === 'image' || m.type === 'file') {
-        content = `<img src="${m.content}" onclick="alert('Image cryptée')">`; // Base64
+        content = `<img src="${m.content}" onclick="alert('Image cryptée')">`;
       } else {
-        content = m.content; // Already escaped text?
+        content = m.content;
       }
 
       div.innerHTML = `
@@ -264,7 +270,6 @@ const app = {
       `;
       container.appendChild(div);
     });
-    // Scroll to bottom
     container.scrollTop = container.scrollHeight;
   },
 
@@ -273,33 +278,39 @@ const app = {
     const txt = input.value.trim();
     if (!txt) return;
 
-    input.value = ""; // optimistic clear
-    google.script.run
-      .withSuccessHandler(res => {
-        if (res.success) this.refreshMessages(true);
-        else alert("Erreur envoi");
-      })
-      .apiSendMessage(this.state.token, this.state.email, this.state.currentChatId, txt, 'text');
+    input.value = "";
+    this.callApi('sendMessage', {
+      token: this.state.token,
+      email: this.state.email,
+      chatId: this.state.currentChatId,
+      content: txt,
+      type: 'text'
+    }, (res) => {
+      this.refreshMessages(true);
+    });
   },
 
   handleFileUpload: function(elem) {
     const file = elem.files[0];
     if (!file) return;
 
-    if (file.size > 2 * 1024 * 1024) return alert("Fichier trop lourd (Max 2Mo)"); // GAS Limit
+    if (file.size > 2 * 1024 * 1024) return alert("Fichier trop lourd (Max 2Mo)");
 
     const reader = new FileReader();
     reader.onload = (e) => {
       const base64 = e.target.result;
       this.loading(true, "Envoi image...");
-      google.script.run
-        .withSuccessHandler(res => {
-          this.loading(false);
-          elem.value = "";
-          if (res.success) this.refreshMessages(true);
-          else alert("Erreur upload");
-        })
-        .apiSendMessage(this.state.token, this.state.email, this.state.currentChatId, base64, 'image');
+      this.callApi('sendMessage', {
+        token: this.state.token,
+        email: this.state.email,
+        chatId: this.state.currentChatId,
+        content: base64,
+        type: 'image'
+      }, (res) => {
+        this.loading(false);
+        elem.value = "";
+        this.refreshMessages(true);
+      });
     };
     reader.readAsDataURL(file);
   },
@@ -307,13 +318,10 @@ const app = {
   // --- ADMIN FUNCTIONS ---
   loadAdminUsers: function() {
     this.loading(true, "Chargement Users...");
-    google.script.run
-      .withSuccessHandler(res => {
-        this.loading(false);
-        if (res.success) this.renderAdminList(res.users);
-        else alert("Erreur: " + res.error);
-      })
-      .apiAdminGetUsers(this.state.token, this.state.email);
+    this.callApi('adminGetUsers', { token: this.state.token, email: this.state.email }, (res) => {
+      this.loading(false);
+      this.renderAdminList(res.users);
+    });
   },
 
   renderAdminList: function(users) {
@@ -347,41 +355,43 @@ const app = {
 
   adminToggleRight: function(targetEmail, newState) {
     this.loading(true);
-    google.script.run
-      .withSuccessHandler(res => {
-        this.loading(false);
-        if(res.success) this.loadAdminUsers();
-        else alert(res.error);
-      })
-      .apiAdminUpdateUser(this.state.token, this.state.email, targetEmail, newState);
+    this.callApi('adminUpdateUser', {
+      token: this.state.token,
+      email: this.state.email,
+      targetEmail: targetEmail,
+      canCreate: newState
+    }, (res) => {
+      this.loading(false);
+      this.loadAdminUsers();
+    });
   },
 
   adminDelete: function(targetEmail) {
     if(!confirm("Supprimer " + targetEmail + " ?")) return;
     this.loading(true);
-    google.script.run
-      .withSuccessHandler(res => {
-        this.loading(false);
-        if(res.success) this.loadAdminUsers();
-        else alert(res.error);
-      })
-      .apiAdminDeleteUser(this.state.token, this.state.email, targetEmail);
+    this.callApi('adminDeleteUser', {
+      token: this.state.token,
+      email: this.state.email,
+      targetEmail: targetEmail
+    }, (res) => {
+      this.loading(false);
+      this.loadAdminUsers();
+    });
   },
 
   adminResetPwd: function(targetEmail) {
     if(!confirm("Reset code pour " + targetEmail + " ?")) return;
     this.loading(true);
-    google.script.run
-      .withSuccessHandler(res => {
-        this.loading(false);
-        if(res.success) alert("Nouveau Code pour " + targetEmail + " : " + res.newCode);
-        else alert(res.error);
-      })
-      .apiAdminResetPassword(this.state.token, this.state.email, targetEmail);
+    this.callApi('adminResetPassword', {
+      token: this.state.token,
+      email: this.state.email,
+      targetEmail: targetEmail
+    }, (res) => {
+      this.loading(false);
+      alert("Nouveau Code pour " + targetEmail + " : " + res.newCode);
+    });
   }
 
 };
 
-// Start
 window.onload = () => app.init();
-</script>
