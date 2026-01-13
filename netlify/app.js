@@ -193,6 +193,10 @@ const app = {
 
         renderUser: (u) => {
             document.getElementById('user-greeting').innerText = `Bonjour, ${u.firstName}`;
+            // Render Avatar
+            const initial = u.firstName ? u.firstName.charAt(0).toUpperCase() : '?';
+            document.getElementById('header-avatar').innerText = initial;
+
             document.getElementById('badge-admin').classList.toggle('hidden', !u.isAdmin);
             document.getElementById('badge-sub').classList.toggle('hidden', !u.isSubscriber);
             document.getElementById('fab-admin').classList.toggle('hidden', !u.isAdmin);

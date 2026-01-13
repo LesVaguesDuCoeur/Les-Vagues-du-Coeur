@@ -113,7 +113,30 @@ function doGet(e) {
   return createJSONOutput({ status: "Online", message: "Use POST requests." });
 }
 
+function initializeDatabase() {
+  const folder = DriveApp.getFolderById(FOLDER_ID);
+
+  const files = [USERS_DB_FILENAME, SETTINGS_DB_FILENAME, SUBSCRIPTIONS_DB_FILENAME, INVOICES_DB_FILENAME, CHATS_DB_FILENAME];
+  files.forEach(name => {
+    if (!folder.getFilesByName(name).hasNext()) {
+       let defaultData = {};
+       if (name === USERS_DB_FILENAME) defaultData = { users: [] };
+       if (name === CHATS_DB_FILENAME) defaultData = { chats: [] };
+       if (name === SUBSCRIPTIONS_DB_FILENAME) defaultData = { subscriptions: [] };
+       if (name === INVOICES_DB_FILENAME) defaultData = { invoices: [] };
+       if (name === SETTINGS_DB_FILENAME) defaultData = {
+          subscriptionEnabled: true,
+          subscriptionPrice: 5.00,
+          subscriptionCurrency: "EUR",
+          paypalLink: "https://paypal.me/ChaouiEngage5?country.x=FR&locale.x=fr_FR"
+       };
+       folder.createFile(name, encrypt(JSON.stringify(defaultData)), MimeType.PLAIN_TEXT);
+    }
+  });
+}
+
 function doPost(e) {
+  initializeDatabase();
   const lock = LockService.getScriptLock();
 
   try {
