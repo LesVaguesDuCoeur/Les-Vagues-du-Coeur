@@ -1,24 +1,27 @@
 // ==========================================
-// WAHTSHAPPEN - BACKEND API (V4 FINAL)
+// WHATSHAPPEN - BACKEND API V5
 // ==========================================
 
-// ═══════════════════════════════════════════════════════════
-// CONFIGURATION (ENCODÉ - NE JAMAIS METTRE EN CLAIR)
-// ═══════════════════════════════════════════════════════════
+const _SEC_1 = "MUlOMnBTSWhqVl8zRm4tQl9XTE1VZ05GY1FkTE9qYlly";
+const _SEC_3 = "Y2hhb3VpZW5nYWdlQGdtYWlsLmNvbQ==";
+const _SEC_KEY = "Q2hhb3VpU2VjcmV0S2V5VjJfTmF0aXZl";
 
-const _FOLDER = "MUlOMnBTSWhqVl8zRm4tQl9XTE1VZ05GY1FkTE9qYlly";
-const _ADMIN = "Y2hhb3VpZW5nYWdlQGdtYWlsLmNvbQ==";
-const SECRET_KEY = "ChaouiSecretKeyV4";
+const FOLDER_ID = decodeSecret(_SEC_1);
+const ADMIN_EMAIL = decodeSecret(_SEC_3);
+const SECRET_KEY = decodeSecret(_SEC_KEY);
 
-function decodeB64(str) {
-  return Utilities.newBlob(Utilities.base64Decode(str)).getDataAsString();
+const USERS_DB_FILENAME = "Users.db";
+const SETTINGS_DB_FILENAME = "Settings.db";
+const SUBSCRIPTIONS_DB_FILENAME = "Subscriptions.db";
+const INVOICES_DB_FILENAME = "Invoices.db";
+const CHATS_DB_FILENAME = "chats_db.txt";
+
+function decodeSecret(str) {
+  return Utilities.newBlob(Utilities.base64Decode(str, Utilities.Charset.UTF_8)).getDataAsString();
 }
 
-const FOLDER_ID = decodeB64(_FOLDER);
-const ADMIN_EMAIL = decodeB64(_ADMIN);
-
 // ═══════════════════════════════════════════════════════════
-// CHIFFREMENT XOR + BASE64 (NATIF, PAS DE LIBRAIRIE)
+// CHIFFREMENT XOR + BASE64 (NATIF)
 // ═══════════════════════════════════════════════════════════
 
 function encrypt(text) {
@@ -53,213 +56,195 @@ function decrypt(cipher) {
 // GESTION DES FICHIERS DB
 // ═══════════════════════════════════════════════════════════
 
-function getOrCreateFile(fileName, defaultContent) {
-  const folder = DriveApp.getFolderById(FOLDER_ID);
-  const files = folder.getFilesByName(fileName);
+function getFolder() {
+  return DriveApp.getFolderById(FOLDER_ID);
+}
 
+function readDb(filename, defaultData) {
+  const folder = getFolder();
+  const files = folder.getFilesByName(filename);
   if (files.hasNext()) {
-    const file = files.next();
-    const content = file.getBlob().getDataAsString();
-    if (!content) return defaultContent;
     try {
-      return JSON.parse(decrypt(content));
-    } catch (e) {
-      return defaultContent;
-    }
-  } else {
-    const encrypted = encrypt(JSON.stringify(defaultContent));
-    folder.createFile(fileName, encrypted);
-    return defaultContent;
+      return JSON.parse(decrypt(files.next().getBlob().getDataAsString()));
+    } catch(e) { return defaultData; }
   }
+  const enc = encrypt(JSON.stringify(defaultData));
+  folder.createFile(filename, enc, MimeType.PLAIN_TEXT);
+  return defaultData;
 }
 
-function saveFile(fileName, data) {
-  const folder = DriveApp.getFolderById(FOLDER_ID);
-  const files = folder.getFilesByName(fileName);
-  const encrypted = encrypt(JSON.stringify(data));
-
+function writeDb(filename, data) {
+  const folder = getFolder();
+  const files = folder.getFilesByName(filename);
   if (files.hasNext()) {
-    const file = files.next();
-    file.setContent(encrypted);
+    files.next().setContent(encrypt(JSON.stringify(data)));
   } else {
-    folder.createFile(fileName, encrypted);
+    folder.createFile(filename, encrypt(JSON.stringify(data)), MimeType.PLAIN_TEXT);
   }
 }
 
-// Raccourcis pour chaque DB
-function readUsersDb() {
-  return getOrCreateFile("users_db.txt", { users: [] });
-}
-function writeUsersDb(data) {
-  saveFile("users_db.txt", data);
-}
+function readUsersDb() { return readDb(USERS_DB_FILENAME, { users: [] }); }
+function writeUsersDb(data) { writeDb(USERS_DB_FILENAME, data); }
 
-function readChatsDb() {
-  return getOrCreateFile("chats_db.txt", { chats: [] });
-}
-function writeChatsDb(data) {
-  saveFile("chats_db.txt", data);
-}
+function readChatsDb() { return readDb(CHATS_DB_FILENAME, { chats: [] }); }
+function writeChatsDb(data) { writeDb(CHATS_DB_FILENAME, data); }
 
-function readSubscriptionsDb() {
-  return getOrCreateFile("subscriptions_db.txt", { subscriptions: [] });
-}
-function writeSubscriptionsDb(data) {
-  saveFile("subscriptions_db.txt", data);
-}
+function readSubscriptionsDb() { return readDb(SUBSCRIPTIONS_DB_FILENAME, { subscriptions: [] }); }
+function writeSubscriptionsDb(data) { writeDb(SUBSCRIPTIONS_DB_FILENAME, data); }
 
-function readInvoicesDb() {
-  return getOrCreateFile("invoices_db.txt", { invoices: [] });
-}
-function writeInvoicesDb(data) {
-  saveFile("invoices_db.txt", data);
-}
+function readInvoicesDb() { return readDb(INVOICES_DB_FILENAME, { invoices: [] }); }
+function writeInvoicesDb(data) { writeDb(INVOICES_DB_FILENAME, data); }
 
 function readSettingsDb() {
-  return getOrCreateFile("settings_db.txt", {
+  return readDb(SETTINGS_DB_FILENAME, {
     subscriptionEnabled: true,
     subscriptionPrice: 5.00,
     subscriptionCurrency: "EUR",
     paypalLink: "https://paypal.me/ChaouiEngage5?country.x=FR&locale.x=fr_FR"
   });
 }
-function writeSettingsDb(data) {
-  saveFile("settings_db.txt", data);
-}
+function writeSettingsDb(data) { writeDb(SETTINGS_DB_FILENAME, data); }
 
 // ═══════════════════════════════════════════════════════════
-// POINT D'ENTRÉE API
+// API HANDLER
 // ═══════════════════════════════════════════════════════════
 
 function doGet(e) {
-  return ContentService.createTextOutput(JSON.stringify({ status: "Online" })).setMimeType(ContentService.MimeType.JSON);
+  return createJSONOutput({ status: "Online", message: "Use POST requests." });
 }
 
 function doPost(e) {
-  try {
-    const data = JSON.parse(e.postData.contents);
-    const action = data.action;
+  const lock = LockService.getScriptLock();
 
-    let result;
+  try {
+    // Basic rate limit or lock check?
+    // We lock inside individual functions or here globally?
+    // Locking globally is safer for consistency but slower.
+    // The prompt's example locks inside functions. We will follow that pattern or wrap here.
+    // Let's use the pattern from the prompt: try/catch/result.
+
+    if (!e.postData || !e.postData.contents) throw new Error("No data");
+    const request = JSON.parse(e.postData.contents);
+    const action = request.action;
+    let result = {};
 
     switch (action) {
-      // Auth
-      case 'register':
-        result = apiRegister(data.email, data.firstName, data.code);
-        break;
-      case 'login':
-        result = apiLogin(data.email, data.code);
-        break;
-      case 'changePassword':
-        result = apiChangePassword(data.email, data.oldCode, data.newCode);
-        break;
+      // AUTH
+      case 'login': result = apiLogin(request.email, request.code); break;
+      case 'changePassword': result = apiChangePassword(request.email, request.oldCode, request.newCode); break;
+      case 'register': result = apiRegister(request.email, request.firstName, request.code); break;
+      case 'getState': result = apiGetState(request.token, request.email); break;
 
-      // State
-      case 'getState':
-        result = apiGetState(data.token);
-        break;
-
-      // Chats
+      // CHAT
       case 'createChat':
-        result = apiCreateChat(data.token, data.participants, data.duration);
-        break;
-      case 'getMessages':
-        result = apiGetMessages(data.token, data.chatId);
-        break;
-      case 'sendMessage':
-        result = apiSendMessage(data.token, data.chatId, data.content, data.type);
-        break;
-      case 'addParticipant':
-        result = apiAddParticipant(data.token, data.chatId, data.email);
-        break;
-      case 'expireChat':
-        result = apiExpireChat(data.token, data.chatId);
-        break;
+      case 'createConversation': result = apiCreateChat(request.token, request.email, request.participants, request.duration); break;
+      case 'sendMessage': result = apiSendMessage(request.token, request.email, request.chatId, request.content, request.type); break;
+      case 'getMessages': result = apiGetMessages(request.token, request.email, request.chatId); break;
+      case 'getChats': result = apiGetChats(request.token, request.email); break;
+      case 'addParticipant': result = apiAddParticipant(request.token, request.email, request.chatId, request.targetEmail); break;
+      case 'expireChat': result = apiExpireChat(request.token, request.email, request.chatId); break;
 
-      // Subscriptions
-      case 'getSubscriptionCode':
-        result = apiGetSubscriptionCode(data.token);
-        break;
-      case 'submitSubscription':
-        result = apiSubmitSubscription(data.token, data.paypalTransaction);
-        break;
-
-      // Admin
-      case 'adminGetUsers':
-        result = apiAdminGetUsers(data.token);
-        break;
+      // ADMIN
+      case 'adminGetUsers': result = apiAdminGetUsers(request.token, request.email); break;
       case 'adminUpdateUser':
-        result = apiAdminUpdateUser(data.token, data.userId, data.updates);
-        break;
-      case 'adminDeleteUser':
-        result = apiAdminDeleteUser(data.token, data.userId);
-        break;
-      case 'adminResetPassword':
-        result = apiAdminResetPassword(data.token, data.userId);
-        break;
-      case 'adminGetSubscriptions':
-        result = apiAdminGetSubscriptions(data.token);
-        break;
-      case 'adminValidateSubscription':
-        result = apiAdminValidateSubscription(data.token, data.userId, data.startDate, data.endDate);
-        break;
-      case 'adminGetInvoices':
-        result = apiAdminGetInvoices(data.token, data.userId);
-        break;
-      case 'adminGetSettings':
-        result = apiAdminGetSettings(data.token);
-        break;
-      case 'adminUpdateSettings':
-        result = apiAdminUpdateSettings(data.token, data.settings);
-        break;
+      case 'adminUpdateUserRights': result = apiAdminUpdateUser(request.token, request.email, request.targetEmail, request.canCreate, request.isAdmin, request.isSubscriber); break;
+      case 'adminDeleteUser': result = apiAdminDeleteUser(request.token, request.email, request.targetEmail); break;
+      case 'adminResetPassword': result = apiAdminResetPassword(request.token, request.email, request.targetEmail); break;
 
-      default:
-        result = { success: false, error: "Action inconnue." };
+      // SUBSCRIPTIONS
+      case 'getSubscriptionCode': result = apiGetSubscriptionCode(request.token, request.email); break;
+      case 'submitSubscription': result = apiSubmitSubscription(request.token, request.email, request.paypalTransaction); break;
+      case 'adminGetSubscriptions': result = apiAdminGetSubscriptions(request.token, request.email); break;
+      case 'adminValidateSubscription': result = apiAdminValidateSubscription(request.token, request.email, request.targetEmail, request.startDate, request.endDate); break;
+      case 'adminGetSettings': result = apiAdminGetSettings(request.token, request.email); break;
+      case 'adminUpdateSettings': result = apiAdminUpdateSettings(request.token, request.email, request.settings); break;
+      case 'adminGetInvoices': result = apiAdminGetInvoices(request.token, request.email, request.targetEmail); break;
+
+      default: throw new Error("Unknown action: " + action);
     }
 
-    return ContentService.createTextOutput(JSON.stringify(result))
-      .setMimeType(ContentService.MimeType.JSON);
-
-  } catch (error) {
-    return ContentService.createTextOutput(JSON.stringify({
-      success: false,
-      error: error.message || "Une erreur est survenue."
-    })).setMimeType(ContentService.MimeType.JSON);
+    return createJSONOutput(result);
+  } catch (err) {
+    return createJSONOutput({ success: false, error: err.message });
   }
 }
 
+function createJSONOutput(data) {
+  return ContentService.createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
 // ═══════════════════════════════════════════════════════════
-// AUTHENTIFICATION
+// CORE LOGIC
 // ═══════════════════════════════════════════════════════════
+
+function apiLogin(email, code) {
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(15000);
+    const db = readUsersDb();
+    const cleanEmail = email.toLowerCase().trim();
+    const userIndex = db.users.findIndex(u => u.email === cleanEmail);
+
+    if (userIndex < 0) throw new Error("Utilisateur inconnu.");
+    const user = db.users[userIndex];
+
+    if (user.code !== code.toString()) throw new Error("Code incorrect.");
+
+    if (user.mustChangePassword) return { success: true, requireNewPassword: true };
+
+    // SuperAdmin Force
+    if (cleanEmail === ADMIN_EMAIL) {
+       user.isAdmin = true;
+       user.canCreate = true;
+    }
+
+    const token = Utilities.getUuid();
+    user.token = token;
+
+    // SAVE DB
+    db.users[userIndex] = user;
+    writeUsersDb(db);
+
+    return { success: true, token: token, user: sanitizeUser(user) };
+  } finally {
+    lock.releaseLock();
+  }
+}
 
 function apiRegister(email, firstName, code) {
   const lock = LockService.getScriptLock();
   try {
     lock.waitLock(15000);
-
-    const cleanEmail = email.toLowerCase().trim();
-    const cleanName = firstName.trim();
-
-    if (!cleanEmail || !cleanName || !code) throw new Error("Veuillez remplir tous les champs.");
-    if (!/^\d{3}$/.test(code)) throw new Error("Le code doit contenir exactement 3 chiffres.");
-
     const db = readUsersDb();
+    const cleanEmail = email.toLowerCase().trim();
 
-    if (db.users.some(u => u.email === cleanEmail)) throw new Error("Cette adresse email est déjà utilisée.");
+    if (db.users.some(u => u.email === cleanEmail)) throw new Error("Email déjà enregistré.");
 
-    const isSuperAdmin = cleanEmail === ADMIN_EMAIL;
+    const cleanCode = code.toString();
+    if (cleanCode.length !== 3) throw new Error("Le code doit faire 3 chiffres.");
+
+    let isAdmin = false;
+    let canCreate = false;
+
+    if (cleanEmail === ADMIN_EMAIL) {
+      isAdmin = true;
+      canCreate = true;
+    }
 
     const newUser = {
       id: Utilities.getUuid(),
       email: cleanEmail,
-      firstName: cleanName,
-      code: code,
+      firstName: firstName,
+      code: cleanCode,
       token: null,
-      isAdmin: isSuperAdmin,
-      canCreate: isSuperAdmin,
+      isAdmin: isAdmin,
+      canCreate: canCreate,
       isSubscriber: false,
       canSubscribe: true,
-      createdAt: new Date().toISOString()
+      activeChats: [],
+      registeredAt: new Date().toISOString(),
+      mustChangePassword: false
     };
 
     db.users.push(newUser);
@@ -271,266 +256,241 @@ function apiRegister(email, firstName, code) {
   }
 }
 
-function apiLogin(email, code) {
-  const lock = LockService.getScriptLock();
-  try {
-    lock.waitLock(15000);
-
-    const cleanEmail = email.toLowerCase().trim();
-    const db = readUsersDb();
-
-    const userIndex = db.users.findIndex(u => u.email === cleanEmail);
-    if (userIndex < 0) throw new Error("Cette adresse email n'est pas inscrite.");
-
-    const user = db.users[userIndex];
-
-    if (user.code !== code.toString()) throw new Error("Le code est incorrect.");
-
-    // Forcer les droits super-admin
-    if (cleanEmail === ADMIN_EMAIL) {
-      user.isAdmin = true;
-      user.canCreate = true;
-    }
-
-    const token = Utilities.getUuid();
-    user.token = token;
-
-    db.users[userIndex] = user;
-    writeUsersDb(db);
-
-    return {
-      success: true,
-      token: token,
-      user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        isAdmin: user.isAdmin,
-        canCreate: user.canCreate,
-        isSubscriber: user.isSubscriber,
-        canSubscribe: user.canSubscribe
-      }
-    };
-  } finally {
-    lock.releaseLock();
-  }
-}
-
-function validateToken(token) {
-  if (!token) return null;
-  const db = readUsersDb();
-  return db.users.find(u => u.token === token) || null;
-}
-
 function apiChangePassword(email, oldCode, newCode) {
   const lock = LockService.getScriptLock();
   try {
     lock.waitLock(10000);
     const db = readUsersDb();
-    const userIndex = db.users.findIndex(u => u.email === email.toLowerCase().trim());
+    const cleanEmail = email.toLowerCase().trim();
+    const idx = db.users.findIndex(u => u.email === cleanEmail);
+    if (idx < 0) throw new Error("Utilisateur inconnu.");
 
-    if (userIndex < 0) throw new Error("Utilisateur non trouvé.");
-    if (db.users[userIndex].code !== oldCode.toString()) throw new Error("Ancien code incorrect.");
+    if (db.users[idx].code !== oldCode.toString()) throw new Error("Ancien code incorrect.");
 
-    db.users[userIndex].code = newCode.toString();
+    db.users[idx].code = newCode.toString();
+    db.users[idx].mustChangePassword = false;
+
     writeUsersDb(db);
+    return { success: true, message: "Mot de passe changé." };
+  } finally {
+    lock.releaseLock();
+  }
+}
 
-    return { success: true, message: "Code mis à jour." };
+function apiGetState(token, email) {
+  const user = validateUser(token, email);
+  // We don't return chats here to keep it light, usually separate call.
+  // But prompt says "getState" returns user state.
+  return { success: true, user: sanitizeUser(user) };
+}
+
+function apiCreateChat(token, email, participants, durationStr) {
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(30000);
+    const db = readUsersDb();
+    const user = db.users.find(u => u.email === email && u.token === token);
+
+    if (!user) throw new Error("Session invalide");
+
+    // CHECK PERMISSIONS
+    if (!user.isAdmin && !user.canCreate && !user.isSubscriber) {
+      throw new Error("Vous n'avez pas les droits pour créer une conversation.");
+    }
+
+    const validEmails = [user.email];
+    const validIds = [user.id];
+    const validNames = [user.firstName];
+
+    const emailList = (typeof participants === 'string') ? participants.split(',') : participants;
+
+    emailList.forEach(pEmail => {
+      const clean = pEmail.trim().toLowerCase();
+      if (!clean) return;
+      const p = db.users.find(u => u.email === clean);
+      if (p) {
+        if (!validEmails.includes(p.email)) {
+          validEmails.push(p.email);
+          validIds.push(p.id);
+          validNames.push(p.firstName);
+        }
+      }
+    });
+
+    let expiresAt = null;
+    if (durationStr !== 'unlimited') {
+      const now = new Date();
+      let mins = 0;
+      if (durationStr === '10min') mins = 10;
+      if (durationStr === '12h') mins = 12 * 60;
+      if (durationStr === '24h') mins = 24 * 60;
+      if (durationStr === '48h') mins = 48 * 60;
+      if (mins > 0) expiresAt = new Date(now.getTime() + mins * 60000).toISOString();
+    }
+
+    const chatsDb = readChatsDb();
+    const newChat = {
+      id: Utilities.getUuid(),
+      createdBy: user.id,
+      participants: validIds,
+      participantNames: validNames, // Snapshot of names
+      duration: durationStr,
+      expiresAt: expiresAt,
+      createdAt: new Date().toISOString(),
+      paused: false,
+      messages: []
+    };
+
+    chatsDb.chats.push(newChat);
+    writeChatsDb(chatsDb);
+
+    return { success: true, chatId: newChat.id };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function apiSendMessage(token, email, chatId, content, type) {
+  const user = validateUser(token, email);
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(5000);
+    const chatsDb = readChatsDb();
+    const chatIndex = chatsDb.chats.findIndex(c => c.id === chatId);
+    if (chatIndex < 0) throw new Error("Chat introuvable.");
+
+    const chat = chatsDb.chats[chatIndex];
+    if (!chat.participants.includes(user.id)) throw new Error("Accès refusé.");
+    if (chat.paused) throw new Error("Conversation en pause.");
+
+    const msg = {
+      id: Utilities.getUuid(),
+      sender: user.email,
+      senderName: user.firstName,
+      content: content,
+      type: type || 'text',
+      timestamp: new Date().toISOString()
+    };
+
+    chat.messages.push(msg);
+    writeChatsDb(chatsDb);
+    return { success: true };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function apiGetMessages(token, email, chatId) {
+  const user = validateUser(token, email);
+  const chatsDb = readChatsDb();
+  const chat = chatsDb.chats.find(c => c.id === chatId);
+
+  if (!chat) throw new Error("Chat introuvable.");
+  if (!chat.participants.includes(user.id)) throw new Error("Accès refusé.");
+
+  // Resolve current names
+  const usersDb = readUsersDb();
+  const names = chat.participants.map(pid => {
+    const u = usersDb.users.find(x => x.id === pid);
+    return u ? u.firstName : "Inconnu";
+  }).join(", ");
+
+  return {
+    success: true,
+    messages: chat.messages,
+    participantNames: names,
+    meta: {
+      id: chat.id,
+      expiresAt: chat.expiresAt,
+      paused: chat.paused
+    }
+  };
+}
+
+function apiGetChats(token, email) {
+  const user = validateUser(token, email);
+  const chatsDb = readChatsDb();
+  const usersDb = readUsersDb();
+
+  const myChats = chatsDb.chats.filter(c => c.participants.includes(user.id));
+
+  const result = myChats.map(c => {
+    const names = c.participants.map(pid => {
+       const u = usersDb.users.find(x => x.id === pid);
+       return u ? u.firstName : "Inconnu";
+    }).join(", ");
+
+    return {
+      id: c.id,
+      participantNames: names,
+      expiresAt: c.expiresAt,
+      paused: c.paused
+    };
+  });
+
+  return { success: true, chats: result };
+}
+
+function apiAddParticipant(token, email, chatId, targetEmail) {
+  const user = validateUser(token, email);
+  if (!user.isAdmin && !user.canCreate) throw new Error("Droit refusé.");
+
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(10000);
+    const chatsDb = readChatsDb();
+    const chatIndex = chatsDb.chats.findIndex(c => c.id === chatId);
+    if (chatIndex < 0) throw new Error("Chat introuvable.");
+    const chat = chatsDb.chats[chatIndex];
+
+    if (!chat.participants.includes(user.id)) throw new Error("Accès refusé.");
+
+    const usersDb = readUsersDb();
+    const target = usersDb.users.find(u => u.email === targetEmail.toLowerCase().trim());
+    if (!target) throw new Error("Utilisateur introuvable.");
+    if (chat.participants.includes(target.id)) throw new Error("Déjà présent.");
+
+    chat.participants.push(target.id);
+
+    // System msg
+    chat.messages.push({
+      id: Utilities.getUuid(),
+      sender: "system",
+      senderName: "Système",
+      content: `${user.firstName} a ajouté ${target.firstName}`,
+      type: "system",
+      timestamp: new Date().toISOString()
+    });
+
+    writeChatsDb(chatsDb);
+    return { success: true };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function apiExpireChat(token, email, chatId) {
+  const user = validateUser(token, email);
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(10000);
+    const chatsDb = readChatsDb();
+    const index = chatsDb.chats.findIndex(c => c.id === chatId);
+    if (index >= 0) {
+      const chat = chatsDb.chats[index];
+      if (chat.participants.includes(user.id)) {
+        chatsDb.chats.splice(index, 1);
+        writeChatsDb(chatsDb);
+      }
+    }
+    return { success: true };
   } finally {
     lock.releaseLock();
   }
 }
 
 // ═══════════════════════════════════════════════════════════
-// CHATS
-// ═══════════════════════════════════════════════════════════
-
-function apiGetState(token) {
-  const user = validateToken(token);
-  if (!user) throw new Error("Session expirée.");
-
-  const chatsDb = readChatsDb();
-  const db = readUsersDb();
-  const now = new Date();
-
-  const myChats = chatsDb.chats.filter(c =>
-    c.participants.includes(user.id) &&
-    (!c.expiresAt || new Date(c.expiresAt) > now)
-  ).map(c => {
-    // Resolve names
-    const names = c.participants.map(pid => {
-      const u = db.users.find(x => x.id === pid);
-      return u ? u.firstName : "Inconnu";
-    }).join(", ");
-
-    // Get last message
-    const lastMsg = c.messages.length > 0 ? c.messages[c.messages.length - 1] : null;
-
-    return {
-      id: c.id,
-      participantNames: names,
-      lastMessage: lastMsg,
-      expiresAt: c.expiresAt,
-      paused: c.paused
-    };
-  });
-
-  return { success: true, user: user, chats: myChats };
-}
-
-function apiCreateChat(token, participantEmails, durationStr) {
-  const user = validateToken(token);
-  if (!user) throw new Error("Session expirée.");
-
-  // Permissions Check
-  if (!user.isAdmin && !user.canCreate && !user.isSubscriber) {
-    throw new Error("Vous n'avez pas les droits pour créer une conversation.");
-  }
-
-  const db = readUsersDb();
-  const validParticipants = [user.id];
-  const emailList = typeof participantEmails === 'string' ? participantEmails.split(',') : participantEmails;
-
-  emailList.forEach(email => {
-    const clean = email.trim().toLowerCase();
-    if (!clean) return;
-    const p = db.users.find(u => u.email === clean);
-    if (!p) throw new Error("Utilisateur introuvable : " + clean);
-    if (!validParticipants.includes(p.id)) validParticipants.push(p.id);
-  });
-
-  let expiresAt = null;
-  if (durationStr !== 'unlimited') {
-    const now = new Date();
-    let mins = 0;
-    if (durationStr === '10min') mins = 10;
-    if (durationStr === '12h') mins = 12 * 60;
-    if (durationStr === '24h') mins = 24 * 60;
-    if (durationStr === '48h') mins = 48 * 60;
-    if (mins > 0) expiresAt = new Date(now.getTime() + mins * 60000).toISOString();
-  }
-
-  const newChat = {
-    id: Utilities.getUuid(),
-    createdBy: user.id,
-    participants: validParticipants,
-    duration: durationStr,
-    expiresAt: expiresAt,
-    paused: false,
-    pausedReason: null,
-    messages: []
-  };
-
-  const chatsDb = readChatsDb();
-  chatsDb.chats.push(newChat);
-  writeChatsDb(chatsDb);
-
-  return { success: true, chatId: newChat.id };
-}
-
-function apiSendMessage(token, chatId, content, type) {
-  const user = validateToken(token);
-  if (!user) throw new Error("Session expirée.");
-
-  const chatsDb = readChatsDb();
-  const chatIndex = chatsDb.chats.findIndex(c => c.id === chatId);
-
-  if (chatIndex < 0) throw new Error("Conversation introuvable.");
-  const chat = chatsDb.chats[chatIndex];
-
-  if (!chat.participants.includes(user.id)) throw new Error("Accès refusé.");
-  if (chat.paused) throw new Error("Conversation en pause (Abonnement expiré).");
-
-  const msg = {
-    id: Utilities.getUuid(),
-    sender: user.email,
-    senderName: user.firstName,
-    content: content,
-    type: type,
-    timestamp: new Date().toISOString()
-  };
-
-  chat.messages.push(msg);
-  writeChatsDb(chatsDb);
-
-  return { success: true };
-}
-
-function apiGetMessages(token, chatId) {
-  const user = validateToken(token);
-  if (!user) throw new Error("Session expirée.");
-
-  const chatsDb = readChatsDb();
-  const chat = chatsDb.chats.find(c => c.id === chatId);
-
-  if (!chat) throw new Error("Conversation introuvable.");
-  if (!chat.participants.includes(user.id)) throw new Error("Accès refusé.");
-
-  // Resolve Names
-  const db = readUsersDb();
-  const names = chat.participants.map(pid => {
-      const u = db.users.find(x => x.id === pid);
-      return u ? u.firstName : "Inconnu";
-  }).join(", ");
-
-  return { success: true, messages: chat.messages, participantNames: names, meta: chat };
-}
-
-function apiExpireChat(token, chatId) {
-  const user = validateToken(token);
-  if (!user) throw new Error("Session expirée.");
-
-  const chatsDb = readChatsDb();
-  const chatIndex = chatsDb.chats.findIndex(c => c.id === chatId);
-
-  if (chatIndex >= 0) {
-    const chat = chatsDb.chats[chatIndex];
-    if (chat.participants.includes(user.id)) {
-      chatsDb.chats.splice(chatIndex, 1);
-      writeChatsDb(chatsDb);
-    }
-  }
-  return { success: true };
-}
-
-function apiAddParticipant(token, chatId, emailToAdd) {
-  const user = validateToken(token);
-  if (!user) throw new Error("Session expirée.");
-
-  // Check rights: Admin or Creator
-  if (!user.isAdmin && !user.canCreate) throw new Error("Vous n'avez pas les droits pour ajouter des participants.");
-
-  const chatsDb = readChatsDb();
-  const chatIndex = chatsDb.chats.findIndex(c => c.id === chatId);
-  if (chatIndex < 0) throw new Error("Conversation introuvable.");
-
-  const chat = chatsDb.chats[chatIndex];
-  if (!chat.participants.includes(user.id)) throw new Error("Accès refusé.");
-
-  const db = readUsersDb();
-  const target = db.users.find(u => u.email === emailToAdd.toLowerCase().trim());
-  if (!target) throw new Error("Utilisateur introuvable.");
-
-  if (chat.participants.includes(target.id)) throw new Error("Déjà participant.");
-
-  chat.participants.push(target.id);
-
-  // System msg
-  chat.messages.push({
-    id: Utilities.getUuid(),
-    sender: "system",
-    senderName: "Système",
-    content: `${user.firstName} a ajouté ${target.firstName}`,
-    type: "system",
-    timestamp: new Date().toISOString()
-  });
-
-  writeChatsDb(chatsDb);
-  return { success: true };
-}
-
-// ═══════════════════════════════════════════════════════════
-// ABONNEMENTS
+// SUBSCRIPTIONS
 // ═══════════════════════════════════════════════════════════
 
 function generateWhatsHappenCode() {
@@ -551,13 +511,11 @@ function generateInvoiceRef() {
   return `WH${y}${m}-${r}`;
 }
 
-function apiGetSubscriptionCode(token) {
-  const user = validateToken(token);
-  if (!user) throw new Error("Session expirée.");
-
+function apiGetSubscriptionCode(token, email) {
+  const user = validateUser(token, email);
   const settings = readSettingsDb();
-  if (!settings.subscriptionEnabled) throw new Error("Les abonnements sont temporairement désactivés.");
-  if (!user.canSubscribe) throw new Error("Vous ne pouvez pas souscrire à un abonnement.");
+  if (!settings.subscriptionEnabled) throw new Error("Abonnements désactivés.");
+  if (!user.canSubscribe) throw new Error("Vous ne pouvez pas vous abonner.");
 
   const subsDb = readSubscriptionsDb();
   let sub = subsDb.subscriptions.find(s => s.userId === user.id);
@@ -571,34 +529,30 @@ function apiGetSubscriptionCode(token) {
       firstName: user.firstName,
       whatsappenCode: code,
       paypalTransaction: null,
-      status: 'pending',
-      startDate: null,
-      endDate: null,
-      createdAt: new Date().toISOString(),
-      validatedAt: null,
-      validatedBy: null
+      status: 'new',
+      createdAt: new Date().toISOString()
     });
     writeSubscriptionsDb(subsDb);
   }
 
-  return { success: true, code: code };
+  return { success: true, code: code, price: settings.subscriptionPrice, paypalLink: settings.paypalLink };
 }
 
-function apiSubmitSubscription(token, paypalTransaction) {
-  const user = validateToken(token);
-  if (!user) throw new Error("Session expirée.");
+function apiSubmitSubscription(token, email, paypalTransaction) {
+  const user = validateUser(token, email);
   if (!paypalTransaction) throw new Error("Transaction requise.");
 
   const lock = LockService.getScriptLock();
   try {
     lock.waitLock(15000);
     const subsDb = readSubscriptionsDb();
-    const subIndex = subsDb.subscriptions.findIndex(s => s.userId === user.id);
+    const idx = subsDb.subscriptions.findIndex(s => s.userId === user.id);
 
-    if (subIndex < 0) throw new Error("Code introuvable. Générez-le d'abord.");
+    if (idx < 0) throw new Error("Code introuvable.");
 
-    subsDb.subscriptions[subIndex].paypalTransaction = paypalTransaction;
-    subsDb.subscriptions[subIndex].status = 'submitted';
+    subsDb.subscriptions[idx].paypalTransaction = paypalTransaction;
+    subsDb.subscriptions[idx].status = 'pending';
+    subsDb.subscriptions[idx].submittedAt = new Date().toISOString();
     writeSubscriptionsDb(subsDb);
 
     return { success: true, message: "Demande envoyée." };
@@ -611,12 +565,11 @@ function apiSubmitSubscription(token, paypalTransaction) {
 // ADMIN
 // ═══════════════════════════════════════════════════════════
 
-function apiAdminGetUsers(token) {
-  const admin = validateToken(token);
-  if (!admin || !admin.isAdmin) throw new Error("Accès refusé.");
+function apiAdminGetUsers(token, email) {
+  const admin = validateUser(token, email);
+  if (!admin.isAdmin) throw new Error("Accès refusé.");
 
   const db = readUsersDb();
-  // Safe map
   const users = db.users.map(u => ({
     id: u.id,
     email: u.email,
@@ -624,35 +577,32 @@ function apiAdminGetUsers(token) {
     isAdmin: u.isAdmin,
     canCreate: u.canCreate,
     isSubscriber: u.isSubscriber,
+    canSubscribe: u.canSubscribe,
     isSuperAdmin: u.email === ADMIN_EMAIL,
-    canSubscribe: u.canSubscribe
+    registeredAt: u.registeredAt
   }));
   return { success: true, users: users };
 }
 
-function apiAdminUpdateUser(token, userId, updates) {
-  const admin = validateToken(token);
-  if (!admin || !admin.isAdmin) throw new Error("Accès refusé.");
+function apiAdminUpdateUser(token, email, targetEmail, canCreate, makeAdmin, isSubscriber) {
+  const admin = validateUser(token, email);
+  if (!admin.isAdmin) throw new Error("Accès refusé.");
 
   const lock = LockService.getScriptLock();
   try {
     lock.waitLock(15000);
     const db = readUsersDb();
-    const index = db.users.findIndex(u => u.id === userId);
-    if (index < 0) throw new Error("Utilisateur introuvable.");
+    const target = db.users.find(u => u.email === targetEmail);
+    if (!target) throw new Error("Utilisateur introuvable.");
 
-    const target = db.users[index];
+    // PROTECTIONS
+    if (target.email === ADMIN_EMAIL) throw new Error("Intouchable.");
+    if (target.isAdmin && admin.email !== ADMIN_EMAIL) throw new Error("Seul le Super-Admin modifie les admins.");
+    if (makeAdmin !== undefined && admin.email !== ADMIN_EMAIL) throw new Error("Seul le Super-Admin promeut les admins.");
 
-    // SuperAdmin Protection
-    if (target.email === ADMIN_EMAIL) throw new Error("Impossible de modifier le super-admin.");
-    if (target.isAdmin && admin.email !== ADMIN_EMAIL) throw new Error("Seul le super-admin peut modifier un admin.");
-
-    if (updates.isAdmin !== undefined && admin.email !== ADMIN_EMAIL) throw new Error("Seul le super-admin peut promouvoir un admin.");
-
-    // Apply updates
-    if (updates.isAdmin !== undefined) target.isAdmin = updates.isAdmin;
-    if (updates.canCreate !== undefined) target.canCreate = updates.canCreate;
-    if (updates.isSubscriber !== undefined) target.isSubscriber = updates.isSubscriber;
+    if (makeAdmin !== undefined) target.isAdmin = makeAdmin;
+    if (canCreate !== undefined) target.canCreate = canCreate;
+    if (isSubscriber !== undefined) target.isSubscriber = isSubscriber;
 
     writeUsersDb(db);
     return { success: true };
@@ -661,22 +611,22 @@ function apiAdminUpdateUser(token, userId, updates) {
   }
 }
 
-function apiAdminDeleteUser(token, userId) {
-  const admin = validateToken(token);
-  if (!admin || !admin.isAdmin) throw new Error("Accès refusé.");
+function apiAdminDeleteUser(token, email, targetEmail) {
+  const admin = validateUser(token, email);
+  if (!admin.isAdmin) throw new Error("Accès refusé.");
 
   const lock = LockService.getScriptLock();
   try {
     lock.waitLock(15000);
     const db = readUsersDb();
-    const index = db.users.findIndex(u => u.id === userId);
-    if (index < 0) throw new Error("Utilisateur introuvable.");
+    const idx = db.users.findIndex(u => u.email === targetEmail);
+    if (idx < 0) throw new Error("Introuvable.");
 
-    const target = db.users[index];
-    if (target.email === ADMIN_EMAIL) throw new Error("Impossible de supprimer le super-admin.");
-    if (target.isAdmin && admin.email !== ADMIN_EMAIL) throw new Error("Seul le super-admin peut supprimer un admin.");
+    const target = db.users[idx];
+    if (target.email === ADMIN_EMAIL) throw new Error("Intouchable.");
+    if (target.isAdmin && admin.email !== ADMIN_EMAIL) throw new Error("Seul le Super-Admin supprime les admins.");
 
-    db.users.splice(index, 1);
+    db.users.splice(idx, 1);
     writeUsersDb(db);
     return { success: true };
   } finally {
@@ -684,16 +634,38 @@ function apiAdminDeleteUser(token, userId) {
   }
 }
 
-function apiAdminGetSubscriptions(token) {
-  const admin = validateToken(token);
-  if (!admin || !admin.isAdmin) throw new Error("Accès refusé.");
-  const subsDb = readSubscriptionsDb();
-  return { success: true, subscriptions: subsDb.subscriptions };
+function apiAdminResetPassword(token, email, targetEmail) {
+  const admin = validateUser(token, email);
+  if (!admin.isAdmin) throw new Error("Accès refusé.");
+
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(10000);
+    const db = readUsersDb();
+    const target = db.users.find(u => u.email === targetEmail);
+    if (!target) throw new Error("Introuvable.");
+    if (target.email === ADMIN_EMAIL) throw new Error("Intouchable.");
+
+    const tempCode = String(Math.floor(1000 + Math.random() * 9000));
+    target.code = tempCode;
+    target.mustChangePassword = true;
+
+    writeUsersDb(db);
+    return { success: true, newCode: tempCode };
+  } finally {
+    lock.releaseLock();
+  }
 }
 
-function apiAdminValidateSubscription(token, userId, startDate, endDate) {
-  const admin = validateToken(token);
-  if (!admin || !admin.isAdmin) throw new Error("Accès refusé.");
+function apiAdminGetSubscriptions(token, email) {
+  const admin = validateUser(token, email);
+  if (!admin.isAdmin) throw new Error("Accès refusé.");
+  return { success: true, subscriptions: readSubscriptionsDb().subscriptions };
+}
+
+function apiAdminValidateSubscription(token, email, targetEmail, startDate, endDate) {
+  const admin = validateUser(token, email);
+  if (!admin.isAdmin) throw new Error("Accès refusé.");
 
   const lock = LockService.getScriptLock();
   try {
@@ -703,16 +675,14 @@ function apiAdminValidateSubscription(token, userId, startDate, endDate) {
     const invoicesDb = readInvoicesDb();
     const settings = readSettingsDb();
 
-    const subIndex = subsDb.subscriptions.findIndex(s => s.userId === userId);
-    if (subIndex < 0) throw new Error("Abonnement introuvable.");
-
-    const sub = subsDb.subscriptions[subIndex];
+    const idx = subsDb.subscriptions.findIndex(s => s.email === targetEmail);
+    if (idx < 0) throw new Error("Demande introuvable.");
+    const sub = subsDb.subscriptions[idx];
 
     // Invoice
     const invoice = {
       reference: generateInvoiceRef(),
-      userId: userId,
-      email: sub.email,
+      email: targetEmail,
       firstName: sub.firstName,
       amount: settings.subscriptionPrice,
       currency: settings.subscriptionCurrency,
@@ -720,10 +690,10 @@ function apiAdminValidateSubscription(token, userId, startDate, endDate) {
       paypalTransaction: sub.paypalTransaction,
       periodStart: startDate,
       periodEnd: endDate,
-      issuedAt: new Date().toISOString(),
-      billedAt: new Date().toISOString()
+      issuedAt: new Date().toISOString()
     };
     invoicesDb.invoices.push(invoice);
+    writeInvoicesDb(invoicesDb);
 
     // Update Sub
     sub.status = 'active';
@@ -731,51 +701,61 @@ function apiAdminValidateSubscription(token, userId, startDate, endDate) {
     sub.endDate = endDate;
     sub.validatedAt = new Date().toISOString();
     sub.validatedBy = admin.email;
+    writeSubscriptionsDb(subsDb);
 
-    // Update User Role
-    const userIndex = usersDb.users.findIndex(u => u.id === userId);
-    if (userIndex >= 0) {
-      usersDb.users[userIndex].isSubscriber = true;
-      // Also give canCreate right? Usually subscriber implies creation rights.
-      // The prompt says "Abonné (💳) : Peut créer des conversations".
-      // But it's separate from canCreate flag (Creator role).
-      // The frontend logic checks: if (canCreate || isAdmin || isSubscriber)
-      // So we just set isSubscriber = true.
+    // Update User
+    const uIdx = usersDb.users.findIndex(u => u.email === targetEmail);
+    if (uIdx >= 0) {
+      usersDb.users[uIdx].isSubscriber = true;
+      writeUsersDb(usersDb);
     }
 
-    writeInvoicesDb(invoicesDb);
-    writeSubscriptionsDb(subsDb);
-    writeUsersDb(usersDb);
-
-    return { success: true };
+    return { success: true, invoice: invoice };
   } finally {
     lock.releaseLock();
   }
 }
 
-function apiAdminGetInvoices(token, userId) {
-  const admin = validateToken(token);
-  if (!admin || !admin.isAdmin) throw new Error("Accès refusé.");
+function apiAdminGetInvoices(token, email, targetEmail) {
+  const admin = validateUser(token, email);
+  if (!admin.isAdmin) throw new Error("Accès refusé.");
   const db = readInvoicesDb();
-  return { success: true, invoices: db.invoices.filter(i => i.userId === userId) };
+  return { success: true, invoices: db.invoices.filter(i => i.email === targetEmail) };
 }
 
-function apiAdminGetSettings(token) {
-  const admin = validateToken(token);
-  if (!admin || !admin.isAdmin) throw new Error("Accès refusé.");
+function apiAdminGetSettings(token, email) {
+  const admin = validateUser(token, email);
+  if (!admin.isAdmin) throw new Error("Accès refusé.");
   return { success: true, settings: readSettingsDb() };
 }
 
-function apiAdminUpdateSettings(token, newSettings) {
-  const admin = validateToken(token);
-  if (!admin || !admin.isAdmin) throw new Error("Accès refusé.");
-  writeSettingsDb(newSettings);
+function apiAdminUpdateSettings(token, email, settings) {
+  const admin = validateUser(token, email);
+  if (!admin.isAdmin) throw new Error("Accès refusé.");
+  writeSettingsDb(settings);
   return { success: true };
 }
 
-// ═══════════════════════════════════════════════════════════
-// TRIGGERS
-// ═══════════════════════════════════════════════════════════
+// --- HELPERS & TRIGGER ---
+
+function validateUser(token, email) {
+  const db = readUsersDb();
+  const user = db.users.find(u => u.email === email);
+  if (!user || user.token !== token) throw new Error("Session invalide.");
+  return user;
+}
+
+function sanitizeUser(u) {
+  return {
+    firstName: u.firstName,
+    email: u.email,
+    isAdmin: u.isAdmin,
+    canCreate: u.canCreate,
+    isSubscriber: u.isSubscriber,
+    canSubscribe: u.canSubscribe,
+    mustChangePassword: u.mustChangePassword
+  };
+}
 
 function cleanUpExpiredChats() {
   const lock = LockService.getScriptLock();
@@ -794,7 +774,7 @@ function cleanUpExpiredChats() {
       writeChatsDb(chatsDb);
     }
 
-    // Also check expired subscriptions
+    // Expire Subscriptions
     const subsDb = readSubscriptionsDb();
     const usersDb = readUsersDb();
     let usersChanged = false;
@@ -803,13 +783,12 @@ function cleanUpExpiredChats() {
       if (sub.status === 'active' && sub.endDate) {
         if (now > new Date(sub.endDate)) {
           sub.status = 'expired';
-          // Downgrade user
-          const uIndex = usersDb.users.findIndex(u => u.id === sub.userId);
-          if (uIndex >= 0) {
-            usersDb.users[uIndex].isSubscriber = false;
+          // Downgrade User
+          const uIdx = usersDb.users.findIndex(u => u.email === sub.email);
+          if (uIdx >= 0) {
+            usersDb.users[uIdx].isSubscriber = false;
             usersChanged = true;
           }
-          // Pause chats logic could be here (expensive iteration)
         }
       }
     });
@@ -823,10 +802,8 @@ function cleanUpExpiredChats() {
 }
 
 function resetDatabase() {
-  const f = DriveApp.getFolderById(FOLDER_ID);
-  const files = f.getFiles();
-  while(files.hasNext()) {
-    files.next().setTrashed(true);
-  }
-  return "Reset Done (V4)";
+  const folder = DriveApp.getFolderById(FOLDER_ID);
+  const files = folder.getFiles();
+  while (files.hasNext()) files.next().setTrashed(true);
+  return "DATABASE RESET DONE";
 }

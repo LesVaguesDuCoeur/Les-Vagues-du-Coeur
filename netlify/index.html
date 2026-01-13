@@ -2,254 +2,243 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WhatsHappen</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="glass-container">
 
-        <!-- LOADING -->
-        <div id="loader" class="loader-overlay hidden">
-            <div class="spinner"></div>
-            <p>Chargement...</p>
-        </div>
+    <!-- LOADER -->
+    <div id="loader" class="loader-overlay">
+        <div class="spinner"></div>
+        <p class="loader-text">Chargement sécurisé...</p>
+    </div>
 
-        <!-- AUTH VIEW -->
-        <div id="view-auth" class="view active">
-            <div class="logo-circle">
-                <img id="app-logo" src="" alt="Logo">
+    <!-- NOTIFICATIONS -->
+    <div id="toast-container"></div>
+
+    <!-- AUTH VIEW -->
+    <div id="view-auth" class="view-container active">
+        <div class="auth-box glass-panel">
+            <div class="auth-logo">
+                <img src="./assets/logo.jpeg" alt="Logo">
             </div>
-            <h1>CHAOUI ENGAGÉ</h1>
-            <p class="subtitle">Messagerie Sécurisée & Éphémère</p>
 
-            <form id="form-login" class="auth-form">
-                <input type="email" id="login-email" placeholder="Email" required autocomplete="email">
-                <input type="password" id="login-code" placeholder="Code (3 chiffres)" inputmode="numeric" required autocomplete="current-password" maxlength="3">
-                <button type="submit" class="btn-gold">Connexion</button>
-                <p class="link" onclick="app.showRegister()">Créer un compte</p>
+            <!-- LOGIN FORM -->
+            <form id="form-login" class="auth-form active">
+                <h2>Connexion</h2>
+                <div class="input-group">
+                    <i class="fas fa-envelope"></i>
+                    <input type="email" id="login-email" placeholder="Email" required>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-key"></i>
+                    <input type="password" id="login-code" placeholder="Code (Mot de passe)" required>
+                </div>
+                <button type="submit" class="btn-gold">Se connecter</button>
+                <div class="auth-links">
+                    <a href="#" onclick="app.showAuth('register')">Créer un compte</a>
+                    <a href="#" onclick="app.showAuth('reset')">Mot de passe oublié ?</a>
+                </div>
             </form>
 
-            <form id="form-register" class="auth-form hidden">
-                <input type="text" id="reg-firstname" placeholder="Prénom" required>
-                <input type="email" id="reg-email" placeholder="Email" required autocomplete="email">
-                <input type="password" id="reg-code" placeholder="Code (3 chiffres)" inputmode="numeric" required maxlength="3">
+            <!-- REGISTER FORM -->
+            <form id="form-register" class="auth-form">
+                <h2>Inscription</h2>
+                <div class="input-group">
+                    <i class="fas fa-user"></i>
+                    <input type="text" id="reg-name" placeholder="Prénom" required>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-envelope"></i>
+                    <input type="email" id="reg-email" placeholder="Email" required>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-key"></i>
+                    <input type="number" id="reg-code" placeholder="Code à 3 chiffres" min="100" max="999" required>
+                </div>
                 <button type="submit" class="btn-gold">S'inscrire</button>
-                <p class="link" onclick="app.showLogin()">Retour Connexion</p>
+                <div class="auth-links">
+                    <a href="#" onclick="app.showAuth('login')">Déjà inscrit ?</a>
+                </div>
+            </form>
+
+            <!-- RESET FORM -->
+            <form id="form-reset" class="auth-form">
+                <h2>Réinitialisation</h2>
+                <p style="font-size: 0.8rem; color: #ccc; margin-bottom: 1rem;">Contactez un administrateur pour réinitialiser votre code.</p>
+                <button type="button" class="btn-gold" onclick="app.showAuth('login')">Retour</button>
             </form>
         </div>
+    </div>
 
-        <!-- DASHBOARD VIEW -->
-        <div id="view-dashboard" class="view hidden">
-            <header class="dashboard-header">
-                <div class="user-section">
-                    <div class="user-avatar" id="avatar-btn" title="Cliquez pour accéder aux options">
-                        <span class="avatar-letter" id="avatar-letter">?</span>
-                    </div>
-                    <div class="user-details">
-                        <span class="user-name" id="user-name">...</span>
-                        <div class="user-badges" id="user-badges"></div>
-                    </div>
-                </div>
-                <div class="header-actions">
-                    <button class="btn-icon" id="btn-refresh" title="Actualiser">🔄</button>
-                    <button class="btn-icon" id="btn-logout" title="Déconnexion">⏻</button>
-                </div>
-            </header>
+    <!-- MAIN APP VIEW -->
+    <div id="view-app" class="view-container">
+        <!-- HEADER -->
+        <header class="app-header glass-panel">
+            <div class="header-left">
+                <button id="btn-back" class="icon-btn hidden"><i class="fas fa-arrow-left"></i></button>
+                <button id="btn-menu" class="icon-btn"><i class="fas fa-bars"></i></button>
+            </div>
+            <div class="header-center">
+                <img src="./assets/logo.jpeg" alt="Logo" class="app-logo">
+            </div>
+            <div class="header-right">
+                <button id="btn-refresh" class="icon-btn"><i class="fas fa-sync-alt"></i></button>
+            </div>
+        </header>
 
-            <div class="tabs">
-                <span class="tab-active">Conversations</span>
+        <!-- DASHBOARD (CHAT LIST) -->
+        <section id="section-dashboard" class="app-section active">
+            <div class="welcome-banner">
+                <h3 id="user-greeting">Bonjour, ...</h3>
+                <div class="status-badges">
+                    <span id="badge-admin" class="badge hidden">ADMIN</span>
+                    <span id="badge-sub" class="badge hidden">PREMIUM</span>
+                </div>
             </div>
 
-            <div id="chat-list" class="list-area">
-                <!-- Chats injected here -->
+            <div id="chat-list" class="chat-list">
+                <!-- Chat Items Injected Here -->
+                <div class="empty-state">Aucune conversation active.</div>
             </div>
 
-            <!-- Boutons Flottants -->
-            <button class="fab-btn create-btn" id="btn-create" style="display: none;">➕</button>
-            <button class="fab-btn subscribe-btn" id="btn-subscribe" style="display: none;">💳</button>
-        </div>
-
-        <!-- NEW CHAT VIEW -->
-        <div id="view-new-chat" class="view hidden">
-            <header>
-                <button class="back-btn" onclick="app.showDashboard()">←</button>
-                <h2>Nouvelle Conversation</h2>
-            </header>
-            <div class="form-area">
-                <label>Participants (Emails)</label>
-                <input type="text" id="new-chat-emails" placeholder="ami@mail.com">
-                <p style="font-size:0.7rem; color:#888; margin-bottom:20px">Pour plusieurs, séparez par des virgules.</p>
-
-                <label>Durée de vie</label>
-                <div class="chips">
-                    <span class="chip selected" data-val="10min">10 min</span>
-                    <span class="chip" data-val="12h">12 H</span>
-                    <span class="chip" data-val="24h">24 H</span>
-                    <span class="chip" data-val="48h">48 H</span>
-                    <span class="chip" data-val="unlimited">∞</span>
-                </div>
-
-                <button id="btn-create-chat-action" class="btn-gold full">Lancer</button>
+            <!-- DUAL FAB -->
+            <div class="fab-container">
+                <button id="fab-admin" class="fab secondary hidden"><i class="fas fa-shield-alt"></i></button>
+                <button id="fab-sub" class="fab primary hidden" style="background:linear-gradient(135deg,#0070ba,#003087); color:white;"><i class="fas fa-credit-card"></i></button>
+                <button id="fab-new" class="fab primary hidden"><i class="fas fa-plus"></i></button>
             </div>
-        </div>
+        </section>
 
-        <!-- CHAT ROOM VIEW -->
-        <div id="view-chat" class="view hidden">
-            <header class="chat-header">
-                <button class="back-btn" onclick="app.showDashboard()">←</button>
+        <!-- CHAT ROOM -->
+        <section id="section-chat" class="app-section">
+            <div class="chat-info-bar glass-panel">
                 <div class="chat-meta">
-                    <h3 id="chat-title">...</h3>
-                    <small id="chat-timer-display" style="display:block; font-size:0.7rem; color:var(--gold);"></small>
+                    <span id="chat-participants">...</span>
+                    <span id="chat-timer" class="timer">--:--</span>
                 </div>
-                <div class="header-actions">
-                    <button id="btn-add-member" class="icon-btn" style="margin-right:10px;">+</button>
-                    <button id="btn-refresh-chat" class="icon-btn">↻</button>
-                </div>
-            </header>
-
-            <div id="messages-area" class="messages-container"></div>
-
-            <div class="input-area">
-                <label for="file-input" class="attach-btn">📎</label>
-                <input type="file" id="file-input" hidden accept="image/*">
-                <input type="text" id="message-input" placeholder="Message..." autocomplete="off">
-                <button id="btn-send" class="send-btn">➤</button>
-            </div>
-        </div>
-
-        <!-- ADMIN PANEL VIEW -->
-        <div id="view-admin" class="view hidden">
-            <div class="admin-header">
-                <button class="back-btn" onclick="app.showDashboard()">←</button>
-                <h2>Administration</h2>
             </div>
 
+            <div id="message-container" class="message-container">
+                <!-- Messages Injected Here -->
+            </div>
+
+            <div class="chat-input-area glass-panel">
+                <button id="btn-upload" class="icon-btn"><i class="fas fa-image"></i></button>
+                <input type="file" id="file-input" accept="image/*" hidden>
+                <input type="text" id="msg-input" placeholder="Message crypté..." autocomplete="off">
+                <button id="btn-send" class="icon-btn send"><i class="fas fa-paper-plane"></i></button>
+            </div>
+        </section>
+
+        <!-- ADMIN PANEL -->
+        <section id="section-admin" class="app-section">
             <div class="admin-tabs">
-                <button class="tab-btn active" data-tab="users" onclick="app.switchAdminTab('users')">👥 Utilisateurs</button>
-                <button class="tab-btn" data-tab="subscriptions" onclick="app.switchAdminTab('subscriptions')">💳 Abonnements</button>
-                <button class="tab-btn" data-tab="settings" onclick="app.switchAdminTab('settings')">⚙️ Paramètres</button>
+                <button class="tab-btn active" data-tab="users">Utilisateurs</button>
+                <button class="tab-btn" data-tab="subs">Abonnements</button>
+                <button class="tab-btn" data-tab="settings">Réglages</button>
             </div>
 
-            <!-- Users Tab -->
-            <div class="tab-content" id="tab-users">
-                <div class="users-list" id="users-list"></div>
-            </div>
-
-            <!-- Subscriptions Tab -->
-            <div class="tab-content hidden" id="tab-subscriptions">
-                <div class="subscriptions-list" id="subscriptions-list"></div>
-            </div>
-
-            <!-- Settings Tab -->
-            <div class="tab-content hidden" id="tab-settings">
-                <div class="settings-form" id="settings-form">
-                    <!-- Settings injected here -->
+            <div id="tab-users" class="admin-tab-content active">
+                <div class="list-header">
+                    <h4>Gestion Utilisateurs</h4>
+                    <button class="btn-sm" onclick="admin.refreshUsers()"><i class="fas fa-sync"></i></button>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL OVERLAY (Alerts/Prompts) -->
-    <div id="modal-overlay" class="modal-overlay hidden">
-      <div id="modal-box" class="modal-box">
-        <div class="modal-icon"></div>
-        <div class="modal-title"></div>
-        <div class="modal-message"></div>
-        <div class="modal-input-container hidden">
-          <input type="text" id="modal-input" class="modal-input" />
-        </div>
-        <div class="modal-buttons">
-          <button id="modal-cancel" class="btn-modal btn-cancel hidden">Annuler</button>
-          <button id="modal-confirm" class="btn-modal btn-confirm">OK</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- SUBSCRIPTION MODAL (Wizard) -->
-    <div id="subscription-wizard" class="modal-overlay hidden">
-        <div class="subscription-box">
-            <button class="close-modal" onclick="app.closeSubscriptionWizard()">×</button>
-            <div class="subscription-header-box">
-                <span class="subscription-icon">💳</span>
-                <h2>Abonnement WhatsHappen</h2>
-                <p class="subscription-price">5,00 €</p>
+                <div id="admin-users-list" class="admin-list"></div>
             </div>
 
-            <div class="subscription-benefits">
-                <h3>Avantages inclus :</h3>
-                <ul>
-                    <li>✅ Créer des conversations illimitées</li>
-                    <li>✅ Discuter avec tous les utilisateurs</li>
-                    <li>✅ Messagerie chiffrée et sécurisée</li>
-                    <li>✅ Support prioritaire</li>
-                </ul>
+            <div id="tab-subs" class="admin-tab-content">
+                <div class="list-header">
+                    <h4>Demandes d'abonnement</h4>
+                    <button class="btn-sm" onclick="admin.refreshSubs()"><i class="fas fa-sync"></i></button>
+                </div>
+                <div id="admin-subs-list" class="admin-list"></div>
             </div>
 
-            <div class="subscription-steps">
-                <div class="step">
-                    <div class="step-number">1</div>
-                    <div class="step-content">
-                        <p class="step-title">Votre code WhatsHappen</p>
-                        <div class="code-display" id="sub-code-display">--------</div>
-                        <button class="btn-copy" onclick="app.copySubCode()">📋 Copier</button>
+            <div id="tab-settings" class="admin-tab-content">
+                <div class="settings-form">
+                    <div class="form-group">
+                        <label>Activer Abonnements</label>
+                        <label class="switch">
+                            <input type="checkbox" id="setting-sub-enabled">
+                            <span class="slider round"></span>
+                        </label>
                     </div>
-                </div>
-
-                <div class="step">
-                    <div class="step-number">2</div>
-                    <div class="step-content">
-                        <p class="step-title">Payez via PayPal</p>
-                        <p class="step-hint">Collez votre code dans "Ajouter une note"</p>
-                        <a href="#" id="paypal-link-btn" target="_blank" class="btn-paypal">
-                            Payer avec PayPal
-                        </a>
+                    <div class="form-group">
+                        <label>Prix (€)</label>
+                        <input type="number" id="setting-price" step="0.01">
                     </div>
-                </div>
-
-                <div class="step">
-                    <div class="step-number">3</div>
-                    <div class="step-content">
-                        <p class="step-title">Numéro de transaction PayPal</p>
-                        <input type="text" id="sub-transaction-id" placeholder="Ex: 8UA86165PL250002N" class="input-field">
-                        <p class="step-hint">Visible dans les détails de votre paiement</p>
+                    <div class="form-group">
+                        <label>Lien PayPal</label>
+                        <input type="text" id="setting-paypal">
                     </div>
+                    <button class="btn-gold" onclick="admin.saveSettings()">Enregistrer</button>
                 </div>
             </div>
+        </section>
+    </div>
 
-            <button class="btn-validate" onclick="app.submitSubscriptionRequest()">
-                ✅ Valider ma demande
-            </button>
-
-            <p class="subscription-footer">
-                Votre abonnement sera activé sous 24h après vérification.
-            </p>
+    <!-- MODAL: NEW CHAT -->
+    <div id="modal-new-chat" class="modal">
+        <div class="modal-content glass-panel">
+            <span class="close-modal">&times;</span>
+            <h3>Nouvelle Conversation</h3>
+            <div class="form-group">
+                <label>Participants (Emails séparés par des virgules)</label>
+                <input type="text" id="new-chat-emails" placeholder="ex: ami@mail.com, autre@mail.com">
+            </div>
+            <div class="form-group">
+                <label>Durée</label>
+                <div class="duration-options">
+                    <button class="dur-btn" data-val="10min">10 min</button>
+                    <button class="dur-btn" data-val="12h">12 H</button>
+                    <button class="dur-btn active" data-val="24h">24 H</button>
+                    <button class="dur-btn" data-val="48h">48 H</button>
+                    <button class="dur-btn" data-val="unlimited">Infini</button>
+                </div>
+            </div>
+            <button id="btn-create-chat" class="btn-gold full-width">Lancer</button>
         </div>
     </div>
 
-    <!-- INVOICE MODAL (Admin) -->
-    <div id="invoice-modal" class="modal-overlay hidden">
-        <div class="invoices-box">
-            <button class="close-modal" onclick="app.closeInvoices()">×</button>
-            <h2 class="invoices-title">📄 Factures</h2>
-            <div class="invoices-list-container">
-                <table class="invoices-table">
-                    <thead>
-                        <tr>
-                            <th>Réf</th>
-                            <th>Date</th>
-                            <th>Montant</th>
-                            <th>PDF</th>
-                        </tr>
-                    </thead>
-                    <tbody id="invoices-tbody"></tbody>
-                </table>
+    <!-- MODAL: SUBSCRIPTION -->
+    <div id="modal-sub" class="modal">
+        <div class="modal-content glass-panel">
+            <span class="close-modal">&times;</span>
+            <h3>Devenir Premium</h3>
+            <div id="sub-step-1">
+                <p>Accédez aux fonctionnalités exclusives pour <span id="sub-price-display">5.00€</span>.</p>
+                <ol>
+                    <li>Copiez votre code unique : <strong id="sub-code-display" class="highlight-code">CHARGEMENT...</strong></li>
+                    <li>Cliquez sur le bouton PayPal ci-dessous.</li>
+                    <li>Lors du paiement, ajoutez ce code en commentaire.</li>
+                    <li>Revenez ici et entrez le numéro de transaction PayPal.</li>
+                </ol>
+                <a id="sub-paypal-link" href="#" target="_blank" class="btn-paypal">Payer avec PayPal</a>
+                <div class="form-group" style="margin-top: 20px;">
+                    <label>Numéro de Transaction PayPal</label>
+                    <input type="text" id="sub-trans-id" placeholder="ex: 9ABC1234567...">
+                </div>
+                <button id="btn-submit-sub" class="btn-gold full-width">Valider ma demande</button>
             </div>
         </div>
     </div>
 
-    <script src="logo.js"></script>
+    <!-- MODAL: CHANGE PASSWORD -->
+    <div id="modal-pwd" class="modal">
+        <div class="modal-content glass-panel">
+            <h3>Changement de Mot de Passe Requis</h3>
+            <p>Un administrateur a réinitialisé votre code.</p>
+            <input type="password" id="new-pwd-input" placeholder="Nouveau Code" class="full-width-input">
+            <button id="btn-save-pwd" class="btn-gold full-width">Enregistrer</button>
+        </div>
+    </div>
+
     <script src="app.js"></script>
 </body>
 </html>
