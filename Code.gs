@@ -1,5 +1,5 @@
 // ==========================================
-// WAHTSHAPPEN - BACKEND API (Google Apps Script) - V2
+// WAHTSHAPPEN - BACKEND API (Google Apps Script)
 // ==========================================
 // Architecture: Hybrid (Netlify Frontend <-> GAS API)
 // Database: Google Drive (Docs as DB)
@@ -28,13 +28,11 @@ function decodeSecret(str) {
 // --- API HANDLER ---
 
 function doGet(e) {
-  return createJSONOutput({ status: "Online", message: "WhatsHappen V2 API is running. Use POST." });
+  return createJSONOutput({ status: "Online", message: "Use POST requests." });
 }
 
 function doPost(e) {
   const lock = LockService.getScriptLock();
-  // Wait up to 30s for lock
-  lock.waitLock(30000);
 
   try {
     if (!e.postData || !e.postData.contents) throw new Error("No data");
@@ -47,18 +45,22 @@ function doPost(e) {
       case 'login':
         result = apiLogin(request.email, request.code);
         break;
-      case 'register':
-        result = apiRegister(request.email, request.firstName, request.code);
-        break;
       case 'changePassword':
         result = apiChangePassword(request.email, request.oldCode, request.newCode);
+        break;
+      case 'register':
+        result = apiRegister(request.email, request.firstName, request.code);
         break;
       case 'getState':
         result = apiGetState(request.token, request.email);
         break;
+      case 'getConversations': // Alias for frontend compat
+        result = { chats: apiGetState(request.token, request.email).chats };
+        break;
 
       // CHAT
-      case 'createChat':
+      case 'createChat': // Alias
+      case 'createConversation':
         result = apiCreateChat(request.token, request.email, request.participants, request.duration);
         break;
       case 'sendMessage':
@@ -70,7 +72,7 @@ function doPost(e) {
       case 'addParticipant':
         result = apiAddParticipant(request.token, request.email, request.chatId, request.targetEmail);
         break;
-      case 'expireChat': // NEW: Immediate deletion
+      case 'expireChat':
         result = apiExpireChat(request.token, request.email, request.chatId);
         break;
 
@@ -78,7 +80,8 @@ function doPost(e) {
       case 'adminGetUsers':
         result = apiAdminGetUsers(request.token, request.email);
         break;
-      case 'adminUpdateUser':
+      case 'adminUpdateUser': // Alias
+      case 'adminUpdateUserRights':
         result = apiAdminUpdateUser(request.token, request.email, request.targetEmail, request.canCreate, request.isAdmin);
         break;
       case 'adminDeleteUser':
@@ -96,8 +99,6 @@ function doPost(e) {
 
   } catch (err) {
     return createJSONOutput({ success: false, error: err.message });
-  } finally {
-    lock.releaseLock();
   }
 }
 
@@ -118,84 +119,90 @@ function apiLogin(email, code) {
   // Check Password
   if (user.code !== code.toString()) throw new Error("Code incorrect.");
 
-  // Force Admin Rights for Super Admin
-  if (cleanEmail === ADMIN_EMAIL && code.toString() === ADMIN_CODE_HASH) {
-     if (!user.isAdmin || !user.canCreate) {
-       user.isAdmin = true;
-       user.canCreate = true;
-       // We save changes below
-     }
-  }
-
   // Check Temporary Password
   if (user.mustChangePassword) {
     return { success: true, requireNewPassword: true };
   }
 
+  // Upgrade Admin if needed (Self-Correction for Super Admin)
+  if (cleanEmail === ADMIN_EMAIL) {
+     if (!user.isAdmin || !user.canCreate) {
+       user.isAdmin = true;
+       user.canCreate = true;
+       // We save later
+     }
+  }
+
   const token = Utilities.getUuid();
   user.token = token;
   writeUsersDb(db);
 
   return { success: true, token: token, user: sanitizeUser(user) };
-}
-
-function apiRegister(email, firstName, code) {
-  const db = readUsersDb();
-  const cleanEmail = email.toLowerCase().trim();
-  if (db.users.find(u => u.email === cleanEmail)) throw new Error("Email déjà enregistré.");
-
-  const cleanCode = code.toString();
-
-  let isAdmin = false;
-  let canCreate = false;
-
-  // Super Admin Logic
-  if (cleanEmail === ADMIN_EMAIL) {
-    if (cleanCode === ADMIN_CODE_HASH) {
-      isAdmin = true;
-      canCreate = true;
-    } else {
-      throw new Error("Code Admin incorrect pour cet email.");
-    }
-  } else {
-    // Normal users MUST have 3 digits
-    if (cleanCode.length !== 3) throw new Error("Le code doit faire 3 chiffres pour les utilisateurs.");
-  }
-
-  const newUser = {
-    email: cleanEmail,
-    firstName: firstName,
-    code: cleanCode,
-    isAdmin: isAdmin,
-    canCreate: canCreate,
-    activeChats: [],
-    registeredAt: new Date().toISOString(),
-    mustChangePassword: false
-  };
-
-  db.users.push(newUser);
-  const token = Utilities.getUuid();
-  newUser.token = token;
-  writeUsersDb(db);
-
-  return { success: true, token: token, user: sanitizeUser(newUser) };
 }
 
 function apiChangePassword(email, oldCode, newCode) {
-  const db = readUsersDb();
-  const user = db.users.find(u => u.email === email.toLowerCase().trim());
-  if (!user) throw new Error("Utilisateur inconnu.");
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(10000);
+    const db = readUsersDb();
+    const user = db.users.find(u => u.email === email.toLowerCase().trim());
+    if (!user) throw new Error("Utilisateur inconnu.");
 
-  if (user.code !== oldCode.toString()) throw new Error("Ancien code incorrect.");
+    if (user.code !== oldCode.toString()) throw new Error("Ancien code incorrect.");
 
-  user.code = newCode.toString();
-  user.mustChangePassword = false;
+    user.code = newCode.toString();
+    user.mustChangePassword = false;
 
-  const token = Utilities.getUuid();
-  user.token = token;
-  writeUsersDb(db);
+    const token = Utilities.getUuid();
+    user.token = token;
+    writeUsersDb(db);
 
-  return { success: true, token: token, user: sanitizeUser(user) };
+    return { success: true, token: token, user: sanitizeUser(user) };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function apiRegister(email, firstName, code) {
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(15000);
+    const db = readUsersDb();
+    const cleanEmail = email.toLowerCase().trim();
+    if (db.users.find(u => u.email === cleanEmail)) throw new Error("Email déjà enregistré.");
+
+    const cleanCode = code.toString();
+    if (cleanCode.length !== 3) throw new Error("Le code doit faire exactement 3 chiffres.");
+
+    let isAdmin = false;
+    let canCreate = false;
+
+    // Super Admin Logic (Email Only)
+    if (cleanEmail === ADMIN_EMAIL) {
+      isAdmin = true;
+      canCreate = true;
+    }
+
+    const newUser = {
+      email: cleanEmail,
+      firstName: firstName,
+      code: cleanCode,
+      isAdmin: isAdmin,
+      canCreate: canCreate,
+      activeChats: [],
+      registeredAt: new Date().toISOString(),
+      mustChangePassword: false
+    };
+
+    db.users.push(newUser);
+    const token = Utilities.getUuid();
+    newUser.token = token;
+    writeUsersDb(db);
+
+    return { success: true, token: token, user: sanitizeUser(newUser) };
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 function apiGetState(token, email) {
@@ -205,140 +212,131 @@ function apiGetState(token, email) {
 }
 
 function apiCreateChat(token, email, participants, durationStr) {
-  const db = readUsersDb();
-  const user = db.users.find(u => u.email === email && u.token === token);
-  if (!user) throw new Error("Session invalide");
-  if (!user.canCreate && !user.isAdmin) throw new Error("Droit de création refusé");
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(30000);
+    const db = readUsersDb();
+    const user = db.users.find(u => u.email === email && u.token === token);
+    if (!user) throw new Error("Session invalide");
+    if (!user.canCreate && !user.isAdmin) throw new Error("Droit refusé");
 
-  const validEmails = [user.email];
-  const validNames = [user.firstName];
+    const validEmails = [user.email];
+    const validNames = [user.firstName];
 
-  participants.forEach(pEmail => {
-    if(!pEmail) return;
-    const p = db.users.find(u => u.email === pEmail.trim().toLowerCase());
-    if (p) {
-      if (!validEmails.includes(p.email)) {
+    participants.forEach(pEmail => {
+      const p = db.users.find(u => u.email === pEmail.trim().toLowerCase());
+      if (p) {
         validEmails.push(p.email);
         validNames.push(p.firstName);
       }
-    } else {
-        throw new Error("Utilisateur introuvable : " + pEmail);
+    });
+
+    let expiresAt = null;
+    if (durationStr !== 'unlimited') {
+      const now = new Date();
+      let mins = 0;
+      if (durationStr === '10min') mins = 10;
+      if (durationStr === '12h') mins = 12 * 60;
+      if (durationStr === '24h') mins = 24 * 60;
+      if (durationStr === '48h') mins = 48 * 60;
+      // Compat with other format
+      if (durationStr.endsWith('h')) mins = parseInt(durationStr) * 60;
+      if (durationStr.endsWith('m')) mins = parseInt(durationStr);
+
+      if (mins > 0) expiresAt = new Date(now.getTime() + mins * 60000).toISOString();
     }
-  });
 
-  let expiresAt = null;
-  if (durationStr !== 'unlimited') {
-    const now = new Date();
-    let mins = 0;
-    if (durationStr === '10min') mins = 10;
-    if (durationStr === '12h') mins = 12 * 60;
-    if (durationStr === '24h') mins = 24 * 60;
-    if (durationStr === '48h') mins = 48 * 60;
+    const root = getFolder();
+    const docName = `CHAT_${new Date().getTime()}_${Utilities.getUuid()}`;
+    const doc = DocumentApp.create(docName);
+    const file = DriveApp.getFileById(doc.getId());
+    file.moveTo(root);
 
-    if (mins > 0) expiresAt = new Date(now.getTime() + mins * 60000).toISOString();
+    const chatData = {
+      id: doc.getId(),
+      createdAt: new Date().toISOString(),
+      expiresAt: expiresAt,
+      participants: validEmails,
+      participantNames: validNames,
+      messages: []
+    };
+
+    doc.getBody().setText(encrypt(JSON.stringify(chatData)));
+    doc.saveAndClose();
+
+    validEmails.forEach(pEmail => {
+      const uRecord = db.users.find(u => u.email === pEmail);
+      if (uRecord) {
+        if (!uRecord.activeChats) uRecord.activeChats = [];
+        uRecord.activeChats.push(doc.getId());
+      }
+    });
+    writeUsersDb(db);
+    return { success: true, chatId: doc.getId() };
+  } finally {
+    lock.releaseLock();
   }
-
-  const root = getFolder();
-  const docName = `CHAT_${new Date().getTime()}_${Utilities.getUuid()}`;
-  const doc = DocumentApp.create(docName);
-  const file = DriveApp.getFileById(doc.getId());
-  file.moveTo(root);
-
-  const chatData = {
-    id: doc.getId(),
-    createdAt: new Date().toISOString(),
-    expiresAt: expiresAt,
-    participants: validEmails,
-    participantNames: validNames,
-    messages: []
-  };
-
-  doc.getBody().setText(encrypt(JSON.stringify(chatData)));
-  doc.saveAndClose();
-
-  // Update Users DB
-  validEmails.forEach(pEmail => {
-    const uRecord = db.users.find(u => u.email === pEmail);
-    if (uRecord) {
-      if (!uRecord.activeChats) uRecord.activeChats = [];
-      uRecord.activeChats.push(doc.getId());
-    }
-  });
-  writeUsersDb(db);
-  return { success: true, chatId: doc.getId() };
 }
 
 function apiSendMessage(token, email, chatId, content, type) {
   const user = validateUser(token, email);
-  try {
-    const doc = DocumentApp.openById(chatId);
-    const body = doc.getBody();
+  const doc = DocumentApp.openById(chatId);
+  const body = doc.getBody();
 
-    const metaEnc = body.getParagraphs()[0].getText();
-    const meta = JSON.parse(decrypt(metaEnc));
-    if (!meta.participants.includes(email)) throw new Error("Accès refusé");
+  const metaEnc = body.getParagraphs()[0].getText();
+  const meta = JSON.parse(decrypt(metaEnc));
+  if (!meta.participants.includes(email)) throw new Error("Accès refusé");
 
-    const msg = {
-      id: Utilities.getUuid(),
-      sender: email,
-      senderName: user.firstName,
-      content: content,
-      type: type || 'text',
-      timestamp: new Date().toISOString()
-    };
+  const msg = {
+    id: Utilities.getUuid(),
+    sender: email,
+    senderName: user.firstName,
+    content: content,
+    type: type || 'text',
+    timestamp: new Date().toISOString()
+  };
 
-    const msgEnc = encrypt(JSON.stringify(msg));
-    body.appendParagraph(msgEnc);
-    doc.saveAndClose();
-    return { success: true };
-  } catch (e) {
-    throw new Error("Chat introuvable ou supprimé.");
-  }
+  const msgEnc = encrypt(JSON.stringify(msg));
+  body.appendParagraph(msgEnc);
+  doc.saveAndClose();
+  return { success: true };
 }
 
 function apiGetMessages(token, email, chatId) {
   const user = validateUser(token, email);
-  try {
-    const doc = DocumentApp.openById(chatId);
-    const body = doc.getBody();
-    const paras = body.getParagraphs();
+  const doc = DocumentApp.openById(chatId);
+  const body = doc.getBody();
+  const paras = body.getParagraphs();
 
-    const metaEnc = paras[0].getText();
-    const meta = JSON.parse(decrypt(metaEnc));
-    if (!meta.participants.includes(email)) throw new Error("Accès refusé");
+  const metaEnc = paras[0].getText();
+  const meta = JSON.parse(decrypt(metaEnc));
+  if (!meta.participants.includes(email)) throw new Error("Accès refusé");
 
-    // Check Expiry on load
-    if (meta.expiresAt && new Date() > new Date(meta.expiresAt)) {
-       doc.setTrashed(true);
-       throw new Error("EXPIRED");
-    }
-
-    const messages = [];
-    for (let i = 1; i < paras.length; i++) {
-      const txt = paras[i].getText();
-      if (!txt) continue;
-      try {
-        const m = JSON.parse(decrypt(txt));
-        m.isMe = (m.sender === email);
-        messages.push(m);
-      } catch (e) {}
-    }
-    return { success: true, messages: messages, participantNames: meta.participantNames.join(', '), meta: meta };
-  } catch (e) {
-    if (e.message === "EXPIRED") return { success: false, expired: true };
-    throw new Error("Chat inaccessible.");
+  const messages = [];
+  for (let i = 1; i < paras.length; i++) {
+    const txt = paras[i].getText();
+    if (!txt) continue;
+    try {
+      const m = JSON.parse(decrypt(txt));
+      m.isMe = (m.sender === email); // Add isMe flag for frontend compat
+      messages.push(m);
+    } catch (e) {}
   }
+  return { success: true, messages: messages, participantNames: meta.participantNames.join(', '), meta: meta };
 }
 
 function apiAddParticipant(token, email, chatId, targetEmail) {
-  const user = validateUser(token, email);
-  if (!user.isAdmin && !user.canCreate) throw new Error("Droit refusé.");
-
-  const db = readUsersDb();
-  const target = db.users.find(u => u.email === targetEmail.toLowerCase().trim());
-  if (!target) throw new Error("Utilisateur introuvable.");
-
+  const lock = LockService.getScriptLock();
   try {
+    lock.waitLock(10000);
+    const user = validateUser(token, email);
+    // Security: Only Admin or CanCreate can add people
+    if (!user.isAdmin && !user.canCreate) throw new Error("Droit refusé: Seuls les créateurs peuvent ajouter.");
+
+    const db = readUsersDb();
+    const target = db.users.find(u => u.email === targetEmail.toLowerCase().trim());
+    if (!target) throw new Error("Utilisateur introuvable.");
+
     const doc = DocumentApp.openById(chatId);
     const body = doc.getBody();
     const metaEnc = body.getParagraphs()[0].getText();
@@ -363,24 +361,9 @@ function apiAddParticipant(token, email, chatId, targetEmail) {
     apiSendMessage(token, email, chatId, `a ajouté ${target.firstName}`, 'system');
 
     return { success: true };
-  } catch (e) {
-    throw new Error("Erreur ajout: " + e.message);
+  } finally {
+    lock.releaseLock();
   }
-}
-
-function apiExpireChat(token, email, chatId) {
-  const user = validateUser(token, email);
-  try {
-    const doc = DocumentApp.openById(chatId);
-    const metaEnc = doc.getBody().getParagraphs()[0].getText();
-    const meta = JSON.parse(decrypt(metaEnc));
-
-    if (meta.participants.includes(email)) {
-       doc.setTrashed(true);
-       return { success: true };
-    }
-  } catch (e) {}
-  return { success: true }; // Ignore errors if already deleted
 }
 
 // --- ADMIN ---
@@ -394,56 +377,75 @@ function apiAdminGetUsers(token, email) {
     firstName: u.firstName,
     canCreate: u.canCreate,
     isAdmin: u.isAdmin,
-    registeredAt: u.registeredAt
+    registeredAt: u.registeredAt,
+    permissions: { canCreateChat: u.canCreate } // Compat
   })) };
 }
 
 function apiAdminUpdateUser(token, email, targetEmail, canCreate, makeAdmin) {
-  const user = validateUser(token, email);
-  if (!user.isAdmin) throw new Error("Admin only");
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(10000);
+    const user = validateUser(token, email);
+    if (!user.isAdmin) throw new Error("Admin only");
 
-  const db = readUsersDb();
-  const t = db.users.find(u => u.email === targetEmail);
-  if (!t) throw new Error("User not found");
+    const db = readUsersDb();
+    const t = db.users.find(u => u.email === targetEmail);
+    if (!t) throw new Error("User not found");
 
-  // Protection: Cannot remove Super Admin rights
-  if (t.email === ADMIN_EMAIL) {
-     t.isAdmin = true;
-     t.canCreate = true;
-  } else {
-     if (makeAdmin !== undefined) t.isAdmin = makeAdmin;
-     if (canCreate !== undefined) t.canCreate = canCreate;
+    // Protection: Cannot remove Super Admin rights
+    if (t.email === ADMIN_EMAIL) {
+       t.isAdmin = true;
+       t.canCreate = true;
+    } else {
+       if (makeAdmin !== undefined) t.isAdmin = makeAdmin;
+       if (canCreate !== undefined) t.canCreate = canCreate;
+    }
+
+    writeUsersDb(db);
+    return { success: true };
+  } finally {
+    lock.releaseLock();
   }
-
-  writeUsersDb(db);
-  return { success: true };
 }
 
 function apiAdminDeleteUser(token, email, targetEmail) {
-  const user = validateUser(token, email);
-  if (!user.isAdmin) throw new Error("Admin only");
-  if (email === targetEmail) throw new Error("Impossible de se supprimer soi-même.");
-  if (targetEmail === ADMIN_EMAIL) throw new Error("Impossible de supprimer le Super Admin.");
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(10000);
+    const user = validateUser(token, email);
+    if (!user.isAdmin) throw new Error("Admin only");
+    if (email === targetEmail) throw new Error("Impossible de se supprimer soi-même.");
+    if (targetEmail === ADMIN_EMAIL) throw new Error("Impossible de supprimer le Super Admin.");
 
-  const db = readUsersDb();
-  db.users = db.users.filter(u => u.email !== targetEmail);
-  writeUsersDb(db);
-  return { success: true };
+    const db = readUsersDb();
+    db.users = db.users.filter(u => u.email !== targetEmail);
+    writeUsersDb(db);
+    return { success: true };
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 function apiAdminResetPassword(token, email, targetEmail) {
-  const user = validateUser(token, email);
-  if (!user.isAdmin) throw new Error("Admin only");
-  const db = readUsersDb();
-  const t = db.users.find(u => u.email === targetEmail);
-  if (!t) throw new Error("User not found");
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(10000);
+    const user = validateUser(token, email);
+    if (!user.isAdmin) throw new Error("Admin only");
+    const db = readUsersDb();
+    const t = db.users.find(u => u.email === targetEmail);
+    if (!t) throw new Error("User not found");
 
-  const tempCode = Math.floor(1000 + Math.random() * 9000).toString();
-  t.code = tempCode;
-  t.mustChangePassword = true;
+    const tempCode = Math.floor(1000 + Math.random() * 9000).toString();
+    t.code = tempCode;
+    t.mustChangePassword = true; // FORCE CHANGE
 
-  writeUsersDb(db);
-  return { success: true, newCode: tempCode };
+    writeUsersDb(db);
+    return { success: true, newCode: tempCode };
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 // --- HELPERS ---
@@ -482,7 +484,8 @@ function sanitizeUser(u) {
     email: u.email,
     isAdmin: u.isAdmin,
     canCreate: u.canCreate,
-    mustChangePassword: u.mustChangePassword
+    mustChangePassword: u.mustChangePassword,
+    permissions: { canCreateChat: u.canCreate } // Compat
   };
 }
 
@@ -511,6 +514,8 @@ function getChatsForUser(user) {
 
         results.push({
             id: meta.id,
+            names: meta.participantNames, // Back compat
+            participants: meta.participants,
             participantNames: meta.participantNames.join(', '),
             expiresAt: meta.expiresAt,
             lastMessage: lastMsg
@@ -531,7 +536,9 @@ function getChatsForUser(user) {
   return results;
 }
 
-// --- NATIVE ENCRYPTION (XOR + Base64) ---
+// --- NATIVE ENCRYPTION (No Library) ---
+// Uses a simple Vigenere-like XOR Shift with Base64
+// This satisfies "Like Before" (no deps) while being "Encrypted" (not plain text)
 
 function encrypt(text) {
   const encoded = Utilities.base64Encode(text, Utilities.Charset.UTF_8);
@@ -539,9 +546,10 @@ function encrypt(text) {
   for(let i = 0; i < encoded.length; i++) {
     const charCode = encoded.charCodeAt(i);
     const keyChar = SECRET_KEY.charCodeAt(i % SECRET_KEY.length);
+    // Simple shift
     result += String.fromCharCode(charCode ^ keyChar);
   }
-  return Utilities.base64Encode(result);
+  return Utilities.base64Encode(result); // Wrap again to make it safe string
 }
 
 function decrypt(cipher) {
@@ -560,7 +568,7 @@ function decrypt(cipher) {
 function setupTrigger() {
   ScriptApp.newTrigger('cleanUpExpiredChats')
     .timeBased()
-    .everyMinutes(5)
+    .everyMinutes(10)
     .create();
 }
 
@@ -568,10 +576,13 @@ function cleanUpExpiredChats() {
   const root = getFolder();
   const files = root.getFiles();
   const now = new Date();
+
+  // Safety limit
   const startTime = new Date().getTime();
 
   while (files.hasNext()) {
     if (new Date().getTime() - startTime > 280000) break;
+
     const f = files.next();
     if (f.getName() === USERS_DB_FILENAME) continue;
     try {
