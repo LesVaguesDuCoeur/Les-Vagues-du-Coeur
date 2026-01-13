@@ -17,8 +17,6 @@ const app = {
         if (typeof LOGO_BASE64 !== 'undefined' && LOGO_BASE64.length > 20) {
             const logoEl = document.getElementById('app-logo');
             if (logoEl) logoEl.src = LOGO_BASE64;
-            const dashLogo = document.getElementById('dashboard-logo');
-            if (dashLogo) dashLogo.src = LOGO_BASE64;
         }
 
         // Session Check
@@ -120,20 +118,19 @@ const app = {
         document.getElementById('btn-refresh-chat').onclick = () => this.loadMessages(this.currentChatId);
         document.getElementById('btn-add-member').onclick = () => this.addMember();
 
-        // Admin Access - Click on Logo
+        // Admin Access - Click on Avatar
         const adminBtn = document.getElementById('btn-admin-access');
         if (adminBtn) {
             adminBtn.onclick = () => {
-                // Admin check
-                if (this.user && (this.user.isAdmin || this.user.email === 'chaouiengage@gmail.com')) {
+                const adminEmail = atob("Y2hhb3VpZW5nYWdlQGdtYWlsLmNvbQ==");
+                if (this.user && (this.user.isAdmin === true || this.user.email === adminEmail)) {
                     this.showAdmin();
                 } else {
-                    // Silent fail or small info? User requested only admins see panel
-                    // But if they click, maybe tell them no? Or nothing (security)
-                    // Nothing is safer/cleaner.
+                    // Non-admin profile view could go here, for now show info
+                    this.showInfo(`Connecté en tant que ${this.user.firstName}`);
                 }
             };
-            adminBtn.style.cursor = "pointer"; // Visual cue
+            adminBtn.style.cursor = "pointer";
         }
 
         // Anti-Screenshot Focus
@@ -196,7 +193,11 @@ const app = {
                 return;
             }
 
-            this.user = res.user;
+            // Ensure token is stored
+            this.user = {
+                ...res.user,
+                token: res.token
+            };
             localStorage.setItem('wh_user', JSON.stringify(this.user));
             this.showDashboard();
         } catch (e) {
@@ -534,6 +535,12 @@ const app = {
 
         if (viewId === 'view-dashboard') {
             document.getElementById('user-greeting').textContent = this.user.firstName;
+
+            // Set Avatar Letter
+            const avatarLet = document.getElementById('user-avatar-letter');
+            if(avatarLet && this.user.firstName) {
+                avatarLet.textContent = this.user.firstName.charAt(0).toUpperCase();
+            }
 
             // FAB Visibility
             const fab = document.getElementById('btn-create-fab');

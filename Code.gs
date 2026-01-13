@@ -9,13 +9,11 @@
 // --- CONFIGURATION (OBFUSCATED) ---
 // Base64 Encoded to prevent casual reading in the editor
 const _SEC_1 = "MUlOMnBTSWhqVl8zRm4tQl9XTE1VZ05GY1FkTE9qYlly"; // Folder ID
-const _SEC_2 = "MTUxMTIwMDA="; // Admin Code (15112000)
 const _SEC_3 = "Y2hhb3VpZW5nYWdlQGdtYWlsLmNvbQ=="; // Admin Email
 const _SEC_KEY = "Q2hhb3VpU2VjcmV0S2V5VjJfTmF0aXZl"; // Secret Key
 
 // Runtime Decoded
 const FOLDER_ID = decodeSecret(_SEC_1);
-const ADMIN_CODE_HASH = decodeSecret(_SEC_2);
 const ADMIN_EMAIL = decodeSecret(_SEC_3);
 const SECRET_KEY = decodeSecret(_SEC_KEY);
 
