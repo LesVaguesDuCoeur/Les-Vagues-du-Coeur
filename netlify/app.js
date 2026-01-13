@@ -75,7 +75,11 @@ const app = {
     },
 
     ui: {
-        showLoader: (show) => document.getElementById('loader').classList.toggle('hidden', !show),
+        showLoader: (show) => {
+            const el = document.getElementById('loader');
+            if(show) el.classList.add('active');
+            else el.classList.remove('active');
+        },
 
         showAuth: (view) => {
             document.getElementById('view-auth').classList.add('active');
@@ -525,4 +529,5 @@ function escapeHtml(text) {
 
 window.app = app; // Expose to global scope for Playwright
 // Start
-window.onload = app.init;
+window.app = app; // Ensure global access immediately
+document.addEventListener('DOMContentLoaded', app.init);

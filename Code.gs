@@ -118,7 +118,9 @@ function initializeDatabase() {
 
   const files = [USERS_DB_FILENAME, SETTINGS_DB_FILENAME, SUBSCRIPTIONS_DB_FILENAME, INVOICES_DB_FILENAME, CHATS_DB_FILENAME];
   files.forEach(name => {
-    if (!folder.getFilesByName(name).hasNext()) {
+    // Check if file exists
+    const iterator = folder.getFilesByName(name);
+    if (!iterator.hasNext()) {
        let defaultData = {};
        if (name === USERS_DB_FILENAME) defaultData = { users: [] };
        if (name === CHATS_DB_FILENAME) defaultData = { chats: [] };
@@ -131,12 +133,13 @@ function initializeDatabase() {
           paypalLink: "https://paypal.me/ChaouiEngage5?country.x=FR&locale.x=fr_FR"
        };
        folder.createFile(name, encrypt(JSON.stringify(defaultData)), MimeType.PLAIN_TEXT);
+       Logger.log("Created DB: " + name);
     }
   });
 }
 
 function doPost(e) {
-  initializeDatabase();
+  initializeDatabase(); // Ensure DB exists on every request
   const lock = LockService.getScriptLock();
 
   try {
