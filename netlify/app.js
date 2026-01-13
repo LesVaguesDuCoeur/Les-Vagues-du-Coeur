@@ -1,9 +1,6 @@
 // ==========================================
 // CONFIGURATION
 // ==========================================
-// Encoded URL to prevent plain-text scraping
-// INSTRUCTIONS: Remplacer par la nouvelle URL encodée en Base64
-// Utilisez btoa('https://script.google.com/macros/s/XXXXX/exec') dans la console pour l'obtenir.
 const _ENC_URL = "aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy9BS2Z5Y2J4ekZldmJRSnplcndEMkwtdU5jVlRSSkU5WFZKNEhHZEM5S1VmdE95SUtUOXBxRXJzdk5mUHNmU0MxMk1qQkVVRFF2QS9leGVj";
 
 const app = {
@@ -16,12 +13,15 @@ const app = {
     init: function() {
         this.setupListeners();
 
-        // Chargement du Logo
+        // Logo Handling
         if (typeof LOGO_BASE64 !== 'undefined' && LOGO_BASE64.length > 20) {
-            document.getElementById('app-logo').src = LOGO_BASE64;
+            const logoEl = document.getElementById('app-logo');
+            if (logoEl) logoEl.src = LOGO_BASE64;
+            const dashLogo = document.getElementById('dashboard-logo');
+            if (dashLogo) dashLogo.src = LOGO_BASE64;
         }
 
-        // Vérification session locale
+        // Session Check
         const savedUser = localStorage.getItem('wh_user');
         if (savedUser) {
             try {
@@ -41,6 +41,72 @@ const app = {
         return atob(_ENC_URL);
     },
 
+    // ==========================================
+    // CUSTOM MODALS (No Alerts)
+    // ==========================================
+    showModal: function(type, title, message, showCancel = false, inputPlaceholder = null) {
+        return new Promise((resolve) => {
+            const overlay = document.getElementById('modal-overlay');
+            const box = document.getElementById('modal-box');
+            const titleEl = box.querySelector('.modal-title');
+            const messageEl = box.querySelector('.modal-message');
+            const inputContainer = box.querySelector('.modal-input-container');
+            const input = document.getElementById('modal-input');
+            const cancelBtn = document.getElementById('modal-cancel');
+            const confirmBtn = document.getElementById('modal-confirm');
+
+            // Reset classes
+            box.className = 'modal-box ' + type;
+            titleEl.textContent = title;
+            messageEl.textContent = message;
+
+            // Input Mode
+            if (inputPlaceholder) {
+                inputContainer.classList.remove('hidden');
+                input.placeholder = inputPlaceholder;
+                input.value = '';
+                input.focus();
+            } else {
+                inputContainer.classList.add('hidden');
+            }
+
+            // Buttons
+            if (showCancel) {
+                cancelBtn.classList.remove('hidden');
+            } else {
+                cancelBtn.classList.add('hidden');
+            }
+
+            overlay.classList.remove('hidden');
+
+            const cleanup = () => {
+                overlay.classList.add('hidden');
+                // Remove listeners to prevent accumulation
+                confirmBtn.onclick = null;
+                cancelBtn.onclick = null;
+            };
+
+            confirmBtn.onclick = () => {
+                cleanup();
+                resolve(inputPlaceholder ? input.value : true);
+            };
+
+            cancelBtn.onclick = () => {
+                cleanup();
+                resolve(null);
+            };
+        });
+    },
+
+    showError: function(msg) { return this.showModal('error', 'Erreur', msg); },
+    showSuccess: function(msg) { return this.showModal('success', 'Succès', msg); },
+    showInfo: function(msg) { return this.showModal('info', 'Info', msg); },
+    showConfirm: function(msg) { return this.showModal('confirm', 'Confirmation', msg, true); },
+    showPrompt: function(title, placeholder) { return this.showModal('info', title, '', true, placeholder); },
+
+    // ==========================================
+    // LISTENERS
+    // ==========================================
     setupListeners: function() {
         document.getElementById('form-login').onsubmit = (e) => { e.preventDefault(); this.doLogin(); };
         document.getElementById('form-register').onsubmit = (e) => { e.preventDefault(); this.doRegister(); };
@@ -52,26 +118,30 @@ const app = {
         document.getElementById('btn-send').onclick = () => this.sendMessage();
         document.getElementById('message-input').onkeypress = (e) => { if(e.key === 'Enter') this.sendMessage(); };
         document.getElementById('btn-refresh-chat').onclick = () => this.loadMessages(this.currentChatId);
-
-        // Ajout membre
         document.getElementById('btn-add-member').onclick = () => this.addMember();
 
-        // Admin Access - Dashboard Logo
+        // Admin Access - Click on Logo
         const adminBtn = document.getElementById('btn-admin-access');
         if (adminBtn) {
             adminBtn.onclick = () => {
+                // Admin check
                 if (this.user && (this.user.isAdmin || this.user.email === 'chaouiengage@gmail.com')) {
                     this.showAdmin();
+                } else {
+                    // Silent fail or small info? User requested only admins see panel
+                    // But if they click, maybe tell them no? Or nothing (security)
+                    // Nothing is safer/cleaner.
                 }
             };
+            adminBtn.style.cursor = "pointer"; // Visual cue
         }
 
-        // Sécurité Visuelle
+        // Anti-Screenshot Focus
         window.addEventListener('blur', () => document.body.classList.add('blurred'));
         window.addEventListener('focus', () => document.body.classList.remove('blurred'));
         document.addEventListener('contextmenu', event => event.preventDefault());
 
-        // Sélection durée
+        // Chips
         document.querySelectorAll('.chip').forEach(c => {
             c.onclick = () => {
                 document.querySelectorAll('.chip').forEach(x => x.classList.remove('selected'));
@@ -81,7 +151,7 @@ const app = {
     },
 
     // ==========================================
-    // API CALLER
+    // API
     // ==========================================
     api: async function(action, payload = {}) {
         const body = { action, ...payload };
@@ -99,20 +169,19 @@ const app = {
 
             if (data.error) {
                 if (data.error.includes("Session") || data.error.includes("invalide")) {
-                    // Do not logout immediately on transient errors, but yes on session invalid
                     this.logout();
                 }
                 throw new Error(data.error);
             }
             return data;
         } catch (e) {
-            console.error("Erreur API:", e);
+            console.error("API Error:", e);
             throw e;
         }
     },
 
     // ==========================================
-    // ACTIONS
+    // AUTH
     // ==========================================
     doLogin: async function() {
         const email = document.getElementById('login-email').value;
@@ -121,13 +190,36 @@ const app = {
         try {
             this.toggleLoader(true);
             const res = await this.api('login', { email, code });
+
+            if (res.requireNewPassword) {
+                await this.handleChangePassword(email, code);
+                return;
+            }
+
             this.user = res.user;
             localStorage.setItem('wh_user', JSON.stringify(this.user));
             this.showDashboard();
         } catch (e) {
-            alert(e.message);
+            this.showError(e.message);
         } finally {
             this.toggleLoader(false);
+        }
+    },
+
+    handleChangePassword: async function(email, oldCode) {
+        this.toggleLoader(false);
+        const newCode = await this.showPrompt("Nouveau Code Secret", "Entrez votre nouveau code");
+        if (!newCode) return;
+
+        try {
+            this.toggleLoader(true);
+            const res = await this.api('changePassword', { email, oldCode, newCode });
+            this.user = res.user;
+            localStorage.setItem('wh_user', JSON.stringify(this.user));
+            this.showSuccess("Mot de passe mis à jour !");
+            this.showDashboard();
+        } catch(e) {
+            this.showError(e.message);
         }
     },
 
@@ -143,7 +235,7 @@ const app = {
             localStorage.setItem('wh_user', JSON.stringify(this.user));
             this.showDashboard();
         } catch (e) {
-            alert(e.message);
+            this.showError(e.message);
         } finally {
             this.toggleLoader(false);
         }
@@ -156,6 +248,9 @@ const app = {
         this.showLogin();
     },
 
+    // ==========================================
+    // CHATS
+    // ==========================================
     loadConversations: async function() {
         if (!this.user) return;
         try {
@@ -164,7 +259,7 @@ const app = {
             list.innerHTML = '';
 
             if (!res.chats || res.chats.length === 0) {
-                list.innerHTML = '<div style="text-align:center;color:#666;margin-top:20px;font-size:0.8rem">Aucune conversation active.<br>Demandez à un Admin de vous écrire.</div>';
+                list.innerHTML = '<div style="text-align:center;color:#666;margin-top:20px;font-size:0.8rem">Aucune conversation active.</div>';
                 return;
             }
 
@@ -182,18 +277,18 @@ const app = {
                 let timeLeft = "∞";
                 if (chat.expiresAt) {
                     const diff = new Date(chat.expiresAt) - new Date();
-                    if (diff > 0) {
+                    if (diff <= 0) {
+                        timeLeft = "Expiré";
+                    } else {
                         const mins = Math.floor(diff / 60000);
                         const hours = Math.floor(mins / 60);
                         timeLeft = hours > 0 ? `${hours}h${mins%60}` : `${mins}m`;
-                    } else {
-                        timeLeft = "Expiré";
                     }
                 }
 
                 el.innerHTML = `
                     <div class="card-content">
-                        <h4>Conversation</h4>
+                        <h4>${chat.participantNames}</h4>
                         <p>${lastMsg}</p>
                     </div>
                     <div class="card-meta">
@@ -201,11 +296,13 @@ const app = {
                         <div>➔</div>
                     </div>
                 `;
+                // If expired locally, don't open? Or open and let backend handle?
+                // Better to let backend handle delete.
                 el.onclick = () => this.enterChat(chat.id, chat.expiresAt);
                 list.appendChild(el);
             });
         } catch (e) {
-            console.log("Polling silencieux...");
+            console.log("Polling silent error");
         }
     },
 
@@ -214,7 +311,7 @@ const app = {
         const durationChip = document.querySelector('.chip.selected');
         const duration = durationChip ? durationChip.dataset.val : '24h';
 
-        if (!emails[0]) return alert("Veuillez mettre un email.");
+        if (!emails[0]) return this.showError("Veuillez mettre au moins un email.");
 
         try {
             this.toggleLoader(true);
@@ -222,9 +319,9 @@ const app = {
                 participants: emails,
                 duration: duration
             });
-            this.enterChat(res.chatId, null); // ExpiresAt unknown until fetch, but okay
+            this.enterChat(res.chatId, null);
         } catch (e) {
-            alert(e.message);
+            this.showError(e.message);
         } finally {
             this.toggleLoader(false);
         }
@@ -239,7 +336,7 @@ const app = {
         this.startTimer();
 
         this.stopPolling();
-        // Reduced polling freq to be nice to quotas, but user wants "Real Time"
+        // Poll messages
         this.pollingInterval = setInterval(() => this.loadMessages(chatId), 3000);
     },
 
@@ -247,7 +344,7 @@ const app = {
         if (this.timerInterval) clearInterval(this.timerInterval);
         const display = document.getElementById('chat-timer-display');
 
-        const update = () => {
+        const update = async () => {
             if (!this.chatExpiresAt) {
                 display.textContent = "";
                 return;
@@ -257,6 +354,8 @@ const app = {
 
             if (diff <= 0) {
                 display.textContent = "Expiré";
+                clearInterval(this.timerInterval);
+                await this.handleExpiration();
                 return;
             }
 
@@ -271,30 +370,35 @@ const app = {
         this.timerInterval = setInterval(update, 1000);
     },
 
+    handleExpiration: async function() {
+        await this.showInfo("Cette conversation a expiré.");
+        try {
+            await this.api('expireChat', { chatId: this.currentChatId });
+        } catch(e) {} // best effort
+        this.showDashboard();
+    },
+
     loadMessages: async function(chatId) {
         if (!chatId) return;
         try {
             const res = await this.api('getMessages', { chatId });
-            const area = document.getElementById('messages-area');
+            if (res.expired) {
+                await this.handleExpiration();
+                return;
+            }
 
+            const area = document.getElementById('messages-area');
             document.getElementById('chat-title').textContent = res.participantNames;
 
-            // Render logic optimized to prevent flicker if no change?
-            // For now, simpler to clear and render, but we can do a quick check
-            // if we are sending, maybe don't wipe?
-            // The issue reported was DOUBLE messages.
-
+            // Simple render
             area.innerHTML = '';
-
             res.messages.forEach(msg => {
                 const div = document.createElement('div');
                 div.className = `msg ${msg.isMe ? 'me' : 'other'} ${msg.type === 'system' ? 'system' : ''}`;
 
                 if (msg.type === 'system') {
                     div.innerHTML = `<small><i>${msg.senderName} ${msg.content}</i></small>`;
-                    div.style.background = 'transparent';
-                    div.style.textAlign = 'center';
-                    div.style.width = '100%';
+                    div.style.background = 'transparent'; div.style.textAlign = 'center'; div.style.width = '100%';
                 } else {
                     let content = '';
                     if (msg.type === 'image') content = `<img src="${msg.content}">`;
@@ -310,17 +414,9 @@ const app = {
                 }
                 area.appendChild(div);
             });
-
-            // Set Timer if we didn't have it (e.g. from refresh)
-            // But we don't get expiresAt here. Only list gets it.
-            // Minor issue, but usually okay as user comes from list.
-
-            // Auto scroll bas
-            // if (area.scrollHeight - area.scrollTop - area.clientHeight < 200) {
             area.scrollTop = area.scrollHeight;
-            // }
         } catch (e) {
-            // ignorer erreurs polling
+            // silent fail on poll
         }
     },
 
@@ -334,10 +430,7 @@ const app = {
 
         if (!text.trim() && !hasFile) return;
 
-        // Prevent Double Click
         btn.disabled = true;
-        btn.innerHTML = "...";
-
         try {
             if (hasFile) {
                 const file = fileInput.files[0];
@@ -352,40 +445,29 @@ const app = {
                 input.value = '';
             }
         } catch (e) {
-            alert("Erreur: " + e.message);
+            this.showError("Erreur envoi: " + e.message);
         } finally {
-            // Re-enable
             btn.disabled = false;
-            btn.innerHTML = "➤";
-            // Focus back
             input.focus();
         }
     },
 
     sendPayload: async function(content, type) {
-        await this.api('sendMessage', {
-            chatId: this.currentChatId,
-            content,
-            type
-        });
-        // Immediate refresh
+        await this.api('sendMessage', { chatId: this.currentChatId, content, type });
         await this.loadMessages(this.currentChatId);
     },
 
     addMember: async function() {
-        const email = prompt("Email de la personne à ajouter :");
+        const email = await this.showPrompt("Ajouter un membre", "Email du participant");
         if (!email) return;
 
         try {
             this.toggleLoader(true);
-            await this.api('addParticipant', {
-               chatId: this.currentChatId,
-               targetEmail: email
-            });
-            alert("Ajouté avec succès !");
+            await this.api('addParticipant', { chatId: this.currentChatId, targetEmail: email });
+            this.showSuccess("Participant ajouté !");
             this.loadMessages(this.currentChatId);
         } catch (e) {
-            alert(e.message);
+            this.showError(e.message);
         } finally {
             this.toggleLoader(false);
         }
@@ -411,11 +493,12 @@ const app = {
                             onchange="app.toggleRights('${u.email}', this.checked)">
                            Création
                         </label>
+                        <button onclick="app.deleteUser('${u.email}')" style="background:none;border:none;color:#d00;cursor:pointer;font-size:0.8rem;margin-top:5px;">Supprimer</button>
                     </div>
                 </div>
             `).join('');
         } catch(e) {
-            alert("Accès refusé");
+            this.showError("Accès refusé");
             this.showDashboard();
         }
     },
@@ -424,7 +507,17 @@ const app = {
         try {
             await this.api('adminUpdateUserRights', { targetEmail: email, canCreate: canCreate });
         } catch(e) {
-            alert("Erreur mise à jour");
+            this.showError("Erreur mise à jour");
+        }
+    },
+
+    deleteUser: async function(email) {
+        if (!await this.showConfirm("Supprimer cet utilisateur ?")) return;
+        try {
+            await this.api('adminDeleteUser', { targetEmail: email });
+            this.showAdmin(); // Refresh
+        } catch(e) {
+            this.showError(e.message);
         }
     },
 
@@ -440,10 +533,9 @@ const app = {
         target.classList.add('active');
 
         if (viewId === 'view-dashboard') {
-            document.getElementById('user-initial').textContent = this.user.firstName.charAt(0).toUpperCase();
             document.getElementById('user-greeting').textContent = this.user.firstName;
 
-            // Gestion Bouton Créer (+)
+            // FAB Visibility
             const fab = document.getElementById('btn-create-fab');
             if (this.user.permissions?.canCreateChat || this.user.isAdmin) {
                 fab.classList.remove('hidden');

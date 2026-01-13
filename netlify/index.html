@@ -11,7 +11,7 @@
     <div class="glass-container">
 
         <!-- LOADING -->
-        <div id="loader" class="loader-overlay">
+        <div id="loader" class="loader-overlay hidden">
             <div class="spinner"></div>
             <p>Chargement...</p>
         </div>
@@ -25,15 +25,15 @@
             <p class="subtitle">Messagerie Sécurisée & Éphémère</p>
 
             <form id="form-login" class="auth-form">
-                <input type="email" id="login-email" placeholder="Email" required>
-                <input type="password" id="login-code" placeholder="Code (3 chiffres)" inputmode="numeric" required>
+                <input type="email" id="login-email" placeholder="Email" required autocomplete="email">
+                <input type="password" id="login-code" placeholder="Code" inputmode="numeric" required autocomplete="current-password">
                 <button type="submit" class="btn-gold">Connexion</button>
                 <p class="link" onclick="app.showRegister()">Créer un compte</p>
             </form>
 
             <form id="form-register" class="auth-form hidden">
                 <input type="text" id="reg-firstname" placeholder="Prénom" required>
-                <input type="email" id="reg-email" placeholder="Email" required>
+                <input type="email" id="reg-email" placeholder="Email" required autocomplete="email">
                 <input type="password" id="reg-code" placeholder="Code (3 chiffres)" inputmode="numeric" required>
                 <button type="submit" class="btn-gold">S'inscrire</button>
                 <p class="link" onclick="app.showLogin()">Retour Connexion</p>
@@ -44,8 +44,9 @@
         <div id="view-dashboard" class="view hidden">
             <header>
                 <div class="user-profile">
-                    <div class="logo-circle-small logo-circle" id="btn-admin-access"> <!-- Clickable for Admin -->
-                        <div class="avatar" id="user-initial">?</div>
+                    <!-- Dashboard Logo (Admin Access) -->
+                    <div class="logo-circle-small logo-circle" id="btn-admin-access">
+                        <img id="dashboard-logo" src="" alt="Admin" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">
                     </div>
                     <span id="user-greeting">Bonjour</span>
                 </div>
@@ -125,6 +126,23 @@
             <div class="list-area" id="admin-list"></div>
         </div>
     </div>
+
+    <!-- MODAL OVERLAY -->
+    <div id="modal-overlay" class="modal-overlay hidden">
+      <div id="modal-box" class="modal-box">
+        <div class="modal-icon"></div>
+        <div class="modal-title"></div>
+        <div class="modal-message"></div>
+        <div class="modal-input-container hidden">
+          <input type="text" id="modal-input" class="modal-input" />
+        </div>
+        <div class="modal-buttons">
+          <button id="modal-cancel" class="btn-modal btn-cancel hidden">Annuler</button>
+          <button id="modal-confirm" class="btn-modal btn-confirm">OK</button>
+        </div>
+      </div>
+    </div>
+
     <script src="logo.js"></script>
     <script src="app.js"></script>
 </body>
