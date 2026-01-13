@@ -65,6 +65,7 @@
             </div>
 
             <button id="btn-create-fab" class="fab-btn hidden" onclick="app.showNewChat()">+</button>
+            <button id="btn-subscribe" class="fab-btn subscribe-btn hidden" onclick="app.openSubscription()">💳</button>
         </div>
 
         <!-- NEW CHAT VIEW -->
@@ -123,8 +124,99 @@
                 <button class="back-btn" onclick="app.showDashboard()">←</button>
                 <h2>Administration</h2>
             </header>
+            <div class="admin-tabs">
+                <button class="admin-tab active" onclick="app.showAdminUsers()">Utilisateurs</button>
+                <button class="admin-tab" onclick="app.showAdminSubscriptions()">Abonnements</button>
+            </div>
             <div class="list-area" id="admin-list"></div>
         </div>
+    </div>
+
+    <!-- SUBSCRIPTION MODAL -->
+    <div id="subscription-modal" class="modal-overlay hidden">
+      <div class="subscription-box">
+        <button class="close-btn" onclick="app.closeSubscription()">×</button>
+
+        <h2 class="subscription-title">💳 Abonnement WhatsHappen</h2>
+        <p class="subscription-price">5,00 €</p>
+
+        <div class="subscription-benefits">
+          <h3>Avantages inclus :</h3>
+          <ul>
+            <li>✅ Créer des conversations illimitées</li>
+            <li>✅ Discuter avec tous les utilisateurs</li>
+            <li>✅ Conversations éphémères sécurisées</li>
+            <li>✅ Chiffrement de bout en bout</li>
+            <li>✅ Support prioritaire</li>
+          </ul>
+        </div>
+
+        <div class="subscription-steps">
+          <h3>Comment s'abonner :</h3>
+
+          <div class="step">
+            <span class="step-number">1</span>
+            <div class="step-content">
+              <p>Votre numéro WhatsHappen unique :</p>
+              <div class="whatsappen-code" id="whatsappen-code">...</div>
+              <button class="btn-copy" onclick="app.copyCode()">📋 Copier</button>
+            </div>
+          </div>
+
+          <div class="step">
+            <span class="step-number">2</span>
+            <div class="step-content">
+              <p>Payez 5€ via PayPal et collez ce code dans "Ajouter une note" :</p>
+              <a href="https://paypal.me/ChaouiEngage5?country.x=FR&locale.x=fr_FR"
+                 target="_blank" class="btn-paypal">
+                <img src="https://www.paypalobjects.com/webstatic/mktg/logo/pp_cc_mark_37x23.jpg" alt="PayPal">
+                Payer avec PayPal
+              </a>
+            </div>
+          </div>
+
+          <div class="step">
+            <span class="step-number">3</span>
+            <div class="step-content">
+              <p>Entrez votre numéro de transaction PayPal :</p>
+              <input type="text" id="paypal-transaction"
+                     placeholder="Ex: 8UA86165PL250002N"
+                     class="input-transaction">
+              <p class="hint">Vous le trouverez dans les détails de votre paiement PayPal</p>
+            </div>
+          </div>
+        </div>
+
+        <button id="btn-validate-subscription" class="btn-validate" onclick="app.validateSubscription()">
+          ✅ Valider mon abonnement
+        </button>
+
+        <p class="subscription-note">
+          Votre abonnement sera activé après vérification par notre équipe (sous 24h).
+        </p>
+      </div>
+    </div>
+
+    <!-- INVOICES MODAL -->
+    <div id="invoices-modal" class="modal-overlay hidden">
+      <div class="invoices-box">
+        <button class="close-btn" onclick="app.closeInvoices()">×</button>
+        <h2 class="invoices-title">📄 Factures</h2>
+        <div class="invoices-list">
+          <table class="invoices-table">
+            <thead>
+              <tr>
+                <th>Référence</th>
+                <th>Date</th>
+                <th>Période</th>
+                <th>Montant</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="invoices-tbody"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
     <!-- MODAL OVERLAY -->
