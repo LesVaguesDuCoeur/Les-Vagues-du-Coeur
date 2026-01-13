@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>WhatsHappen</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="glass-container">
@@ -26,7 +26,7 @@
 
             <form id="form-login" class="auth-form">
                 <input type="email" id="login-email" placeholder="Email" required autocomplete="email">
-                <input type="password" id="login-code" placeholder="Code" inputmode="numeric" required autocomplete="current-password">
+                <input type="password" id="login-code" placeholder="Code (3 chiffres)" inputmode="numeric" required autocomplete="current-password" maxlength="3">
                 <button type="submit" class="btn-gold">Connexion</button>
                 <p class="link" onclick="app.showRegister()">Créer un compte</p>
             </form>
@@ -34,7 +34,7 @@
             <form id="form-register" class="auth-form hidden">
                 <input type="text" id="reg-firstname" placeholder="Prénom" required>
                 <input type="email" id="reg-email" placeholder="Email" required autocomplete="email">
-                <input type="password" id="reg-code" placeholder="Code (3 chiffres)" inputmode="numeric" required>
+                <input type="password" id="reg-code" placeholder="Code (3 chiffres)" inputmode="numeric" required maxlength="3">
                 <button type="submit" class="btn-gold">S'inscrire</button>
                 <p class="link" onclick="app.showLogin()">Retour Connexion</p>
             </form>
@@ -42,17 +42,19 @@
 
         <!-- DASHBOARD VIEW -->
         <div id="view-dashboard" class="view hidden">
-            <header>
-                <div class="user-profile">
-                    <!-- Dashboard Avatar (Admin Access / Profile) -->
-                    <div class="user-avatar" id="btn-admin-access" title="Cliquez pour les options">
-                        <span class="avatar-letter" id="user-avatar-letter">?</span>
+            <header class="dashboard-header">
+                <div class="user-section">
+                    <div class="user-avatar" id="avatar-btn" title="Cliquez pour accéder aux options">
+                        <span class="avatar-letter" id="avatar-letter">?</span>
                     </div>
-                    <span id="user-greeting">Bonjour</span>
+                    <div class="user-details">
+                        <span class="user-name" id="user-name">...</span>
+                        <div class="user-badges" id="user-badges"></div>
+                    </div>
                 </div>
-                <div class="actions">
-                    <button id="btn-refresh" class="icon-btn" title="Actualiser">↻</button>
-                    <button id="btn-logout" class="icon-btn" title="Déconnexion">⏻</button>
+                <div class="header-actions">
+                    <button class="btn-icon" id="btn-refresh" title="Actualiser">🔄</button>
+                    <button class="btn-icon" id="btn-logout" title="Déconnexion">⏻</button>
                 </div>
             </header>
 
@@ -64,8 +66,9 @@
                 <!-- Chats injected here -->
             </div>
 
-            <button id="btn-create-fab" class="fab-btn hidden" onclick="app.showNewChat()">+</button>
-            <button id="btn-subscribe" class="fab-btn subscribe-btn hidden" onclick="app.openSubscription()">💳</button>
+            <!-- Boutons Flottants -->
+            <button class="fab-btn create-btn" id="btn-create" style="display: none;">➕</button>
+            <button class="fab-btn subscribe-btn" id="btn-subscribe" style="display: none;">💳</button>
         </div>
 
         <!-- NEW CHAT VIEW -->
@@ -88,7 +91,7 @@
                     <span class="chip" data-val="unlimited">∞</span>
                 </div>
 
-                <button id="btn-create-chat" class="btn-gold full">Lancer</button>
+                <button id="btn-create-chat-action" class="btn-gold full">Lancer</button>
             </div>
         </div>
 
@@ -106,9 +109,7 @@
                 </div>
             </header>
 
-            <div id="messages-area" class="messages-container">
-                <!-- Messages -->
-            </div>
+            <div id="messages-area" class="messages-container"></div>
 
             <div class="input-area">
                 <label for="file-input" class="attach-btn">📎</label>
@@ -118,108 +119,39 @@
             </div>
         </div>
 
-        <!-- ADMIN VIEW -->
+        <!-- ADMIN PANEL VIEW -->
         <div id="view-admin" class="view hidden">
-            <header>
+            <div class="admin-header">
                 <button class="back-btn" onclick="app.showDashboard()">←</button>
                 <h2>Administration</h2>
-            </header>
+            </div>
+
             <div class="admin-tabs">
-                <button class="admin-tab active" onclick="app.showAdminUsers()">Utilisateurs</button>
-                <button class="admin-tab" onclick="app.showAdminSubscriptions()">Abonnements</button>
+                <button class="tab-btn active" data-tab="users" onclick="app.switchAdminTab('users')">👥 Utilisateurs</button>
+                <button class="tab-btn" data-tab="subscriptions" onclick="app.switchAdminTab('subscriptions')">💳 Abonnements</button>
+                <button class="tab-btn" data-tab="settings" onclick="app.switchAdminTab('settings')">⚙️ Paramètres</button>
             </div>
-            <div class="list-area" id="admin-list"></div>
+
+            <!-- Users Tab -->
+            <div class="tab-content" id="tab-users">
+                <div class="users-list" id="users-list"></div>
+            </div>
+
+            <!-- Subscriptions Tab -->
+            <div class="tab-content hidden" id="tab-subscriptions">
+                <div class="subscriptions-list" id="subscriptions-list"></div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div class="tab-content hidden" id="tab-settings">
+                <div class="settings-form" id="settings-form">
+                    <!-- Settings injected here -->
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- SUBSCRIPTION MODAL -->
-    <div id="subscription-modal" class="modal-overlay hidden">
-      <div class="subscription-box">
-        <button class="close-btn" onclick="app.closeSubscription()">×</button>
-
-        <h2 class="subscription-title">💳 Abonnement WhatsHappen</h2>
-        <p class="subscription-price">5,00 €</p>
-
-        <div class="subscription-benefits">
-          <h3>Avantages inclus :</h3>
-          <ul>
-            <li>✅ Créer des conversations illimitées</li>
-            <li>✅ Discuter avec tous les utilisateurs</li>
-            <li>✅ Conversations éphémères sécurisées</li>
-            <li>✅ Chiffrement de bout en bout</li>
-            <li>✅ Support prioritaire</li>
-          </ul>
-        </div>
-
-        <div class="subscription-steps">
-          <h3>Comment s'abonner :</h3>
-
-          <div class="step">
-            <span class="step-number">1</span>
-            <div class="step-content">
-              <p>Votre numéro WhatsHappen unique :</p>
-              <div class="whatsappen-code" id="whatsappen-code">...</div>
-              <button class="btn-copy" onclick="app.copyCode()">📋 Copier</button>
-            </div>
-          </div>
-
-          <div class="step">
-            <span class="step-number">2</span>
-            <div class="step-content">
-              <p>Payez 5€ via PayPal et collez ce code dans "Ajouter une note" :</p>
-              <a href="https://paypal.me/ChaouiEngage5?country.x=FR&locale.x=fr_FR"
-                 target="_blank" class="btn-paypal">
-                <img src="https://www.paypalobjects.com/webstatic/mktg/logo/pp_cc_mark_37x23.jpg" alt="PayPal">
-                Payer avec PayPal
-              </a>
-            </div>
-          </div>
-
-          <div class="step">
-            <span class="step-number">3</span>
-            <div class="step-content">
-              <p>Entrez votre numéro de transaction PayPal :</p>
-              <input type="text" id="paypal-transaction"
-                     placeholder="Ex: 8UA86165PL250002N"
-                     class="input-transaction">
-              <p class="hint">Vous le trouverez dans les détails de votre paiement PayPal</p>
-            </div>
-          </div>
-        </div>
-
-        <button id="btn-validate-subscription" class="btn-validate" onclick="app.validateSubscription()">
-          ✅ Valider mon abonnement
-        </button>
-
-        <p class="subscription-note">
-          Votre abonnement sera activé après vérification par notre équipe (sous 24h).
-        </p>
-      </div>
-    </div>
-
-    <!-- INVOICES MODAL -->
-    <div id="invoices-modal" class="modal-overlay hidden">
-      <div class="invoices-box">
-        <button class="close-btn" onclick="app.closeInvoices()">×</button>
-        <h2 class="invoices-title">📄 Factures</h2>
-        <div class="invoices-list">
-          <table class="invoices-table">
-            <thead>
-              <tr>
-                <th>Référence</th>
-                <th>Date</th>
-                <th>Période</th>
-                <th>Montant</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="invoices-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- MODAL OVERLAY -->
+    <!-- MODAL OVERLAY (Alerts/Prompts) -->
     <div id="modal-overlay" class="modal-overlay hidden">
       <div id="modal-box" class="modal-box">
         <div class="modal-icon"></div>
@@ -233,6 +165,88 @@
           <button id="modal-confirm" class="btn-modal btn-confirm">OK</button>
         </div>
       </div>
+    </div>
+
+    <!-- SUBSCRIPTION MODAL (Wizard) -->
+    <div id="subscription-wizard" class="modal-overlay hidden">
+        <div class="subscription-box">
+            <button class="close-modal" onclick="app.closeSubscriptionWizard()">×</button>
+            <div class="subscription-header-box">
+                <span class="subscription-icon">💳</span>
+                <h2>Abonnement WhatsHappen</h2>
+                <p class="subscription-price">5,00 €</p>
+            </div>
+
+            <div class="subscription-benefits">
+                <h3>Avantages inclus :</h3>
+                <ul>
+                    <li>✅ Créer des conversations illimitées</li>
+                    <li>✅ Discuter avec tous les utilisateurs</li>
+                    <li>✅ Messagerie chiffrée et sécurisée</li>
+                    <li>✅ Support prioritaire</li>
+                </ul>
+            </div>
+
+            <div class="subscription-steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <p class="step-title">Votre code WhatsHappen</p>
+                        <div class="code-display" id="sub-code-display">--------</div>
+                        <button class="btn-copy" onclick="app.copySubCode()">📋 Copier</button>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <p class="step-title">Payez via PayPal</p>
+                        <p class="step-hint">Collez votre code dans "Ajouter une note"</p>
+                        <a href="#" id="paypal-link-btn" target="_blank" class="btn-paypal">
+                            Payer avec PayPal
+                        </a>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <p class="step-title">Numéro de transaction PayPal</p>
+                        <input type="text" id="sub-transaction-id" placeholder="Ex: 8UA86165PL250002N" class="input-field">
+                        <p class="step-hint">Visible dans les détails de votre paiement</p>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn-validate" onclick="app.submitSubscriptionRequest()">
+                ✅ Valider ma demande
+            </button>
+
+            <p class="subscription-footer">
+                Votre abonnement sera activé sous 24h après vérification.
+            </p>
+        </div>
+    </div>
+
+    <!-- INVOICE MODAL (Admin) -->
+    <div id="invoice-modal" class="modal-overlay hidden">
+        <div class="invoices-box">
+            <button class="close-modal" onclick="app.closeInvoices()">×</button>
+            <h2 class="invoices-title">📄 Factures</h2>
+            <div class="invoices-list-container">
+                <table class="invoices-table">
+                    <thead>
+                        <tr>
+                            <th>Réf</th>
+                            <th>Date</th>
+                            <th>Montant</th>
+                            <th>PDF</th>
+                        </tr>
+                    </thead>
+                    <tbody id="invoices-tbody"></tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <script src="logo.js"></script>
