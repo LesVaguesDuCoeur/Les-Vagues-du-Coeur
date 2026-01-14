@@ -272,58 +272,67 @@ function apiGetConversations(token, email) {
   let changed = false;
 
   user.activeChats.forEach(chat => {
-      if (typeof chat === 'string') {
-          // Backward compatibility for old format
-          let exists = true;
-          try {
-             const f = DriveApp.getFileById(chat);
-             if (f.isTrashed()) exists = false;
+      let chatId = typeof chat === 'string' ? chat : chat.id;
+      let exists = true;
 
-             if (exists) {
-                 const doc = DocumentApp.openById(chat);
-                 const meta = JSON.parse(decrypt(doc.getBody().getParagraphs()[0].getText()));
-                 if (meta.expiresAt && now > new Date(meta.expiresAt)) {
-                    changed = true;
-                 } else {
-                    validChats.push({
+      try {
+         const f = DriveApp.getFileById(chatId);
+         if (f.isTrashed()) {
+             exists = false;
+         }
+      } catch(e) {
+         // File completely missing or no access
+         exists = false;
+      }
+
+      // Check Expiry
+      let expiresAt = typeof chat === 'object' ? chat.expiresAt : null;
+      if (exists && expiresAt && now > new Date(expiresAt)) {
+          exists = false;
+      }
+
+      if (exists) {
+          if (typeof chat === 'string') {
+               // Upgrade old string format to object
+               try {
+                   const doc = DocumentApp.openById(chat);
+                   const meta = JSON.parse(decrypt(doc.getBody().getParagraphs()[0].getText()));
+                   validChats.push({
                         id: chat,
                         names: meta.participantNames.join(', '),
                         expiresAt: meta.expiresAt,
                         lastMessage: { content: "...", sender: "..." }
-                    });
-                 }
-             } else {
-                 changed = true;
-             }
-          } catch(e) { changed = true; }
-      } else {
-          let exists = true;
-          try {
-             const f = DriveApp.getFileById(chat.id);
-             if (f.isTrashed()) exists = false;
-          } catch(e) { exists = false; }
-
-          if (!exists || (chat.expiresAt && now > new Date(chat.expiresAt))) {
-             changed = true;
+                   });
+                   changed = true; // Mark changed to save the upgrade
+               } catch(e) { changed = true; }
           } else {
-             validChats.push({
-                 id: chat.id,
-                 names: chat.names,
-                 expiresAt: chat.expiresAt,
-                 lastMessage: chat.lastMessage
-             });
+               validChats.push(chat);
           }
+      } else {
+          changed = true;
       }
   });
 
   if (changed) {
-      const db = readUsersDb();
-      const u = db.users.find(x => x.email === email);
-      if (u) {
-          u.activeChats = validChats;
-          writeUsersDb(db);
-          user.activeChats = validChats;
-      }
+      const lock = LockService.getScriptLock();
+      try {
+          // Short lock to ensure we don't overwrite concurrent updates
+          if (lock.tryLock(5000)) {
+              const db = readUsersDb();
+              const u = db.users.find(x => x.email === email);
+              if (u) {
+                  u.activeChats = validChats;
+                  writeUsersDb(db);
+                  user.activeChats = validChats;
+                  // Also update permissions in case they changed
+                  if (u.isAdmin !== user.isAdmin || u.canCreate !== user.canCreate || u.isSubscriber !== user.isSubscriber) {
+                      user.isAdmin = u.isAdmin;
+                      user.canCreate = u.canCreate;
+                      user.isSubscriber = u.isSubscriber;
+                  }
+              }
+          }
+      } catch(e) {} finally { lock.releaseLock(); }
   }
 
   return { success: true, chats: validChats, user: sanitizeUser(user) };

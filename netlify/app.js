@@ -15,10 +15,9 @@ const app = {
         this.setupListeners();
 
         // Logo Handling
-        if (typeof LOGO_BASE64 !== 'undefined' && LOGO_BASE64.length > 20) {
+        if (typeof window.LOGO_BASE64 !== 'undefined' && window.LOGO_BASE64.length > 20) {
             const logoEl = document.getElementById('app-logo');
-            if (logoEl) logoEl.src = LOGO_BASE64;
-
+            if (logoEl) logoEl.src = window.LOGO_BASE64;
         }
 
         // Session Check
@@ -323,6 +322,14 @@ const app = {
         if (!this.user) return;
         try {
             const res = await this.api('getConversations');
+
+            // Sync Permissions & User Data
+            if (res.user) {
+                this.user = { ...this.user, ...res.user };
+                localStorage.setItem('wh_user', JSON.stringify(this.user));
+                this.updateFabButton();
+            }
+
             const list = document.getElementById('chat-list');
             list.innerHTML = '';
 
@@ -330,6 +337,13 @@ const app = {
                 list.innerHTML = '<div style="text-align:center;color:#666;margin-top:20px;font-size:0.8rem">Aucune conversation active.</div>';
                 return;
             }
+
+            // Sort by Date (Newest first)
+            res.chats.sort((a, b) => {
+                const tA = a.lastMessage && a.lastMessage.timestamp ? new Date(a.lastMessage.timestamp) : new Date(0);
+                const tB = b.lastMessage && b.lastMessage.timestamp ? new Date(b.lastMessage.timestamp) : new Date(0);
+                return tB - tA;
+            });
 
             res.chats.forEach(chat => {
                 const el = document.createElement('div');

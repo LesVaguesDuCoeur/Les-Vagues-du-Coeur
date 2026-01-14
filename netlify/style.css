@@ -68,6 +68,7 @@ body.blurred {
     height: 100%;
     padding: 20px;
     animation: fadeIn 0.3s ease;
+    overflow-y: auto; /* Fix for profile scrolling */
 }
 
 .view.active {
@@ -287,12 +288,12 @@ header {
     width: 70px;
     height: 70px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--gold), #ffd700);
-    border: 2px solid rgba(255, 255, 255, 0.3);
+    background: linear-gradient(135deg, var(--gold), #b8860b);
+    border: 2px solid rgba(255, 215, 0, 0.5);
     font-size: 2.5rem;
     color: #000;
     cursor: pointer;
-    box-shadow: 0 10px 25px rgba(212, 175, 55, 0.4);
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -302,14 +303,15 @@ header {
 }
 
 @keyframes float {
-    0% { transform: translateY(0px); }
-    50% { transform: translateY(-5px); }
-    100% { transform: translateY(0px); }
+    0% { transform: translateY(0px); box-shadow: 0 0 20px rgba(212, 175, 55, 0.4); }
+    50% { transform: translateY(-5px); box-shadow: 0 0 35px rgba(212, 175, 55, 0.7); }
+    100% { transform: translateY(0px); box-shadow: 0 0 20px rgba(212, 175, 55, 0.4); }
 }
 
 .fab-btn:hover {
     transform: scale(1.1);
-    box-shadow: 0 15px 35px rgba(212, 175, 55, 0.6);
+    background: var(--gold);
+    box-shadow: 0 0 40px rgba(212, 175, 55, 0.8);
 }
 
 .fab-btn:active { transform: scale(0.95); }
@@ -322,21 +324,24 @@ header {
     width: 55px;
     height: 55px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--gold), #C9A227);
-    border: 2px solid rgba(255,255,255,0.2);
-    color: #000;
-    font-size: 1.6rem;
+    background: rgba(20, 20, 20, 0.6);
+    backdrop-filter: blur(5px);
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    font-size: 1.5rem;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 8px 20px rgba(212, 175, 55, 0.4);
+    box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
     z-index: 90;
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: all 0.3s ease;
 }
 .contact-fab:hover {
-    transform: scale(1.1) rotate(10deg);
-    box-shadow: 0 10px 25px rgba(212, 175, 55, 0.6);
+    transform: scale(1.1);
+    background: rgba(212, 175, 55, 0.2);
+    box-shadow: 0 0 25px rgba(212, 175, 55, 0.5);
+    color: #fff;
 }
 .contact-fab:active { transform: scale(0.95); }
 
