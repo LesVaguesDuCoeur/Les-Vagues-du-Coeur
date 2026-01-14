@@ -144,9 +144,10 @@ const app = {
         document.getElementById('btn-add-member').onclick = () => this.addMember();
         document.getElementById('btn-delete-chat').onclick = () => this.deleteCurrentChat();
 
-        // Admin Access - Click on Avatar (Now handled inside Profile for cleaner UX, but keeping listener for dashboard header click if desired)
-        // Changed: Dashboard Avatar Click -> Opens Profile
-        document.getElementById('dashboard-avatar').onclick = () => this.showProfile();
+        // Admin Access - Click on Avatar (Only if Admin)
+        document.getElementById('dashboard-avatar').onclick = () => {
+             if (this.user && this.user.isAdmin) this.showAdmin();
+        };
 
         // Anti-Screenshot Focus
         window.addEventListener('blur', () => document.body.classList.add('blurred'));

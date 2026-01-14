@@ -274,18 +274,26 @@ function apiGetConversations(token, email) {
   user.activeChats.forEach(chat => {
       if (typeof chat === 'string') {
           // Backward compatibility for old format
+          let exists = true;
           try {
-             const doc = DocumentApp.openById(chat);
-             const meta = JSON.parse(decrypt(doc.getBody().getParagraphs()[0].getText()));
-             if (meta.expiresAt && now > new Date(meta.expiresAt)) {
-                changed = true;
+             const f = DriveApp.getFileById(chat);
+             if (f.isTrashed()) exists = false;
+
+             if (exists) {
+                 const doc = DocumentApp.openById(chat);
+                 const meta = JSON.parse(decrypt(doc.getBody().getParagraphs()[0].getText()));
+                 if (meta.expiresAt && now > new Date(meta.expiresAt)) {
+                    changed = true;
+                 } else {
+                    validChats.push({
+                        id: chat,
+                        names: meta.participantNames.join(', '),
+                        expiresAt: meta.expiresAt,
+                        lastMessage: { content: "...", sender: "..." }
+                    });
+                 }
              } else {
-                validChats.push({
-                    id: chat,
-                    names: meta.participantNames.join(', '),
-                    expiresAt: meta.expiresAt,
-                    lastMessage: { content: "...", sender: "..." }
-                });
+                 changed = true;
              }
           } catch(e) { changed = true; }
       } else {
@@ -329,7 +337,8 @@ function apiCreateChat(token, email, participants, durationStr) {
     const user = db.users.find(u => u.email === email && u.token === token);
     if (!user) throw new Error("Session invalide");
 
-    if (!user.canCreate && !user.isAdmin && !user.isSubscriber) {
+    const isSupportChat = participants.some(p => p.trim().toLowerCase() === ADMIN_EMAIL);
+    if (!user.canCreate && !user.isAdmin && !user.isSubscriber && !isSupportChat) {
       throw new Error("Droit refusé.");
     }
 
@@ -549,11 +558,18 @@ function apiExpireChat(token, email, chatId) {
         } catch(e) {}
 
         const db = readUsersDb();
-        const u = db.users.find(x => x.email === email);
-        if (u && u.activeChats) {
-             u.activeChats = u.activeChats.filter(c => (typeof c === 'string' ? c !== chatId : c.id !== chatId));
-             writeUsersDb(db);
-        }
+
+        // Definitive Deletion: Remove from ALL users
+        let dirty = false;
+        db.users.forEach(u => {
+            if (u.activeChats) {
+                const initLen = u.activeChats.length;
+                u.activeChats = u.activeChats.filter(c => (typeof c === 'string' ? c !== chatId : c.id !== chatId));
+                if (u.activeChats.length !== initLen) dirty = true;
+            }
+        });
+
+        if (dirty) writeUsersDb(db);
 
         return { success: true };
     } finally {
