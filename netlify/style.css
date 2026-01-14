@@ -261,45 +261,65 @@ header {
     position: absolute;
     bottom: 30px;
     right: 30px;
-    width: 60px;
-    height: 60px;
+    width: 70px;
+    height: 70px;
     border-radius: 50%;
-    background: linear-gradient(45deg, var(--gold-hover), var(--gold));
-    border: none;
-    font-size: 2rem;
+    background: linear-gradient(135deg, var(--gold), #ffd700);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    font-size: 2.5rem;
     color: #000;
     cursor: pointer;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+    box-shadow: 0 10px 25px rgba(212, 175, 55, 0.4);
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: transform 0.2s;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     z-index: 100;
 }
 
-.fab-btn:active { transform: scale(0.9); }
+.fab-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 15px 35px rgba(212, 175, 55, 0.6);
+}
+
+.fab-btn:active { transform: scale(0.95); }
 
 /* Contact Support Button */
 .contact-fab {
     position: absolute;
-    bottom: 110px;
+    bottom: 115px;
     right: 30px;
-    width: 60px;
-    height: 60px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
-    background: linear-gradient(45deg, var(--gold-hover), var(--gold));
-    border: none;
-    color: #000;
-    font-size: 2rem;
+    background: rgba(30, 30, 30, 0.9);
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    font-size: 1.5rem;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
     z-index: 90;
-    transition: transform 0.2s;
+    transition: all 0.3s ease;
+}
+.contact-fab:hover {
+    background: var(--gold);
+    color: #000;
+    transform: scale(1.1);
 }
 .contact-fab:active { transform: scale(0.9); }
+
+.dash-logo {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-left: 10px;
+    border: 1px solid var(--gold);
+    animation: fadeIn 0.5s ease;
+}
 
 /* Chat Card Delete Button */
 .chat-delete-btn {

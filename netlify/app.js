@@ -17,6 +17,13 @@ const app = {
         if (typeof LOGO_BASE64 !== 'undefined' && LOGO_BASE64.length > 20) {
             const logoEl = document.getElementById('app-logo');
             if (logoEl) logoEl.src = LOGO_BASE64;
+
+            // Also inject into dashboard header if present
+            const dashLogo = document.getElementById('dashboard-logo-img');
+            if (dashLogo) {
+                dashLogo.src = LOGO_BASE64;
+                dashLogo.classList.remove('hidden');
+            }
         }
 
         // Session Check
@@ -433,11 +440,16 @@ const app = {
     },
 
     enterChat: function(chatId, expiresAt) {
+        this.stopPolling(); // Stop polling immediately
         this.currentChatId = chatId;
         this.chatExpiresAt = expiresAt ? new Date(expiresAt) : null;
 
         // Mark as Read
         localStorage.setItem(`read_${chatId}`, new Date().toISOString());
+
+        // Clear previous messages immediately to prevent "jumping"
+        document.getElementById('messages-area').innerHTML = '';
+        document.getElementById('chat-title').textContent = 'Chargement...';
 
         // Show/Hide Delete Button
         const delBtn = document.getElementById('btn-delete-chat');
@@ -451,7 +463,6 @@ const app = {
         this.loadMessages(chatId);
         this.startTimer();
 
-        this.stopPolling();
         // Poll messages faster
         this.pollingInterval = setInterval(() => this.loadMessages(chatId), 3000);
     },
