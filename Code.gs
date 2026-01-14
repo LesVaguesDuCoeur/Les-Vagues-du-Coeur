@@ -5,11 +5,14 @@ This code handles the backend logic for the chat application using Google Apps S
 
 const _SEC_1 = "MUlOMnBTSWhqVl8zRm4tQl9XTE1VZ05GY1FkTE9qYlly";
 const _SEC_3 = "Y2hhb3VpZW5nYWdlQGdtYWlsLmNvbQ==";
-const _SEC_KEY = "Q2hhb3VpU2VjcmV0S2V5VjJfTmF0aXZl";
+const _SEC_KEY_LEGACY = "Q2hhb3VpU2VjcmV0S2V5VjJfTmF0aXZl";
 
 const FOLDER_ID = decodeSecret(_SEC_1);
 const ADMIN_EMAIL = decodeSecret(_SEC_3);
-const SECRET_KEY = decodeSecret(_SEC_KEY);
+// AI_PROTECTION: Secret Key is now loaded from Script Properties for security.
+// If missing (first run), it defaults to the legacy key to preserve data access.
+// To secure your app: Open Project Settings > Script Properties > Add 'SECRET_KEY' with a new random string.
+const SECRET_KEY = getOrInitSecretKey();
 
 const USERS_DB_FILENAME = "Users.db";
 const SETTINGS_DB_FILENAME = "Settings.db";
@@ -120,6 +123,22 @@ function doPost(e) {
 function createJSONOutput(data) {
   return ContentService.createTextOutput(JSON.stringify(data))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+function getOrInitSecretKey() {
+  try {
+    const props = PropertiesService.getScriptProperties();
+    let key = props.getProperty('SECRET_KEY');
+    if (!key) {
+      const legacy = Utilities.newBlob(Utilities.base64DecodeWebSafe(_SEC_KEY_LEGACY, Utilities.Charset.UTF_8)).getDataAsString();
+      props.setProperty('SECRET_KEY', legacy);
+      return legacy;
+    }
+    return key;
+  } catch(e) {
+    // Fallback if PropertiesService fails (e.g. strict scope)
+    return Utilities.newBlob(Utilities.base64DecodeWebSafe(_SEC_KEY_LEGACY, Utilities.Charset.UTF_8)).getDataAsString();
+  }
 }
 
 function initializeDatabase() {
