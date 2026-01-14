@@ -16,7 +16,7 @@ const SETTINGS_DB_FILENAME = "Settings.db";
 const SUBSCRIPTIONS_DB_FILENAME = "Subscriptions.db";
 const INVOICES_DB_FILENAME = "Invoices.db";
 
-function decodeSecret(str) { return Utilities.newBlob(Utilities.base64Decode(str, Utilities.Charset.UTF_8)).getDataAsString(); }
+function decodeSecret(str) { return Utilities.newBlob(Utilities.base64DecodeWebSafe(str, Utilities.Charset.UTF_8)).getDataAsString(); }
 
 function doGet(e) { return createJSONOutput({ status: "Online", message: "Use POST requests." }); }
 
@@ -283,7 +283,7 @@ function apiGetConversations(token, email) {
   user.activeChats.forEach(chat => {
       let chatId = typeof chat === 'string' ? chat : chat.id;
       let exists = true;
-      let cacheKey = "chat_exists_" + chatId;
+      let cacheKey = "chat_v2_" + chatId;
       let cachedStatus = cache.get(cacheKey);
 
       if (cachedStatus === "trashed") {
@@ -301,8 +301,9 @@ function apiGetConversations(token, email) {
                  cache.put(cacheKey, "valid", 600);
              }
           } catch(e) {
-             exists = false;
-             cache.put(cacheKey, "trashed", 21600);
+             // In case of error (e.g. transient Drive issue), assume valid to avoid data loss.
+             exists = true;
+             // Do not cache the error state.
           }
       }
 

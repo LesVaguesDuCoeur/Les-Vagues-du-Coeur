@@ -283,17 +283,18 @@ header {
 
 .fab-btn {
     position: absolute;
-    bottom: 40px; /* Raised for mobile nav bars */
+    bottom: 40px;
     right: 30px;
     width: 70px;
     height: 70px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--gold), #b8860b);
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
     border: 2px solid rgba(255, 215, 0, 0.5);
     font-size: 2.5rem;
-    color: #000;
+    color: var(--gold);
     cursor: pointer;
-    box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -303,60 +304,62 @@ header {
 }
 
 @keyframes float {
-    0% { transform: translateY(0px); box-shadow: 0 0 20px rgba(212, 175, 55, 0.4); }
-    50% { transform: translateY(-5px); box-shadow: 0 0 35px rgba(212, 175, 55, 0.7); }
-    100% { transform: translateY(0px); box-shadow: 0 0 20px rgba(212, 175, 55, 0.4); }
+    0% { transform: translateY(0px); box-shadow: 0 0 20px rgba(212, 175, 55, 0.2); }
+    50% { transform: translateY(-5px); box-shadow: 0 0 35px rgba(212, 175, 55, 0.5); }
+    100% { transform: translateY(0px); box-shadow: 0 0 20px rgba(212, 175, 55, 0.2); }
 }
 
 .fab-btn:hover {
     transform: scale(1.1);
-    background: var(--gold);
-    box-shadow: 0 0 40px rgba(212, 175, 55, 0.8);
+    background: rgba(212, 175, 55, 0.2);
+    border-color: var(--gold);
+    color: #fff;
+    box-shadow: 0 0 40px rgba(212, 175, 55, 0.6);
 }
 
 .fab-btn:active { transform: scale(0.95); }
 
 /* Custom Style for Subscribe FAB */
 #btn-subscribe-fab {
-    background: linear-gradient(135deg, #1a1a1a, #444);
+    background: rgba(20, 20, 20, 0.8);
     border: 2px solid var(--gold);
     color: var(--gold);
-    box-shadow: 0 0 25px rgba(212, 175, 55, 0.3);
 }
 
 #btn-subscribe-fab:hover {
-    background: var(--gold);
+    background: rgba(212, 175, 55, 0.8);
     color: #000;
-    box-shadow: 0 0 40px rgba(212, 175, 55, 0.6);
+    box-shadow: 0 0 40px rgba(212, 175, 55, 0.8);
 }
 
 /* Contact Support Button */
 .contact-fab {
     position: absolute;
-    bottom: 125px; /* Raised for mobile nav bars */
+    bottom: 125px;
     right: 30px;
     width: 55px;
     height: 55px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #000000 0%, #333333 100%);
+    background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(5px);
-    border: 2px solid var(--gold);
+    border: 1px solid rgba(255, 215, 0, 0.3);
     color: var(--gold);
     font-size: 1.5rem;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.1);
     z-index: 90;
     transition: all 0.3s ease;
 }
 
 .contact-fab:hover {
     transform: scale(1.15) rotate(10deg);
-    background: var(--gold);
-    box-shadow: 0 0 30px rgba(212, 175, 55, 0.8);
-    color: #000;
+    background: rgba(212, 175, 55, 0.2);
+    border-color: var(--gold);
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
+    color: #fff;
 }
 
 .contact-fab:active { transform: scale(0.95); }
