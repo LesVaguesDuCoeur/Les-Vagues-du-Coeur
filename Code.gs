@@ -101,6 +101,12 @@ function doPost(e) {
       case 'adminGetInvoices':
         result = apiAdminGetInvoices(request.token, request.email, request.targetEmail);
         break;
+      case 'adminUpdateSubscription':
+        result = apiAdminUpdateSubscription(request.token, request.email, request.targetEmail, request.newData);
+        break;
+      case 'adminDeleteSubscription':
+        result = apiAdminDeleteSubscription(request.token, request.email, request.targetEmail);
+        break;
       default:
         throw new Error("Unknown action: " + action);
     }
@@ -270,19 +276,34 @@ function apiGetConversations(token, email) {
 
   const validChats = [];
   let changed = false;
+  const cache = CacheService.getScriptCache();
 
   user.activeChats.forEach(chat => {
       let chatId = typeof chat === 'string' ? chat : chat.id;
       let exists = true;
+      let cacheKey = "chat_exists_" + chatId;
+      let cachedStatus = cache.get(cacheKey);
 
-      try {
-         const f = DriveApp.getFileById(chatId);
-         if (f.isTrashed()) {
+      if (cachedStatus === "trashed") {
+          exists = false;
+      } else if (cachedStatus === "valid") {
+          exists = true;
+      } else {
+          // Not in cache, check Drive
+          try {
+             const f = DriveApp.getFileById(chatId);
+             if (f.isTrashed()) {
+                 exists = false;
+                 cache.put(cacheKey, "trashed", 21600); // 6 hours
+             } else {
+                 exists = true;
+                 cache.put(cacheKey, "valid", 600); // 10 minutes
+             }
+          } catch(e) {
+             // File completely missing or no access
              exists = false;
-         }
-      } catch(e) {
-         // File completely missing or no access
-         exists = false;
+             cache.put(cacheKey, "trashed", 21600);
+          }
       }
 
       // Check Expiry
@@ -312,34 +333,6 @@ function apiGetConversations(token, email) {
           changed = true;
       }
   });
-
-  if (changed) {
-      const lock = LockService.getScriptLock();
-      try {
-          // Robust lock to ensure ghost chats are removed permanently
-          lock.waitLock(10000);
-          const db = readUsersDb();
-          const u = db.users.find(x => x.email === email);
-          if (u) {
-              u.activeChats = validChats;
-
-              // Verify permissions while we have the lock
-              if (u.isAdmin !== user.isAdmin || u.canCreate !== user.canCreate || u.isSubscriber !== user.isSubscriber) {
-                  user.isAdmin = u.isAdmin;
-                  user.canCreate = u.canCreate;
-                  user.isSubscriber = u.isSubscriber;
-              }
-
-              writeUsersDb(db);
-          }
-      } catch(e) {
-          // If lock fails, we still return the valid list to the user so the UI is correct
-          console.error("Lock failed in getConversations", e);
-      } finally { lock.releaseLock(); }
-  }
-
-  return { success: true, chats: validChats, user: sanitizeUser(user) };
-}
 
 function apiCreateChat(token, email, participants, durationStr) {
   const lock = LockService.getScriptLock();
@@ -812,6 +805,62 @@ function apiAdminUpdateSettings(token, email, newSettings) {
     const user = validateUser(token, email);
     if (!user.isAdmin) throw new Error("Admin only");
     writeSettingsDb(newSettings);
+    return { success: true };
+}
+
+function apiAdminUpdateSubscription(token, email, targetEmail, newData) {
+    const user = validateUser(token, email);
+    if (!user.isAdmin) throw new Error("Admin only");
+
+    const subsDb = readSubscriptionsDb();
+    const idx = subsDb.subscriptions.findIndex(s => s.email === targetEmail);
+    if (idx < 0) throw new Error("Abonnement non trouvé.");
+
+    if (newData.paypalTransaction) subsDb.subscriptions[idx].paypalTransaction = newData.paypalTransaction;
+    if (newData.startDate) subsDb.subscriptions[idx].startDate = newData.startDate;
+    if (newData.endDate) subsDb.subscriptions[idx].endDate = newData.endDate;
+
+    writeSubscriptionsDb(subsDb);
+
+    const invDb = readInvoicesDb();
+    let invDirty = false;
+    invDb.invoices.forEach(inv => {
+        if (inv.email === targetEmail && inv.whatsappenCode === subsDb.subscriptions[idx].whatsappenCode) {
+            if (newData.paypalTransaction) inv.paypalTransaction = newData.paypalTransaction;
+            if (newData.startDate) inv.periodStart = newData.startDate;
+            if (newData.endDate) inv.periodEnd = newData.endDate;
+            invDirty = true;
+        }
+    });
+    if (invDirty) writeInvoicesDb(invDb);
+
+    return { success: true };
+}
+
+function apiAdminDeleteSubscription(token, email, targetEmail) {
+    const user = validateUser(token, email);
+    if (!user.isAdmin) throw new Error("Admin only");
+
+    const subsDb = readSubscriptionsDb();
+    const subIdx = subsDb.subscriptions.findIndex(s => s.email === targetEmail);
+
+    if (subIdx >= 0) {
+        subsDb.subscriptions.splice(subIdx, 1);
+        writeSubscriptionsDb(subsDb);
+    }
+
+    const invDb = readInvoicesDb();
+    const initInvLen = invDb.invoices.length;
+    invDb.invoices = invDb.invoices.filter(i => i.email !== targetEmail);
+    if (invDb.invoices.length !== initInvLen) writeInvoicesDb(invDb);
+
+    const usersDb = readUsersDb();
+    const uIdx = usersDb.users.findIndex(u => u.email === targetEmail);
+    if (uIdx >= 0) {
+        usersDb.users[uIdx].isSubscriber = false;
+        writeUsersDb(usersDb);
+    }
+
     return { success: true };
 }
 

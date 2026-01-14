@@ -896,9 +896,12 @@ const app = {
     },
 
     // --- SUBSCRIPTION ADMIN ---
+    adminSubs: [],
+
     loadAdminSubscriptions: async function() {
         try {
             const res = await this.api('adminGetSubscriptions');
+            this.adminSubs = res.subscriptions;
             const list = document.getElementById('admin-subscriptions-list');
             list.innerHTML = res.subscriptions.map(s => {
                 const isActive = s.status === 'active';
@@ -906,13 +909,17 @@ const app = {
                 <div class="sub-card">
                     <div class="sub-info">
                         <span>${s.firstName} (${s.email})</span>
-                        <span class="sub-status ${s.status}">${s.status}</span>
+                        <div style="display:flex; gap:5px; align-items:center;">
+                            <span class="sub-status ${s.status}">${s.status}</span>
+                            <button onclick="app.adminEditSub('${s.email}')" title="Modifier" style="background:none;border:none;cursor:pointer;">✏️</button>
+                            <button onclick="app.adminDeleteSub('${s.email}')" title="Supprimer" style="background:none;border:none;cursor:pointer;">🗑️</button>
+                        </div>
                     </div>
                     <div class="sub-details">
                         <div>Code: <strong>${s.whatsappenCode}</strong></div>
                         <div>Transaction: ${s.paypalTransaction || 'N/A'}</div>
                         <div>Date Commande: ${s.submittedAt ? new Date(s.submittedAt).toLocaleDateString() : '-'}</div>
-                        <div>Date Validation: ${s.validatedAt ? new Date(s.validatedAt).toLocaleDateString() : '-'}</div>
+                        <div>Période: ${s.startDate || '-'} / ${s.endDate || '-'}</div>
                     </div>
                     ${s.status === 'pending' ? `
                         <div class="validation-form">
@@ -926,6 +933,59 @@ const app = {
             `}).join('');
         } catch(e) {
             this.showError(e.message);
+        }
+    },
+
+    adminEditSub: function(email) {
+        const sub = this.adminSubs.find(s => s.email === email);
+        if (!sub) return;
+
+        document.getElementById('edit-sub-email').value = email;
+        document.getElementById('edit-sub-txn').value = sub.paypalTransaction || '';
+        document.getElementById('edit-sub-start').value = sub.startDate || '';
+        document.getElementById('edit-sub-end').value = sub.endDate || '';
+
+        document.getElementById('edit-sub-modal').classList.remove('hidden');
+    },
+
+    saveSubscriptionUpdates: async function() {
+        const email = document.getElementById('edit-sub-email').value;
+        const txn = document.getElementById('edit-sub-txn').value;
+        const start = document.getElementById('edit-sub-start').value;
+        const end = document.getElementById('edit-sub-end').value;
+
+        try {
+            this.toggleLoader(true);
+            await this.api('adminUpdateSubscription', {
+                targetEmail: email,
+                newData: {
+                    paypalTransaction: txn,
+                    startDate: start,
+                    endDate: end
+                }
+            });
+            this.showSuccess("Abonnement mis à jour.");
+            document.getElementById('edit-sub-modal').classList.add('hidden');
+            this.loadAdminSubscriptions();
+        } catch(e) {
+            this.showError(e.message);
+        } finally {
+            this.toggleLoader(false);
+        }
+    },
+
+    adminDeleteSub: async function(email) {
+        if (!await this.showConfirm("Supprimer cet abonnement (et les factures associées) ? L'utilisateur perdra son statut d'abonné.")) return;
+
+        try {
+            this.toggleLoader(true);
+            await this.api('adminDeleteSubscription', { targetEmail: email });
+            this.showSuccess("Abonnement supprimé.");
+            this.loadAdminSubscriptions();
+        } catch(e) {
+            this.showError(e.message);
+        } finally {
+            this.toggleLoader(false);
         }
     },
 

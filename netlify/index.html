@@ -248,6 +248,28 @@
     </div>
 </div>
 
+<!-- EDIT SUBSCRIPTION MODAL (ADMIN) -->
+<div id="edit-sub-modal" class="modal-overlay hidden">
+    <div class="modal-box" style="text-align:left;">
+        <h3 class="modal-title" style="text-align:center;">Modifier Abonnement</h3>
+        <input type="hidden" id="edit-sub-email">
+
+        <label style="color:var(--gold); font-size:0.8rem;">Transaction PayPal</label>
+        <input type="text" id="edit-sub-txn" class="modal-input">
+
+        <label style="color:var(--gold); font-size:0.8rem;">Date Début</label>
+        <input type="date" id="edit-sub-start" class="modal-input">
+
+        <label style="color:var(--gold); font-size:0.8rem;">Date Fin</label>
+        <input type="date" id="edit-sub-end" class="modal-input">
+
+        <div class="modal-buttons">
+            <button onclick="document.getElementById('edit-sub-modal').classList.add('hidden')" class="btn-modal btn-cancel">Annuler</button>
+            <button onclick="app.saveSubscriptionUpdates()" class="btn-modal btn-confirm">Enregistrer</button>
+        </div>
+    </div>
+</div>
+
 <!-- SUBSCRIPTION MODAL -->
 <div id="subscription-modal" class="modal-overlay hidden">
     <div class="modal-box" style="text-align:left;">
