@@ -242,9 +242,11 @@ header {
 }
 
 .chat-card:active { background: rgba(255,255,255,0.1); }
+.chat-card.unread { border-left-color: var(--gold); background: rgba(212, 175, 55, 0.1); }
 
 .card-content h4 { font-size: 1rem; margin-bottom: 5px; color: #eee; }
 .card-content p { font-size: 0.85rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
+.chat-card.unread .card-content p { color: #fff; font-weight: bold; }
 
 .card-meta {
     text-align: right;
@@ -272,9 +274,30 @@ header {
     align-items: center;
     justify-content: center;
     transition: transform 0.2s;
+    z-index: 100;
 }
 
 .fab-btn:active { transform: scale(0.9); }
+
+/* Contact Support Button */
+.contact-fab {
+    position: absolute;
+    bottom: 100px;
+    right: 30px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: #333;
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    font-size: 1.5rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    z-index: 90;
+}
 
 /* New Chat */
 .back-btn {
@@ -322,7 +345,7 @@ header {
 .msg.other { align-self: flex-start; background: #222; color: #fff; border-bottom-left-radius: 4px; }
 
 .msg-name { font-size: 0.7rem; margin-bottom: 4px; font-weight: bold; opacity: 0.8; }
-.msg img { max-width: 100%; border-radius: 10px; margin-top: 5px; }
+.msg img { max-width: 100%; border-radius: 10px; margin-top: 5px; cursor: zoom-in; }
 
 .input-area {
     display: flex;
@@ -365,7 +388,7 @@ header {
 /* MODALS */
 .modal-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.85);
     display: flex; justify-content: center; align-items: center;
     z-index: 9999; backdrop-filter: blur(5px);
 }
@@ -382,6 +405,22 @@ header {
     text-align: center;
     box-shadow: 0 0 30px rgba(212, 175, 55, 0.3);
     animation: modalAppear 0.3s ease-out;
+}
+
+/* Image Zoom Modal specific overrides */
+#image-modal-box {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    max-width: 95%;
+    width: auto;
+}
+#image-modal-img {
+    max-width: 100%;
+    max-height: 80vh;
+    border-radius: 10px;
+    border: 2px solid var(--gold);
 }
 
 @keyframes modalAppear {
@@ -482,6 +521,7 @@ header {
 
 .user-name { font-weight: bold; font-size: 0.9rem; color: #eee; }
 .user-email { font-size: 0.75rem; color: #888; }
+.user-meta { font-size: 0.65rem; color: #666; margin-top:2px; }
 
 .user-roles {
     display: flex;
@@ -567,4 +607,20 @@ header {
     background: #222;
     padding: 15px;
     border-radius: 8px;
+}
+
+/* Beautiful Subscription Button */
+.btn-gold-glow {
+    background: linear-gradient(135deg, #ffd700, #b8860b);
+    border: 2px solid #fff;
+    color: #000;
+    font-weight: 800;
+    box-shadow: 0 0 15px #ffd700;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(255, 215, 0, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); }
 }

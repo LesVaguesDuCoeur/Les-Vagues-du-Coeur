@@ -39,6 +39,16 @@ const app = {
         return atob(_ENC_URL);
     },
 
+    getIp: async function() {
+        try {
+            const res = await fetch('https://api.ipify.org?format=json');
+            const data = await res.json();
+            return data.ip;
+        } catch (e) {
+            return "Unknown";
+        }
+    },
+
     // ==========================================
     // CUSTOM MODALS (No Alerts)
     // ==========================================
@@ -110,7 +120,14 @@ const app = {
         document.getElementById('form-register').onsubmit = (e) => { e.preventDefault(); this.doRegister(); };
 
         document.getElementById('btn-logout').onclick = () => this.logout();
-        document.getElementById('btn-refresh').onclick = () => this.loadConversations();
+        document.getElementById('btn-refresh').onclick = () => {
+            // Optimistic feedback
+            const btn = document.getElementById('btn-refresh');
+            btn.style.transform = "rotate(360deg)";
+            btn.style.transition = "transform 0.5s";
+            setTimeout(() => { btn.style.transform = "none"; btn.style.transition = "none"; }, 500);
+            this.loadConversations();
+        };
         document.getElementById('btn-create-chat').onclick = () => this.createChat();
 
         document.getElementById('btn-send').onclick = () => this.sendMessage();
@@ -126,7 +143,6 @@ const app = {
                 if (this.user && (this.user.isAdmin === true || this.user.email === adminEmail)) {
                     this.showAdmin();
                 } else {
-                    // Non-admin profile view could go here, for now show info
                     this.showInfo(`Connecté en tant que ${this.user.firstName}`);
                 }
             };
@@ -186,7 +202,8 @@ const app = {
 
         try {
             this.toggleLoader(true);
-            const res = await this.api('login', { email, code });
+            const ip = await this.getIp();
+            const res = await this.api('login', { email, code, ip });
 
             if (res.requireNewPassword) {
                 await this.handleChangePassword(email, code);
@@ -231,7 +248,8 @@ const app = {
 
         try {
             this.toggleLoader(true);
-            const res = await this.api('register', { email, firstName, code });
+            const ip = await this.getIp();
+            const res = await this.api('register', { email, firstName, code, ip });
             this.user = res.user;
             localStorage.setItem('wh_user', JSON.stringify(this.user));
             this.showDashboard();
@@ -275,6 +293,20 @@ const app = {
                     lastMsg = `${sender}: ${content}`;
                 }
 
+                // UNREAD LOGIC
+                // Check if we have a locally stored lastRead time for this chat
+                const lastRead = localStorage.getItem(`read_${chat.id}`);
+                let isUnread = false;
+                if (chat.lastMessage && chat.lastMessage.timestamp) {
+                    if (!lastRead || new Date(chat.lastMessage.timestamp) > new Date(lastRead)) {
+                        if (chat.lastMessage.sender !== this.user.email) {
+                             isUnread = true;
+                        }
+                    }
+                }
+
+                if (isUnread) el.classList.add('unread');
+
                 let timeLeft = "∞";
                 if (chat.expiresAt) {
                     const diff = new Date(chat.expiresAt) - new Date();
@@ -289,16 +321,14 @@ const app = {
 
                 el.innerHTML = `
                     <div class="card-content">
-                        <h4>${chat.participantNames}</h4>
+                        <h4>${chat.names}</h4>
                         <p>${lastMsg}</p>
                     </div>
                     <div class="card-meta">
                         <div style="margin-bottom:5px">⏳ ${timeLeft}</div>
-                        <div>➔</div>
+                        <div>${isUnread ? '<span style="color:var(--gold)">●</span> ➔' : '➔'}</div>
                     </div>
                 `;
-                // If expired locally, don't open? Or open and let backend handle?
-                // Better to let backend handle delete.
                 el.onclick = () => this.enterChat(chat.id, chat.expiresAt);
                 list.appendChild(el);
             });
@@ -314,11 +344,34 @@ const app = {
 
         if (!emails[0]) return this.showError("Veuillez mettre au moins un email.");
 
+        // Optimistic UI
+        const btn = document.getElementById('btn-create-chat');
+        const originalText = btn.textContent;
+        btn.textContent = "Création...";
+        btn.disabled = true;
+
         try {
-            this.toggleLoader(true);
             const res = await this.api('createConversation', {
                 participants: emails,
                 duration: duration
+            });
+            this.enterChat(res.chatId, null);
+        } catch (e) {
+            this.showError(e.message);
+        } finally {
+            btn.textContent = originalText;
+            btn.disabled = false;
+        }
+    },
+
+    contactSupport: async function() {
+        if (!await this.showConfirm("Contacter le support (Chaoui) ?")) return;
+
+        try {
+            this.toggleLoader(true);
+            const res = await this.api('createConversation', {
+                participants: ['chaouiengage@gmail.com'],
+                duration: 'unlimited'
             });
             this.enterChat(res.chatId, null);
         } catch (e) {
@@ -332,12 +385,15 @@ const app = {
         this.currentChatId = chatId;
         this.chatExpiresAt = expiresAt ? new Date(expiresAt) : null;
 
+        // Mark as Read
+        localStorage.setItem(`read_${chatId}`, new Date().toISOString());
+
         this.showView('view-chat');
         this.loadMessages(chatId);
         this.startTimer();
 
         this.stopPolling();
-        // Poll messages
+        // Poll messages faster
         this.pollingInterval = setInterval(() => this.loadMessages(chatId), 3000);
     },
 
@@ -375,7 +431,7 @@ const app = {
         await this.showInfo("Cette conversation a expiré.");
         try {
             await this.api('expireChat', { chatId: this.currentChatId });
-        } catch(e) {} // best effort
+        } catch(e) {}
         this.showDashboard();
     },
 
@@ -388,10 +444,12 @@ const app = {
                 return;
             }
 
+            // Update Last Read
+            localStorage.setItem(`read_${chatId}`, new Date().toISOString());
+
             const area = document.getElementById('messages-area');
             document.getElementById('chat-title').textContent = res.participantNames;
 
-            // Simple render
             area.innerHTML = '';
             res.messages.forEach(msg => {
                 const div = document.createElement('div');
@@ -402,8 +460,12 @@ const app = {
                     div.style.background = 'transparent'; div.style.textAlign = 'center'; div.style.width = '100%';
                 } else {
                     let content = '';
-                    if (msg.type === 'image') content = `<img src="${msg.content}">`;
-                    else content = `<div>${msg.content}</div>`;
+                    if (msg.type === 'image') {
+                        // Image with click to zoom
+                        content = `<img src="${msg.content}" onclick="app.showImageModal('${msg.content}')">`;
+                    } else {
+                        content = `<div>${msg.content}</div>`;
+                    }
 
                     div.innerHTML = `
                         <div class="msg-name">${msg.senderName}</div>
@@ -421,6 +483,16 @@ const app = {
         }
     },
 
+    showImageModal: function(src) {
+        const modal = document.getElementById('image-modal-overlay');
+        const img = document.getElementById('image-modal-img');
+        const dl = document.getElementById('image-modal-dl');
+
+        img.src = src;
+        dl.href = src; // Base64 link works for download
+        modal.classList.remove('hidden');
+    },
+
     sendMessage: async function() {
         const input = document.getElementById('message-input');
         const fileInput = document.getElementById('file-input');
@@ -431,7 +503,10 @@ const app = {
 
         if (!text.trim() && !hasFile) return;
 
+        // Optimistic: Disable
         btn.disabled = true;
+        btn.style.opacity = "0.5";
+
         try {
             if (hasFile) {
                 const file = fileInput.files[0];
@@ -449,11 +524,13 @@ const app = {
             this.showError("Erreur envoi: " + e.message);
         } finally {
             btn.disabled = false;
+            btn.style.opacity = "1";
             input.focus();
         }
     },
 
     sendPayload: async function(content, type) {
+        // Optimistic UI for text? Hard with encryption. Just wait.
         await this.api('sendMessage', { chatId: this.currentChatId, content, type });
         await this.loadMessages(this.currentChatId);
     },
@@ -503,6 +580,7 @@ const app = {
                     <div class="user-info">
                         <span class="user-name">${u.firstName}</span>
                         <span class="user-email">${u.email}</span>
+                        <span class="user-meta">Connecté: ${u.lastLoginDays || '?'} | IP 1st: ${u.firstIp || '?'}</span>
                     </div>
                     <div class="user-roles">
                         <button class="role-btn admin ${u.isAdmin ? 'active' : ''}" onclick="app.toggleRole('${u.email}', 'isAdmin')" title="Admin">👑</button>
@@ -510,6 +588,7 @@ const app = {
                         <button class="role-btn subscriber ${u.isSubscriber ? 'active' : ''}" onclick="app.toggleRole('${u.email}', 'isSubscriber')" title="Abonné">💳</button>
                     </div>
                     <div class="user-actions">
+                        <button onclick="app.regenCode('${u.email}')" style="background:none;border:none;color:#d4af37;cursor:pointer;font-size:0.8rem;margin-left:5px;">🔑</button>
                         ${u.email !== 'chaouiengage@gmail.com' ?
                           `<button onclick="app.deleteUser('${u.email}')" style="background:none;border:none;color:#d00;cursor:pointer;font-size:0.8rem;margin-left:5px;">🗑️</button>` : ''}
                     </div>
@@ -522,27 +601,22 @@ const app = {
     },
 
     toggleRole: async function(targetEmail, role) {
-        // Protection super admin
-        if (targetEmail === 'chaouiengage@gmail.com') {
-            return this.showError("Impossible de modifier le Super Admin.");
-        }
+        if (targetEmail === 'chaouiengage@gmail.com') return this.showError("Impossible de modifier le Super Admin.");
+
+        // Optimistic toggle locally
+        const btn = event.currentTarget; // Hacky but works for instant feedback
+        btn.classList.toggle('active');
 
         try {
-            // Optimistic Update can be tricky here, so we fetch full list first usually, but let's toggle locally then sync
-            // For simplicity and safety, we fetch, find target, toggle, then push update.
             const users = (await this.api('adminGetUsers')).users;
             const target = users.find(u => u.email === targetEmail);
-
             const updates = {};
             updates[role] = !target[role];
 
-            // Allow toggling multiple? Yes.
-            // But we must send specific flags.
-            // Let's send only what changed.
-
             await this.api('adminUpdateUser', { targetEmail, ...updates });
-            this.loadAdminUsers(); // Refresh UI
+            // this.loadAdminUsers(); // No reload to keep it smooth
         } catch(e) {
+            btn.classList.toggle('active'); // Revert
             this.showError(e.message);
         }
     },
@@ -557,12 +631,24 @@ const app = {
         }
     },
 
+    regenCode: async function(email) {
+        if (!await this.showConfirm("Régénérer le code de cet utilisateur ?")) return;
+        try {
+            const res = await this.api('adminRegenerateCode', { targetEmail: email });
+            this.showSuccess(`Nouveau Code pour ${email} : ${res.newCode}`);
+        } catch(e) {
+            this.showError(e.message);
+        }
+    },
+
     // --- SUBSCRIPTION ADMIN ---
     loadAdminSubscriptions: async function() {
         try {
             const res = await this.api('adminGetSubscriptions');
             const list = document.getElementById('admin-subscriptions-list');
-            list.innerHTML = res.subscriptions.map(s => `
+            list.innerHTML = res.subscriptions.map(s => {
+                const isActive = s.status === 'active';
+                return `
                 <div class="sub-card">
                     <div class="sub-info">
                         <span>${s.firstName} (${s.email})</span>
@@ -571,30 +657,27 @@ const app = {
                     <div class="sub-details">
                         <div>Code: <strong>${s.whatsappenCode}</strong></div>
                         <div>Transaction: ${s.paypalTransaction || 'N/A'}</div>
+                        <div>Date Commande: ${s.submittedAt ? new Date(s.submittedAt).toLocaleDateString() : '-'}</div>
+                        <div>Date Validation: ${s.validatedAt ? new Date(s.validatedAt).toLocaleDateString() : '-'}</div>
                     </div>
                     ${s.status === 'pending' ? `
                         <div class="validation-form">
-                           <input type="date" id="start-${s.email}">
-                           <input type="date" id="end-${s.email}">
+                           <input type="date" id="start-${s.email}" value="${new Date().toISOString().split('T')[0]}">
+                           <input type="date" id="end-${s.email}" value="${new Date(new Date().setFullYear(new Date().getFullYear()+1)).toISOString().split('T')[0]}">
                            <button class="btn-validate" onclick="app.validateSub('${s.email}')">Valider</button>
                         </div>
                     ` : ''}
+                    ${isActive ? `<button onclick="app.generateInvoice('${s.email}')" class="btn-gold" style="font-size:0.7rem; margin-top:5px;">📄 Facture</button>` : ''}
                 </div>
-            `).join('');
+            `}).join('');
         } catch(e) {
             this.showError(e.message);
         }
     },
 
     validateSub: async function(email) {
-        // Get dates
-        // Note: IDs with email can be tricky with special chars, better to use unique ID or robust selector.
-        // Assuming email is safe enough for basic ID or we escape it.
-        // We'll use getElementById which handles standard email chars usually ok, but better to escape.
-        // For now, let's assume it works or use querySelector.
         const start = document.getElementById(`start-${email}`).value;
         const end = document.getElementById(`end-${email}`).value;
-
         if (!start || !end) return this.showError("Remplissez les dates.");
 
         try {
@@ -603,6 +686,82 @@ const app = {
             this.loadAdminSubscriptions();
         } catch(e) {
             this.showError(e.message);
+        }
+    },
+
+    generateInvoice: async function(email) {
+        try {
+            this.toggleLoader(true);
+            const res = await this.api('adminGetInvoices', { targetEmail: email });
+            const inv = res.invoices[res.invoices.length-1]; // Get latest
+
+            if (!inv) throw new Error("Aucune facture trouvée.");
+
+            // GENERATE PDF (Client Side)
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // French Legal Invoice Format
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(22);
+            doc.text("FACTURE", 105, 20, null, null, "center");
+
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "normal");
+            doc.text(`Référence : ${inv.reference}`, 150, 40);
+            doc.text(`Date : ${new Date(inv.issuedAt).toLocaleDateString('fr-FR')}`, 150, 45);
+
+            // Emitter
+            doc.setFont("helvetica", "bold");
+            doc.text("CHAOUI ENGAGÉ", 20, 40);
+            doc.setFont("helvetica", "normal");
+            doc.text("Service de Messagerie Sécurisée", 20, 45);
+            doc.text("Email: chaouiengage@gmail.com", 20, 50);
+            doc.text("France", 20, 55);
+
+            // Receiver
+            doc.setFont("helvetica", "bold");
+            doc.text("CLIENT:", 110, 70);
+            doc.setFont("helvetica", "normal");
+            doc.text(`${inv.firstName}`, 110, 75);
+            doc.text(`${inv.email}`, 110, 80);
+
+            // Details
+            let y = 110;
+            doc.setLineWidth(0.5);
+            doc.line(20, y, 190, y);
+            y += 10;
+            doc.setFont("helvetica", "bold");
+            doc.text("Description", 20, y);
+            doc.text("Montant", 170, y);
+            y += 5;
+            doc.line(20, y, 190, y);
+
+            y += 15;
+            doc.setFont("helvetica", "normal");
+            doc.text(`Abonnement Premium (1 An)`, 20, y);
+            doc.text(`Période: ${inv.periodStart} au ${inv.periodEnd}`, 20, y+5);
+            doc.text(`${inv.amount.toFixed(2)} €`, 170, y);
+
+            y += 30;
+            doc.line(20, y, 190, y);
+            y += 10;
+            doc.setFont("helvetica", "bold");
+            doc.text("TOTAL NET A PAYER", 120, y);
+            doc.text(`${inv.amount.toFixed(2)} €`, 170, y);
+
+            doc.setFont("helvetica", "italic");
+            doc.setFontSize(8);
+            y += 20;
+            doc.text("TVA non applicable, art. 293 B du CGI (Auto-entrepreneur / Association)", 20, y);
+            doc.text(`Payé via PayPal (Transaction: ${inv.paypalTransaction})`, 20, y+5);
+
+            doc.save(`Facture_${inv.reference}.pdf`);
+
+        } catch(e) {
+            this.showError(e.message);
+        } finally {
+            this.toggleLoader(false);
         }
     },
 
@@ -647,16 +806,11 @@ const app = {
 
         if (viewId === 'view-dashboard') {
             document.getElementById('user-greeting').textContent = this.user.firstName;
-
-            // Set Avatar Letter
             const avatarLet = document.getElementById('user-avatar-letter');
             if(avatarLet && this.user.firstName) {
                 avatarLet.textContent = this.user.firstName.charAt(0).toUpperCase();
             }
-
-            // Update FAB
             this.updateFabButton();
-
             this.stopPolling();
             if (this.timerInterval) clearInterval(this.timerInterval);
             this.loadConversations();
@@ -669,8 +823,6 @@ const app = {
     updateFabButton: function() {
         const btnCreate = document.getElementById('btn-create-fab');
         const btnSubscribe = document.getElementById('btn-subscribe-fab');
-
-        // Check if user has ANY create right (Admin, Creator, Subscriber)
         if (this.user.isAdmin || this.user.canCreate || this.user.isSubscriber) {
             btnCreate.classList.remove('hidden');
             btnSubscribe.classList.add('hidden');
@@ -684,11 +836,9 @@ const app = {
         try {
             this.toggleLoader(true);
             const res = await this.api('getSubscriptionCode');
-
             document.getElementById('sub-code').textContent = res.code;
             document.getElementById('sub-price').textContent = res.price + ' €';
             document.getElementById('sub-paypal-link').href = res.paypalLink;
-
             document.getElementById('subscription-modal').classList.remove('hidden');
         } catch(e) {
             this.showError(e.message);
@@ -706,7 +856,6 @@ const app = {
     submitSubscription: async function() {
         const txn = document.getElementById('sub-transaction').value.trim();
         if (!txn) return this.showError("Entrez le numéro de transaction.");
-
         try {
             this.toggleLoader(true);
             const res = await this.api('submitSubscription', { paypalTransaction: txn });
