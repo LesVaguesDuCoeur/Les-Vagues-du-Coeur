@@ -18,12 +18,6 @@ const app = {
             const logoEl = document.getElementById('app-logo');
             if (logoEl) logoEl.src = LOGO_BASE64;
 
-            // Also inject into dashboard header if present
-            const dashLogo = document.getElementById('dashboard-logo-img');
-            if (dashLogo) {
-                dashLogo.src = LOGO_BASE64;
-                dashLogo.classList.remove('hidden');
-            }
         }
 
         // Session Check

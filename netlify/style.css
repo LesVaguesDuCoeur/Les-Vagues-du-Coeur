@@ -18,7 +18,7 @@
 body {
     background: radial-gradient(circle at top right, #1a1a1a, #000000);
     color: var(--text);
-    height: 100vh;
+    height: 100dvh; /* Dynamic Viewport Height for Mobile */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -226,7 +226,7 @@ header {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    padding-bottom: 80px;
+    padding-bottom: 150px; /* Extra padding for FABs */
 }
 
 .chat-card {
@@ -259,7 +259,7 @@ header {
 
 .fab-btn {
     position: absolute;
-    bottom: 30px;
+    bottom: 40px; /* Raised for mobile nav bars */
     right: 30px;
     width: 70px;
     height: 70px;
@@ -287,7 +287,7 @@ header {
 /* Contact Support Button */
 .contact-fab {
     position: absolute;
-    bottom: 115px;
+    bottom: 125px; /* Raised for mobile nav bars */
     right: 30px;
     width: 50px;
     height: 50px;
