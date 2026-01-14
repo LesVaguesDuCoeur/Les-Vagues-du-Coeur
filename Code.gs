@@ -529,7 +529,17 @@ function apiExpireChat(token, email, chatId) {
             throw new Error("Vous n'êtes pas participant.");
         }
 
-        doc.setTrashed(true);
+        // Fix: Use DriveApp for trashing
+        DriveApp.getFileById(chatId).setTrashed(true);
+
+        // Optimization: Remove from DB immediately for this user to avoid ghosting
+        const db = readUsersDb();
+        const u = db.users.find(x => x.email === email);
+        if (u && u.activeChats) {
+             u.activeChats = u.activeChats.filter(c => (typeof c === 'string' ? c !== chatId : c.id !== chatId));
+             writeUsersDb(db);
+        }
+
         return { success: true };
     } finally {
         lock.releaseLock();

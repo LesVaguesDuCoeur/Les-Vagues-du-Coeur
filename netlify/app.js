@@ -320,6 +320,12 @@ const app = {
                     }
                 }
 
+                // Check Delete Permission
+                let deleteBtn = '';
+                if (this.user.isAdmin || this.user.canCreate || this.user.isSubscriber) {
+                    deleteBtn = `<button class="chat-delete-btn" title="Supprimer">🗑️</button>`;
+                }
+
                 el.innerHTML = `
                     <div class="card-content">
                         <h4>${chat.names}</h4>
@@ -327,10 +333,33 @@ const app = {
                     </div>
                     <div class="card-meta">
                         <div style="margin-bottom:5px">⏳ ${timeLeft}</div>
-                        <div>${isUnread ? '<span style="color:var(--gold)">●</span> ➔' : '➔'}</div>
+                        <div style="display:flex; align-items:center; justify-content:flex-end;">
+                           ${isUnread ? '<span style="color:var(--gold);margin-right:5px;">●</span>' : ''}
+                           <span>➔</span>
+                           ${deleteBtn}
+                        </div>
                     </div>
                 `;
-                el.onclick = () => this.enterChat(chat.id, chat.expiresAt);
+
+                // Bind Click Events
+                const contentDiv = el.querySelector('.card-content');
+                contentDiv.onclick = () => this.enterChat(chat.id, chat.expiresAt);
+
+                // Allow clicking whole card except delete button
+                el.onclick = (e) => {
+                    if (!e.target.classList.contains('chat-delete-btn')) {
+                         this.enterChat(chat.id, chat.expiresAt);
+                    }
+                };
+
+                const btnDel = el.querySelector('.chat-delete-btn');
+                if (btnDel) {
+                    btnDel.onclick = (e) => {
+                        e.stopPropagation();
+                        this.deleteChatFromList(chat.id, el);
+                    };
+                }
+
                 list.appendChild(el);
             });
         } catch (e) {
@@ -379,6 +408,27 @@ const app = {
             this.showError(e.message);
         } finally {
             this.toggleLoader(false);
+        }
+    },
+
+    deleteChatFromList: async function(chatId, el) {
+        if (!await this.showConfirm("Supprimer définitivement cette conversation ?")) return;
+
+        // Optimistic UI Removal
+        el.style.opacity = "0.5";
+
+        try {
+            await this.api('expireChat', { chatId: chatId });
+            el.remove();
+
+            // Check if list empty
+            const list = document.getElementById('chat-list');
+            if (list.children.length === 0) {
+                list.innerHTML = '<div style="text-align:center;color:#666;margin-top:20px;font-size:0.8rem">Aucune conversation active.</div>';
+            }
+        } catch(e) {
+            el.style.opacity = "1";
+            this.showError(e.message);
         }
     },
 

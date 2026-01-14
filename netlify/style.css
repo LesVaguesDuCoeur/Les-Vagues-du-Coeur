@@ -282,24 +282,41 @@ header {
 /* Contact Support Button */
 .contact-fab {
     position: absolute;
-    bottom: 100px;
+    bottom: 110px;
     right: 30px;
-    width: 50px;
-    height: 50px;
+    width: 60px;
+    height: 60px;
     border-radius: 50%;
     background: linear-gradient(45deg, var(--gold-hover), var(--gold));
     border: none;
     color: #000;
-    font-size: 1.5rem;
+    font-size: 2rem;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.5);
     z-index: 90;
     transition: transform 0.2s;
 }
 .contact-fab:active { transform: scale(0.9); }
+
+/* Chat Card Delete Button */
+.chat-delete-btn {
+    background: none;
+    border: none;
+    color: #d00;
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 5px;
+    margin-left: 10px;
+    opacity: 0.7;
+    transition: all 0.2s;
+}
+.chat-delete-btn:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
 
 /* New Chat */
 .back-btn {
