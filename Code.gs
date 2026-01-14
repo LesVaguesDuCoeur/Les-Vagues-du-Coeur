@@ -187,7 +187,6 @@ function apiRegister(email, firstName, code, ip) {
     if (db.users.find(u => u.email === cleanEmail)) throw new Error("Email déjà enregistré.");
 
     const cleanCode = code.toString();
-    // Restriction removed for V6+
 
     let isAdmin = false;
     let canCreate = false;
@@ -269,12 +268,15 @@ function apiDeleteAccount(token, email) {
 }
 
 function apiGetConversations(token, email) {
-  const user = validateUser(token, email);
-  const now = new Date();
+  const db = readUsersDb();
+  const user = db.users.find(u => u.email === email && u.token === token);
+  if (!user) throw new Error("Session invalide");
 
+  const now = new Date();
   if (!user.activeChats) user.activeChats = [];
 
   const validChats = [];
+  const dbChatsToKeep = [];
   let changed = false;
   const cache = CacheService.getScriptCache();
 
@@ -289,24 +291,21 @@ function apiGetConversations(token, email) {
       } else if (cachedStatus === "valid") {
           exists = true;
       } else {
-          // Not in cache, check Drive
           try {
              const f = DriveApp.getFileById(chatId);
              if (f.isTrashed()) {
                  exists = false;
-                 cache.put(cacheKey, "trashed", 21600); // 6 hours
+                 cache.put(cacheKey, "trashed", 21600);
              } else {
                  exists = true;
-                 cache.put(cacheKey, "valid", 600); // 10 minutes
+                 cache.put(cacheKey, "valid", 600);
              }
           } catch(e) {
-             // File completely missing or no access
              exists = false;
              cache.put(cacheKey, "trashed", 21600);
           }
       }
 
-      // Check Expiry
       let expiresAt = typeof chat === 'object' ? chat.expiresAt : null;
       if (exists && expiresAt && now > new Date(expiresAt)) {
           exists = false;
@@ -314,25 +313,35 @@ function apiGetConversations(token, email) {
 
       if (exists) {
           if (typeof chat === 'string') {
-               // Upgrade old string format to object
                try {
                    const doc = DocumentApp.openById(chat);
                    const meta = JSON.parse(decrypt(doc.getBody().getParagraphs()[0].getText()));
-                   validChats.push({
+                   const newObj = {
                         id: chat,
                         names: meta.participantNames.join(', '),
                         expiresAt: meta.expiresAt,
                         lastMessage: { content: "...", sender: "..." }
-                   });
-                   changed = true; // Mark changed to save the upgrade
+                   };
+                   validChats.push(newObj);
+                   dbChatsToKeep.push(newObj);
+                   changed = true;
                } catch(e) { changed = true; }
           } else {
                validChats.push(chat);
+               dbChatsToKeep.push(chat);
           }
       } else {
           changed = true;
       }
   });
+
+  if (changed) {
+      user.activeChats = dbChatsToKeep;
+      writeUsersDb(db);
+  }
+
+  return { success: true, conversations: validChats };
+}
 
 function apiCreateChat(token, email, participants, durationStr) {
   const lock = LockService.getScriptLock();
