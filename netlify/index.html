@@ -27,7 +27,7 @@
 
         <form id="form-login" class="auth-form">
             <input type="email" id="login-email" placeholder="Email" required autocomplete="email">
-            <input type="password" id="login-code" placeholder="Code" inputmode="numeric" required autocomplete="current-password">
+            <input type="password" id="login-code" placeholder="Mot de passe" required autocomplete="current-password">
             <button type="submit" class="btn-gold">Connexion</button>
             <p class="link" onclick="app.showRegister()">Créer un compte</p>
         </form>
@@ -35,7 +35,16 @@
         <form id="form-register" class="auth-form hidden">
             <input type="text" id="reg-firstname" placeholder="Prénom" required>
             <input type="email" id="reg-email" placeholder="Email" required autocomplete="email">
-            <input type="password" id="reg-code" placeholder="Code (3 chiffres)" inputmode="numeric" required>
+            <input type="password" id="reg-code" placeholder="Mot de passe" required>
+            <input type="password" id="reg-code-confirm" placeholder="Confirmer Mot de passe" required>
+
+            <div id="password-strength-container" class="hidden">
+                <div class="password-strength-bar">
+                    <div id="password-strength-fill"></div>
+                </div>
+                <small id="password-strength-text" style="color:#888;">Sécurité: Faible</small>
+            </div>
+
             <button type="submit" class="btn-gold">S'inscrire</button>
             <p class="link" onclick="app.showLogin()">Retour Connexion</p>
         </form>

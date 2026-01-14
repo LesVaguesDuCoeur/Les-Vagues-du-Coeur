@@ -170,7 +170,7 @@ function apiRegister(email, firstName, code, ip) {
     if (db.users.find(u => u.email === cleanEmail)) throw new Error("Email déjà enregistré.");
 
     const cleanCode = code.toString();
-    if (cleanCode.length !== 3) throw new Error("Le code doit faire exactement 3 chiffres.");
+    // if (cleanCode.length !== 3) throw new Error("Le code doit faire exactement 3 chiffres."); // Removed for V6
 
     let isAdmin = false;
     let canCreate = false;
@@ -607,7 +607,8 @@ function apiAdminRegenerateCode(token, email, targetEmail) {
       const t = db.users.find(u => u.email === targetEmail);
       if (!t) throw new Error("User not found");
 
-      const newCode = Math.floor(100 + Math.random() * 900).toString();
+      // Generate new code (simple for reset)
+      const newCode = Math.floor(100000 + Math.random() * 900000).toString();
       t.code = newCode;
       t.mustChangePassword = false;
 

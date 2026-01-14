@@ -120,6 +120,12 @@ const app = {
         document.getElementById('form-login').onsubmit = (e) => { e.preventDefault(); this.doLogin(); };
         document.getElementById('form-register').onsubmit = (e) => { e.preventDefault(); this.doRegister(); };
 
+        // Password Strength Listener
+        const regPass = document.getElementById('reg-code');
+        if (regPass) {
+            regPass.addEventListener('input', () => this.checkPasswordStrength(regPass.value));
+        }
+
         document.getElementById('btn-logout').onclick = () => this.logout();
         document.getElementById('btn-refresh').onclick = () => {
             // Optimistic feedback
@@ -247,6 +253,16 @@ const app = {
         const email = document.getElementById('reg-email').value;
         const firstName = document.getElementById('reg-firstname').value;
         const code = document.getElementById('reg-code').value;
+        const confirm = document.getElementById('reg-code-confirm').value;
+
+        if (code !== confirm) {
+            return this.showError("Les mots de passe ne correspondent pas.");
+        }
+
+        // Minimal strength check (at least 4 chars)
+        if (code.length < 4) {
+             return this.showError("Le mot de passe est trop court.");
+        }
 
         try {
             this.toggleLoader(true);
@@ -260,6 +276,45 @@ const app = {
         } finally {
             this.toggleLoader(false);
         }
+    },
+
+    checkPasswordStrength: function(password) {
+        const container = document.getElementById('password-strength-container');
+        const fill = document.getElementById('password-strength-fill');
+        const text = document.getElementById('password-strength-text');
+
+        if (!password) {
+            container.classList.add('hidden');
+            return;
+        }
+        container.classList.remove('hidden');
+
+        let score = 0;
+        if (password.length > 5) score++;
+        if (password.length > 8) score++;
+        if (/[A-Z]/.test(password)) score++;
+        if (/[0-9]/.test(password)) score++;
+        if (/[^A-Za-z0-9]/.test(password)) score++;
+
+        // 0-5 scale
+        let color = '#d00'; // Red
+        let label = 'Faible';
+        let width = '20%';
+
+        if (score >= 4) {
+            color = '#0f0'; // Green
+            label = 'Très sécurisé';
+            width = '100%';
+        } else if (score >= 2) {
+            color = 'orange';
+            label = 'Moyen';
+            width = '60%';
+        }
+
+        fill.style.width = width;
+        fill.style.backgroundColor = color;
+        text.textContent = `Sécurité: ${label}`;
+        text.style.color = color;
     },
 
     logout: function() {
