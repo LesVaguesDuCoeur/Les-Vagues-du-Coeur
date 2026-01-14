@@ -1,0 +1,37 @@
+DEPLOYMENT INSTRUCTIONS (WHATSHAPPEN)
+
+1. GOOGLE APPS SCRIPT (Backend)
+   - Go to script.google.com and create a new project.
+   - Copy the content of `Code.gs` into the script editor.
+   - Save the project.
+   - Deploy as Web App:
+     - Click "Deploy" > "New Deployment".
+     - Select type: "Web App".
+     - Description: "v1".
+     - Execute as: "Me" (your email).
+     - Who has access: "Anyone" (Anonymous).
+     - Click "Deploy".
+   - Copy the resulting "Web App URL".
+   - Convert this URL to Base64 (e.g., using a site like base64encode.org).
+   - Update `netlify/app.js`: Replace the value of `_ENC_URL` with your new Base64 URL.
+
+2. NETLIFY (Frontend)
+   - Push the `netlify/` folder to a GitHub repository (or upload manually to Netlify).
+   - Ensure `index.html` is in the root of the published site.
+
+3. INITIALIZATION
+   - Open the Netlify URL.
+   - Login with:
+     - Email: chaouiengage@gmail.com
+     - Code: 2504 (or the one you configured/know from history)
+   - This first login will initialize the Super-Admin user in the DB.
+
+4. FEATURES
+   - Subscription: Non-admin/creator users see a "💳" button.
+   - Admin Console: Click the Avatar in the dashboard to access.
+   - Tabs: Use the tabs in Admin to manage Users and Subscriptions.
+   - Roles: Toggle roles (Crown, Pencil, Card) by clicking on them.
+
+5. SECURITY NOTE
+   - The `Settings.db`, `Subscriptions.db`, `Users.db`, `Invoices.db` files will be automatically created in the folder defined by `FOLDER_ID` in Code.gs.
+   - Do not delete these files manually unless you want to reset the app.

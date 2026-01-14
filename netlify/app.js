@@ -1,533 +1,744 @@
-// WHATSHAPPEN FRONTEND V5
-
-// ═══════════════════════════════════════════════════════════
-// CONFIG & STATE
-// ═══════════════════════════════════════════════════════════
-
-const API_URL = "https://script.google.com/macros/s/AKfycbzLwdJ4UqV0zN-gQ2T_H9Oq-X4B2h8Y1j6kL3N0p5Q7r9S2t1U4v8W3x6Y/exec"; // Replace with your actual deployment ID
-// Note: In a real deployment, the user must update this URL after deploying the GAS script.
+// ==========================================
+// CONFIGURATION
+// ==========================================
+const _ENC_URL = "aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy9BS2Z5Y2J4ekZldmJRSnplcndEMkwtdU5jVlRSSkU5WFZKNEhHZEM5S1VmdE95SUtUOXBxRXJzdk5mUHNmU0MxMk1qQkVVRFF2QS9leGVj";
 
 const app = {
-    state: {
-        token: localStorage.getItem('wh_token'),
-        email: localStorage.getItem('wh_email'),
-        user: null,
-        currentChatId: null,
-        chats: [],
-        pollingInterval: null
+    user: null,
+    currentChatId: null,
+    pollingInterval: null,
+    timerInterval: null,
+    chatExpiresAt: null,
+
+    init: function() {
+        this.setupListeners();
+
+        // Logo Handling
+        if (typeof LOGO_BASE64 !== 'undefined' && LOGO_BASE64.length > 20) {
+            const logoEl = document.getElementById('app-logo');
+            if (logoEl) logoEl.src = LOGO_BASE64;
+        }
+
+        // Session Check
+        const savedUser = localStorage.getItem('wh_user');
+        if (savedUser) {
+            try {
+                this.user = JSON.parse(savedUser);
+                this.showDashboard();
+            } catch (e) {
+                localStorage.removeItem('wh_user');
+                this.showLogin();
+            }
+        } else {
+            this.showLogin();
+        }
+        document.getElementById('loader').classList.add('hidden');
     },
 
-    init: async () => {
-        app.ui.showLoader(true);
-        // EVENT LISTENERS
-        document.getElementById('form-login').onsubmit = app.handlers.login;
-        document.getElementById('form-register').onsubmit = app.handlers.register;
+    getApiUrl: function() {
+        return atob(_ENC_URL);
+    },
 
-        document.getElementById('btn-menu').onclick = () => app.ui.toggleMenu(); // Placeholder
-        document.getElementById('btn-refresh').onclick = () => app.actions.getState();
-        document.getElementById('btn-back').onclick = () => app.ui.showDashboard();
+    // ==========================================
+    // CUSTOM MODALS (No Alerts)
+    // ==========================================
+    showModal: function(type, title, message, showCancel = false, inputPlaceholder = null) {
+        return new Promise((resolve) => {
+            const overlay = document.getElementById('modal-overlay');
+            const box = document.getElementById('modal-box');
+            const titleEl = box.querySelector('.modal-title');
+            const messageEl = box.querySelector('.modal-message');
+            const inputContainer = box.querySelector('.modal-input-container');
+            const input = document.getElementById('modal-input');
+            const cancelBtn = document.getElementById('modal-cancel');
+            const confirmBtn = document.getElementById('modal-confirm');
 
-        document.getElementById('fab-new').onclick = () => app.ui.showModal('modal-new-chat');
-        document.getElementById('fab-sub').onclick = () => app.handlers.openSubscription();
-        document.getElementById('fab-admin').onclick = () => app.ui.showSection('section-admin');
+            // Reset classes
+            box.className = 'modal-box ' + type;
+            titleEl.textContent = title;
+            messageEl.textContent = message;
 
-        // Chat
-        document.getElementById('btn-send').onclick = app.handlers.sendMessage;
-        document.getElementById('msg-input').onkeypress = (e) => { if(e.key === 'Enter') app.handlers.sendMessage(); };
-        document.getElementById('btn-upload').onclick = () => document.getElementById('file-input').click();
-        document.getElementById('file-input').onchange = app.handlers.uploadFile;
+            // Input Mode
+            if (inputPlaceholder) {
+                inputContainer.classList.remove('hidden');
+                input.placeholder = inputPlaceholder;
+                input.value = '';
+                input.focus();
+            } else {
+                inputContainer.classList.add('hidden');
+            }
 
-        // New Chat
-        document.querySelectorAll('.dur-btn').forEach(btn => {
-            btn.onclick = () => {
-                document.querySelectorAll('.dur-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
+            // Buttons
+            if (showCancel) {
+                cancelBtn.classList.remove('hidden');
+            } else {
+                cancelBtn.classList.add('hidden');
+            }
+
+            overlay.classList.remove('hidden');
+
+            const cleanup = () => {
+                overlay.classList.add('hidden');
+                // Remove listeners to prevent accumulation
+                confirmBtn.onclick = null;
+                cancelBtn.onclick = null;
+            };
+
+            confirmBtn.onclick = () => {
+                cleanup();
+                resolve(inputPlaceholder ? input.value : true);
+            };
+
+            cancelBtn.onclick = () => {
+                cleanup();
+                resolve(null);
             };
         });
-        document.getElementById('btn-create-chat').onclick = app.handlers.createChat;
+    },
 
-        // Modals
-        document.querySelectorAll('.close-modal').forEach(x => x.onclick = (e) => e.target.closest('.modal').classList.remove('active'));
-        window.onclick = (e) => { if(e.target.classList.contains('modal')) e.target.classList.remove('active'); };
+    showError: function(msg) { return this.showModal('error', 'Erreur', msg); },
+    showSuccess: function(msg) { return this.showModal('success', 'Succès', msg); },
+    showInfo: function(msg) { return this.showModal('info', 'Info', msg); },
+    showConfirm: function(msg) { return this.showModal('confirm', 'Confirmation', msg, true); },
+    showPrompt: function(title, placeholder) { return this.showModal('info', title, '', true, placeholder); },
 
-        // Admin Tabs
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.onclick = () => {
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                document.querySelectorAll('.admin-tab-content').forEach(c => c.classList.remove('active'));
-                btn.classList.add('active');
-                document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    // ==========================================
+    // LISTENERS
+    // ==========================================
+    setupListeners: function() {
+        document.getElementById('form-login').onsubmit = (e) => { e.preventDefault(); this.doLogin(); };
+        document.getElementById('form-register').onsubmit = (e) => { e.preventDefault(); this.doRegister(); };
+
+        document.getElementById('btn-logout').onclick = () => this.logout();
+        document.getElementById('btn-refresh').onclick = () => this.loadConversations();
+        document.getElementById('btn-create-chat').onclick = () => this.createChat();
+
+        document.getElementById('btn-send').onclick = () => this.sendMessage();
+        document.getElementById('message-input').onkeypress = (e) => { if(e.key === 'Enter') this.sendMessage(); };
+        document.getElementById('btn-refresh-chat').onclick = () => this.loadMessages(this.currentChatId);
+        document.getElementById('btn-add-member').onclick = () => this.addMember();
+
+        // Admin Access - Click on Avatar
+        const adminBtn = document.getElementById('btn-admin-access');
+        if (adminBtn) {
+            adminBtn.onclick = () => {
+                const adminEmail = atob("Y2hhb3VpZW5nYWdlQGdtYWlsLmNvbQ==");
+                if (this.user && (this.user.isAdmin === true || this.user.email === adminEmail)) {
+                    this.showAdmin();
+                } else {
+                    // Non-admin profile view could go here, for now show info
+                    this.showInfo(`Connecté en tant que ${this.user.firstName}`);
+                }
+            };
+            adminBtn.style.cursor = "pointer";
+        }
+
+        // Anti-Screenshot Focus
+        window.addEventListener('blur', () => document.body.classList.add('blurred'));
+        window.addEventListener('focus', () => document.body.classList.remove('blurred'));
+        document.addEventListener('contextmenu', event => event.preventDefault());
+
+        // Chips
+        document.querySelectorAll('.chip').forEach(c => {
+            c.onclick = () => {
+                document.querySelectorAll('.chip').forEach(x => x.classList.remove('selected'));
+                c.classList.add('selected');
             };
         });
+    },
 
-        // Subscription
-        document.getElementById('btn-submit-sub').onclick = app.handlers.submitSub;
+    // ==========================================
+    // API
+    // ==========================================
+    api: async function(action, payload = {}) {
+        const body = { action, ...payload };
+        if (this.user && this.user.token) {
+            body.token = this.user.token;
+            body.email = this.user.email;
+        }
 
-        // Password Reset
-        document.getElementById('btn-save-pwd').onclick = app.handlers.changePassword;
+        try {
+            const res = await fetch(this.getApiUrl(), {
+                method: 'POST',
+                body: JSON.stringify(body)
+            });
+            const data = await res.json();
 
-        if (app.state.token && app.state.email) {
-            await app.actions.getState();
-        } else {
-            app.ui.showAuth('login');
-            app.ui.showLoader(false);
+            if (data.error) {
+                if (data.error.includes("Session") || data.error.includes("invalide")) {
+                    this.logout();
+                }
+                throw new Error(data.error);
+            }
+            return data;
+        } catch (e) {
+            console.error("API Error:", e);
+            throw e;
         }
     },
 
-    ui: {
-        showLoader: (show) => {
-            const el = document.getElementById('loader');
-            if(show) el.classList.add('active');
-            else el.classList.remove('active');
-        },
+    // ==========================================
+    // AUTH
+    // ==========================================
+    doLogin: async function() {
+        const email = document.getElementById('login-email').value;
+        const code = document.getElementById('login-code').value;
 
-        showAuth: (view) => {
-            document.getElementById('view-auth').classList.add('active');
-            document.getElementById('view-app').classList.remove('active');
-            document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
-            if(view === 'login') document.getElementById('form-login').classList.add('active');
-            if(view === 'register') document.getElementById('form-register').classList.add('active');
-            if(view === 'reset') document.getElementById('form-reset').classList.add('active');
-        },
+        try {
+            this.toggleLoader(true);
+            const res = await this.api('login', { email, code });
 
-        showDashboard: () => {
-            app.ui.showSection('section-dashboard');
-            app.state.currentChatId = null;
-            document.getElementById('btn-back').classList.add('hidden');
-            document.getElementById('btn-menu').classList.remove('hidden');
-            if(app.state.pollingInterval) clearInterval(app.state.pollingInterval);
-            app.state.pollingInterval = setInterval(app.actions.getState, 10000); // Slow poll for list
-        },
-
-        showChat: (chatId) => {
-            app.state.currentChatId = chatId;
-            app.ui.showSection('section-chat');
-            document.getElementById('btn-back').classList.remove('hidden');
-            document.getElementById('btn-menu').classList.add('hidden');
-            app.actions.getMessages(chatId);
-            if(app.state.pollingInterval) clearInterval(app.state.pollingInterval);
-            app.state.pollingInterval = setInterval(() => app.actions.getMessages(chatId), 3000); // Fast poll
-        },
-
-        showSection: (id) => {
-            document.getElementById('view-auth').classList.remove('active');
-            document.getElementById('view-app').classList.add('active');
-            document.querySelectorAll('.app-section').forEach(s => s.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-        },
-
-        showModal: (id) => document.getElementById(id).classList.add('active'),
-        hideModal: (id) => document.getElementById(id).classList.remove('active'),
-
-        toggleMenu: () => {
-             // Placeholder for simple logout/menu
-             if(confirm("Se déconnecter ?")) {
-                 localStorage.clear();
-                 location.reload();
-             }
-        },
-
-        toast: (msg) => {
-            const t = document.createElement('div');
-            t.className = 'toast';
-            t.innerText = msg;
-            document.getElementById('toast-container').appendChild(t);
-            setTimeout(() => t.remove(), 3000);
-        },
-
-        renderChatList: (chats) => {
-            const list = document.getElementById('chat-list');
-            list.innerHTML = '';
-            if (chats.length === 0) {
-                list.innerHTML = '<div class="empty-state">Aucune conversation active.</div>';
+            if (res.requireNewPassword) {
+                await this.handleChangePassword(email, code);
                 return;
             }
-            chats.forEach(c => {
-                const el = document.createElement('div');
-                el.className = 'chat-item';
-                el.innerHTML = `<h4>${c.participantNames}</h4><p>Ex: ${c.expiresAt ? new Date(c.expiresAt).toLocaleTimeString() : '∞'}</p>`;
-                el.onclick = () => app.ui.showChat(c.id);
-                list.appendChild(el);
-            });
-        },
 
-        renderMessages: (messages, meta) => {
-            const container = document.getElementById('message-container');
-            container.innerHTML = ''; // Full redraw for simplicity in this version
+            // Ensure token is stored
+            this.user = {
+                ...res.user,
+                token: res.token
+            };
+            localStorage.setItem('wh_user', JSON.stringify(this.user));
+            this.showDashboard();
+        } catch (e) {
+            this.showError(e.message);
+        } finally {
+            this.toggleLoader(false);
+        }
+    },
 
-            document.getElementById('chat-participants').innerText = meta.participantNames;
+    handleChangePassword: async function(email, oldCode) {
+        this.toggleLoader(false);
+        const newCode = await this.showPrompt("Nouveau Code Secret", "Entrez votre nouveau code");
+        if (!newCode) return;
 
-            // Timer update
-            if (meta.expiresAt) {
-                const diff = new Date(meta.expiresAt) - new Date();
-                if (diff > 0) {
-                    const m = Math.floor(diff / 60000);
-                    const s = Math.floor((diff % 60000) / 1000);
-                    document.getElementById('chat-timer').innerText = `${m}m ${s}s`;
-                } else {
-                    document.getElementById('chat-timer').innerText = "Expiré";
-                }
-            } else {
-                document.getElementById('chat-timer').innerText = "Infini";
+        try {
+            this.toggleLoader(true);
+            const res = await this.api('changePassword', { email, oldCode, newCode });
+            this.user = res.user;
+            localStorage.setItem('wh_user', JSON.stringify(this.user));
+            this.showSuccess("Mot de passe mis à jour !");
+            this.showDashboard();
+        } catch(e) {
+            this.showError(e.message);
+        }
+    },
+
+    doRegister: async function() {
+        const email = document.getElementById('reg-email').value;
+        const firstName = document.getElementById('reg-firstname').value;
+        const code = document.getElementById('reg-code').value;
+
+        try {
+            this.toggleLoader(true);
+            const res = await this.api('register', { email, firstName, code });
+            this.user = res.user;
+            localStorage.setItem('wh_user', JSON.stringify(this.user));
+            this.showDashboard();
+        } catch (e) {
+            this.showError(e.message);
+        } finally {
+            this.toggleLoader(false);
+        }
+    },
+
+    logout: function() {
+        this.user = null;
+        this.stopPolling();
+        localStorage.removeItem('wh_user');
+        this.showLogin();
+    },
+
+    // ==========================================
+    // CHATS
+    // ==========================================
+    loadConversations: async function() {
+        if (!this.user) return;
+        try {
+            const res = await this.api('getConversations');
+            const list = document.getElementById('chat-list');
+            list.innerHTML = '';
+
+            if (!res.chats || res.chats.length === 0) {
+                list.innerHTML = '<div style="text-align:center;color:#666;margin-top:20px;font-size:0.8rem">Aucune conversation active.</div>';
+                return;
             }
 
-            messages.forEach(m => {
+            res.chats.forEach(chat => {
                 const el = document.createElement('div');
-                el.className = `msg ${m.type} ${m.sender === app.state.email ? 'own' : 'other'}`;
+                el.className = 'chat-card';
 
-                let content = '';
-                if (m.type === 'text') content = escapeHtml(m.content);
-                if (m.type === 'image') content = `<img src="${m.content}" onclick="app.ui.viewImage(this.src)">`;
-                if (m.type === 'file') content = `<a href="${m.content}" target="_blank" style="color:white; text-decoration:underline;">📁 Fichier</a>`;
-                if (m.type === 'system') content = m.content;
+                let lastMsg = "Nouvelle conversation";
+                if (chat.lastMessage) {
+                    const sender = chat.lastMessage.sender === this.user.email ? "Vous" : chat.lastMessage.senderName || "...";
+                    const content = chat.lastMessage.type === 'image' ? '📷 Photo' : chat.lastMessage.content;
+                    lastMsg = `${sender}: ${content}`;
+                }
+
+                let timeLeft = "∞";
+                if (chat.expiresAt) {
+                    const diff = new Date(chat.expiresAt) - new Date();
+                    if (diff <= 0) {
+                        timeLeft = "Expiré";
+                    } else {
+                        const mins = Math.floor(diff / 60000);
+                        const hours = Math.floor(mins / 60);
+                        timeLeft = hours > 0 ? `${hours}h${mins%60}` : `${mins}m`;
+                    }
+                }
 
                 el.innerHTML = `
-                    ${m.type !== 'system' ? `<span class="msg-sender">${m.senderName}</span>` : ''}
-                    ${content}
+                    <div class="card-content">
+                        <h4>${chat.participantNames}</h4>
+                        <p>${lastMsg}</p>
+                    </div>
+                    <div class="card-meta">
+                        <div style="margin-bottom:5px">⏳ ${timeLeft}</div>
+                        <div>➔</div>
+                    </div>
                 `;
-                container.appendChild(el);
+                // If expired locally, don't open? Or open and let backend handle?
+                // Better to let backend handle delete.
+                el.onclick = () => this.enterChat(chat.id, chat.expiresAt);
+                list.appendChild(el);
             });
-            container.scrollTop = container.scrollHeight;
-        },
-
-        viewImage: (src) => {
-            const w = window.open("");
-            w.document.write(`<img src="${src}" style="width:100%">`);
-        },
-
-        renderUser: (u) => {
-            document.getElementById('user-greeting').innerText = `Bonjour, ${u.firstName}`;
-            // Render Avatar
-            const initial = u.firstName ? u.firstName.charAt(0).toUpperCase() : '?';
-            document.getElementById('header-avatar').innerText = initial;
-
-            document.getElementById('badge-admin').classList.toggle('hidden', !u.isAdmin);
-            document.getElementById('badge-sub').classList.toggle('hidden', !u.isSubscriber);
-            document.getElementById('fab-admin').classList.toggle('hidden', !u.isAdmin);
-
-            // Logic for Creation vs Subscription FAB
-            const canCreate = (u.canCreate || u.isAdmin || u.isSubscriber);
-            document.getElementById('fab-new').classList.toggle('hidden', !canCreate);
-            document.getElementById('fab-sub').classList.toggle('hidden', canCreate); // Show sub if CANNOT create
-
-            if (u.mustChangePassword) app.ui.showModal('modal-pwd');
+        } catch (e) {
+            console.log("Polling silent error");
         }
     },
 
-    actions: {
-        apiCall: async (payload) => {
-            try {
-                const res = await fetch(API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify(payload)
-                });
-                const json = await res.json();
-                if (!json.success && json.error) throw new Error(json.error);
-                return json;
-            } catch (e) {
-                app.ui.toast(e.message);
-                app.ui.showLoader(false);
-                throw e;
+    createChat: async function() {
+        const emails = document.getElementById('new-chat-emails').value.split(',').map(e => e.trim());
+        const durationChip = document.querySelector('.chip.selected');
+        const duration = durationChip ? durationChip.dataset.val : '24h';
+
+        if (!emails[0]) return this.showError("Veuillez mettre au moins un email.");
+
+        try {
+            this.toggleLoader(true);
+            const res = await this.api('createConversation', {
+                participants: emails,
+                duration: duration
+            });
+            this.enterChat(res.chatId, null);
+        } catch (e) {
+            this.showError(e.message);
+        } finally {
+            this.toggleLoader(false);
+        }
+    },
+
+    enterChat: function(chatId, expiresAt) {
+        this.currentChatId = chatId;
+        this.chatExpiresAt = expiresAt ? new Date(expiresAt) : null;
+
+        this.showView('view-chat');
+        this.loadMessages(chatId);
+        this.startTimer();
+
+        this.stopPolling();
+        // Poll messages
+        this.pollingInterval = setInterval(() => this.loadMessages(chatId), 3000);
+    },
+
+    startTimer: function() {
+        if (this.timerInterval) clearInterval(this.timerInterval);
+        const display = document.getElementById('chat-timer-display');
+
+        const update = async () => {
+            if (!this.chatExpiresAt) {
+                display.textContent = "";
+                return;
             }
-        },
+            const now = new Date();
+            const diff = this.chatExpiresAt - now;
 
-        getState: async () => {
-            const res = await app.actions.apiCall({
-                action: 'getState',
-                token: app.state.token,
-                email: app.state.email
+            if (diff <= 0) {
+                display.textContent = "Expiré";
+                clearInterval(this.timerInterval);
+                await this.handleExpiration();
+                return;
+            }
+
+            const hours = Math.floor(diff / 3600000);
+            const minutes = Math.floor((diff % 3600000) / 60000);
+            const seconds = Math.floor((diff % 60000) / 1000);
+
+            display.textContent = `⏳ ${hours}h ${minutes}m ${seconds}s`;
+        };
+
+        update();
+        this.timerInterval = setInterval(update, 1000);
+    },
+
+    handleExpiration: async function() {
+        await this.showInfo("Cette conversation a expiré.");
+        try {
+            await this.api('expireChat', { chatId: this.currentChatId });
+        } catch(e) {} // best effort
+        this.showDashboard();
+    },
+
+    loadMessages: async function(chatId) {
+        if (!chatId) return;
+        try {
+            const res = await this.api('getMessages', { chatId });
+            if (res.expired) {
+                await this.handleExpiration();
+                return;
+            }
+
+            const area = document.getElementById('messages-area');
+            document.getElementById('chat-title').textContent = res.participantNames;
+
+            // Simple render
+            area.innerHTML = '';
+            res.messages.forEach(msg => {
+                const div = document.createElement('div');
+                div.className = `msg ${msg.isMe ? 'me' : 'other'} ${msg.type === 'system' ? 'system' : ''}`;
+
+                if (msg.type === 'system') {
+                    div.innerHTML = `<small><i>${msg.senderName} ${msg.content}</i></small>`;
+                    div.style.background = 'transparent'; div.style.textAlign = 'center'; div.style.width = '100%';
+                } else {
+                    let content = '';
+                    if (msg.type === 'image') content = `<img src="${msg.content}">`;
+                    else content = `<div>${msg.content}</div>`;
+
+                    div.innerHTML = `
+                        <div class="msg-name">${msg.senderName}</div>
+                        ${content}
+                        <div style="font-size:0.6rem; opacity:0.5; text-align:right; margin-top:2px">
+                           ${new Date(msg.timestamp).toLocaleTimeString().slice(0,5)}
+                        </div>
+                    `;
+                }
+                area.appendChild(div);
             });
-
-            app.state.user = res.user;
-            app.ui.renderUser(res.user);
-
-            try {
-                const chatsRes = await app.actions.apiCall({
-                    action: 'getChats',
-                    token: app.state.token,
-                    email: app.state.email
-                });
-                app.state.chats = chatsRes.chats;
-                app.ui.renderChatList(chatsRes.chats);
-            } catch (e) { console.log("Chats not loaded yet"); }
-
-            app.ui.showDashboard();
-            app.ui.showLoader(false);
-        },
-
-        getMessages: async (chatId) => {
-            const res = await app.actions.apiCall({
-                action: 'getMessages',
-                token: app.state.token,
-                email: app.state.email,
-                chatId: chatId
-            });
-            app.ui.renderMessages(res.messages, res.meta);
+            area.scrollTop = area.scrollHeight;
+        } catch (e) {
+            // silent fail on poll
         }
     },
 
-    handlers: {
-        login: async (e) => {
-            e.preventDefault();
-            app.ui.showLoader(true);
-            const email = document.getElementById('login-email').value;
-            const code = document.getElementById('login-code').value;
-            try {
-                const res = await app.actions.apiCall({ action: 'login', email, code });
-                if (res.success) {
-                    localStorage.setItem('wh_token', res.token);
-                    localStorage.setItem('wh_email', res.user.email);
-                    app.state.token = res.token;
-                    app.state.email = res.user.email;
-                    app.state.user = res.user;
-                    app.ui.renderUser(res.user);
-                    await app.actions.getState(); // Will load dashboard
-                }
-            } catch (err) {}
-        },
+    sendMessage: async function() {
+        const input = document.getElementById('message-input');
+        const fileInput = document.getElementById('file-input');
+        const btn = document.getElementById('btn-send');
 
-        register: async (e) => {
-            e.preventDefault();
-            app.ui.showLoader(true);
-            const email = document.getElementById('reg-email').value;
-            const name = document.getElementById('reg-name').value;
-            const code = document.getElementById('reg-code').value;
-            try {
-                const res = await app.actions.apiCall({ action: 'register', email, firstName: name, code });
-                if (res.success) {
-                    app.ui.toast("Inscription réussie ! Connectez-vous.");
-                    app.ui.showAuth('login');
-                }
-            } catch (err) {}
-            app.ui.showLoader(false);
-        },
+        const text = input.value;
+        const hasFile = fileInput.files.length > 0;
 
-        createChat: async () => {
-             const emails = document.getElementById('new-chat-emails').value;
-             const dur = document.querySelector('.dur-btn.active').dataset.val;
-             app.ui.showLoader(true);
-             try {
-                 const res = await app.actions.apiCall({
-                     action: 'createChat',
-                     token: app.state.token,
-                     email: app.state.email,
-                     participants: emails,
-                     duration: dur
-                 });
-                 if (res.success) {
-                     app.ui.hideModal('modal-new-chat');
-                     app.ui.toast("Conversation créée");
-                     await app.actions.getState();
-                 }
-             } catch(e){}
-             app.ui.showLoader(false);
-        },
+        if (!text.trim() && !hasFile) return;
 
-        sendMessage: async () => {
-            const input = document.getElementById('msg-input');
-            const txt = input.value.trim();
-            if (!txt) return;
-            input.value = ''; // Optimistic clear
-            try {
-                await app.actions.apiCall({
-                    action: 'sendMessage',
-                    token: app.state.token,
-                    email: app.state.email,
-                    chatId: app.state.currentChatId,
-                    content: txt,
-                    type: 'text'
-                });
-                app.actions.getMessages(app.state.currentChatId);
-            } catch (e) { input.value = txt; } // Revert on fail
-        },
-
-        uploadFile: async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = async function(evt) {
-                const b64 = evt.target.result;
-                // Basic compression could go here
-                try {
-                    app.ui.toast("Envoi de l'image...");
-                    await app.actions.apiCall({
-                        action: 'sendMessage',
-                        token: app.state.token,
-                        email: app.state.email,
-                        chatId: app.state.currentChatId,
-                        content: b64,
-                        type: 'image' // Simplified logic, assumes image
-                    });
-                    app.actions.getMessages(app.state.currentChatId);
-                } catch(e) {}
-            };
-            reader.readAsDataURL(file);
-            e.target.value = ''; // Reset
-        },
-
-        changePassword: async () => {
-            const newCode = document.getElementById('new-pwd-input').value;
-            if (newCode.length !== 3) return app.ui.toast("3 chiffres requis.");
-            // In a real scenario, we'd prompt for the old code.
-            // For now, we assume the user knows they need to contact admin if stuck,
-            // or we would store the temp code in session for this specific flow.
-            // To make this work without oldCode storage, we'd need to update the API
-            // or ask the user "Entrez votre code actuel".
-            app.ui.toast("Veuillez vous reconnecter avec le nouveau code après validation.");
-            app.ui.hideModal('modal-pwd');
-        },
-
-        submitSub: async () => {
-            const txn = document.getElementById('sub-trans-id').value;
-            if (!txn) return app.ui.toast("Numéro de transaction requis.");
-            app.ui.showLoader(true);
-            try {
-                const res = await app.actions.apiCall({
-                    action: 'submitSubscription',
-                    token: app.state.token,
-                    email: app.state.email,
-                    paypalTransaction: txn
-                });
-                if (res.success) {
-                    app.ui.toast("Demande envoyée !");
-                    app.ui.hideModal('modal-sub');
-                }
-            } catch(e) {}
-            app.ui.showLoader(false);
-        },
-
-        openSubscription: async () => {
-            app.ui.showLoader(true);
-            try {
-                const res = await app.actions.apiCall({
-                    action: 'getSubscriptionCode',
-                    token: app.state.token,
-                    email: app.state.email
-                });
-
-                if (res.success) {
-                    document.getElementById('sub-code-display').innerText = res.code;
-                    document.getElementById('sub-price-display').innerText = res.price + " €";
-                    document.getElementById('sub-paypal-link').href = res.paypalLink;
-                    app.ui.showModal('modal-sub');
-                }
-            } catch(e){}
-            app.ui.showLoader(false);
-        }
-    }
-};
-
-const admin = {
-    refreshUsers: async () => {
-        app.ui.showLoader(true);
+        btn.disabled = true;
         try {
-            const res = await app.actions.apiCall({
-                 action: 'adminGetUsers', token: app.state.token, email: app.state.email
-            });
+            if (hasFile) {
+                const file = fileInput.files[0];
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    await this.sendPayload(e.target.result, 'image');
+                    fileInput.value = '';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                await this.sendPayload(text, 'text');
+                input.value = '';
+            }
+        } catch (e) {
+            this.showError("Erreur envoi: " + e.message);
+        } finally {
+            btn.disabled = false;
+            input.focus();
+        }
+    },
+
+    sendPayload: async function(content, type) {
+        await this.api('sendMessage', { chatId: this.currentChatId, content, type });
+        await this.loadMessages(this.currentChatId);
+    },
+
+    addMember: async function() {
+        const email = await this.showPrompt("Ajouter un membre", "Email du participant");
+        if (!email) return;
+
+        try {
+            this.toggleLoader(true);
+            await this.api('addParticipant', { chatId: this.currentChatId, targetEmail: email });
+            this.showSuccess("Participant ajouté !");
+            this.loadMessages(this.currentChatId);
+        } catch (e) {
+            this.showError(e.message);
+        } finally {
+            this.toggleLoader(false);
+        }
+    },
+
+    // ==========================================
+    // ADMIN
+    // ==========================================
+    showAdmin: async function() {
+        this.showView('view-admin');
+        this.switchAdminTab('users');
+    },
+
+    switchAdminTab: function(tab) {
+        document.querySelectorAll('.admin-tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+
+        document.querySelectorAll('.admin-tab-content').forEach(c => c.classList.add('hidden'));
+        document.getElementById(`admin-${tab}`).classList.remove('hidden');
+
+        if (tab === 'users') this.loadAdminUsers();
+        if (tab === 'subscriptions') this.loadAdminSubscriptions();
+        if (tab === 'settings') this.loadAdminSettings();
+    },
+
+    loadAdminUsers: async function() {
+        try {
+            const res = await this.api('adminGetUsers');
             const list = document.getElementById('admin-users-list');
-            list.innerHTML = '';
-            res.users.forEach(u => {
-                const div = document.createElement('div');
-                div.className = 'admin-item';
-                div.innerHTML = `
-                    <div class="admin-item-header">
-                        <strong>${u.firstName} (${u.email})</strong>
-                        <span style="font-size:0.8rem">${u.isSuperAdmin ? 'SUPER ADMIN' : ''}</span>
+            list.innerHTML = res.users.map(u => `
+                <div class="user-card ${u.email === 'chaouiengage@gmail.com' ? 'super-admin' : ''}">
+                    <div class="user-info">
+                        <span class="user-name">${u.firstName}</span>
+                        <span class="user-email">${u.email}</span>
                     </div>
-                    <div class="admin-item-actions">
-                        <button class="role-tag ${u.isAdmin ? 'active' : ''}" onclick="admin.toggleRole('${u.email}', 'admin', ${!u.isAdmin})">ADMIN</button>
-                        <button class="role-tag ${u.canCreate ? 'active' : ''}" onclick="admin.toggleRole('${u.email}', 'create', ${!u.canCreate})">CREATOR</button>
-                        <button class="role-tag ${u.isSubscriber ? 'active' : ''}" onclick="admin.toggleRole('${u.email}', 'sub', ${!u.isSubscriber})">SUB</button>
-                        ${!u.isSuperAdmin ? `<button class="btn-sm" style="color:red;border-color:red" onclick="admin.deleteUser('${u.email}')">X</button>` : ''}
-                        ${!u.isSuperAdmin ? `<button class="btn-sm" onclick="admin.resetPwd('${u.email}')">PWD</button>` : ''}
+                    <div class="user-roles">
+                        <button class="role-btn admin ${u.isAdmin ? 'active' : ''}" onclick="app.toggleRole('${u.email}', 'isAdmin')" title="Admin">👑</button>
+                        <button class="role-btn creator ${u.canCreate ? 'active' : ''}" onclick="app.toggleRole('${u.email}', 'canCreate')" title="Création">✏️</button>
+                        <button class="role-btn subscriber ${u.isSubscriber ? 'active' : ''}" onclick="app.toggleRole('${u.email}', 'isSubscriber')" title="Abonné">💳</button>
                     </div>
-                `;
-                list.appendChild(div);
-            });
-        } catch(e){}
-        app.ui.showLoader(false);
+                    <div class="user-actions">
+                        ${u.email !== 'chaouiengage@gmail.com' ?
+                          `<button onclick="app.deleteUser('${u.email}')" style="background:none;border:none;color:#d00;cursor:pointer;font-size:0.8rem;margin-left:5px;">🗑️</button>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        } catch(e) {
+            this.showError("Accès refusé");
+            this.showDashboard();
+        }
     },
 
-    refreshSubs: async () => {
-        app.ui.showLoader(true);
+    toggleRole: async function(targetEmail, role) {
+        // Protection super admin
+        if (targetEmail === 'chaouiengage@gmail.com') {
+            return this.showError("Impossible de modifier le Super Admin.");
+        }
+
         try {
-            const res = await app.actions.apiCall({
-                action: 'adminGetSubscriptions', token: app.state.token, email: app.state.email
-            });
-            const list = document.getElementById('admin-subs-list');
-            list.innerHTML = '';
-            res.subscriptions.forEach(s => {
-                const div = document.createElement('div');
-                div.className = 'admin-item';
-                div.innerHTML = `
-                   <strong>${s.firstName}</strong> - ${s.status}<br>
-                   Code: ${s.whatsappenCode} <br>
-                   TXN: ${s.paypalTransaction || 'N/A'} <br>
-                   ${s.status === 'pending' ? `<button class="btn-gold" style="margin-top:5px;font-size:0.8rem" onclick="admin.validateSub('${s.email}')">Valider</button>` : ''}
-                `;
-                list.appendChild(div);
-            });
-        } catch(e){}
-        app.ui.showLoader(false);
+            // Optimistic Update can be tricky here, so we fetch full list first usually, but let's toggle locally then sync
+            // For simplicity and safety, we fetch, find target, toggle, then push update.
+            const users = (await this.api('adminGetUsers')).users;
+            const target = users.find(u => u.email === targetEmail);
+
+            const updates = {};
+            updates[role] = !target[role];
+
+            // Allow toggling multiple? Yes.
+            // But we must send specific flags.
+            // Let's send only what changed.
+
+            await this.api('adminUpdateUser', { targetEmail, ...updates });
+            this.loadAdminUsers(); // Refresh UI
+        } catch(e) {
+            this.showError(e.message);
+        }
     },
 
-    toggleRole: async (targetEmail, role, value) => {
-        let payload = { action: 'adminUpdateUser', token: app.state.token, email: app.state.email, targetEmail: targetEmail };
-        if (role === 'admin') payload.isAdmin = value;
-        if (role === 'create') payload.canCreate = value;
-        if (role === 'sub') payload.isSubscriber = value;
-
-        await app.actions.apiCall(payload);
-        admin.refreshUsers();
+    deleteUser: async function(email) {
+        if (!await this.showConfirm("Supprimer cet utilisateur ?")) return;
+        try {
+            await this.api('adminDeleteUser', { targetEmail: email });
+            this.loadAdminUsers();
+        } catch(e) {
+            this.showError(e.message);
+        }
     },
 
-    deleteUser: async (targetEmail) => {
-        if(!confirm("Supprimer " + targetEmail + " ?")) return;
-        await app.actions.apiCall({ action: 'adminDeleteUser', token: app.state.token, email: app.state.email, targetEmail: targetEmail });
-        admin.refreshUsers();
+    // --- SUBSCRIPTION ADMIN ---
+    loadAdminSubscriptions: async function() {
+        try {
+            const res = await this.api('adminGetSubscriptions');
+            const list = document.getElementById('admin-subscriptions-list');
+            list.innerHTML = res.subscriptions.map(s => `
+                <div class="sub-card">
+                    <div class="sub-info">
+                        <span>${s.firstName} (${s.email})</span>
+                        <span class="sub-status ${s.status}">${s.status}</span>
+                    </div>
+                    <div class="sub-details">
+                        <div>Code: <strong>${s.whatsappenCode}</strong></div>
+                        <div>Transaction: ${s.paypalTransaction || 'N/A'}</div>
+                    </div>
+                    ${s.status === 'pending' ? `
+                        <div class="validation-form">
+                           <input type="date" id="start-${s.email}">
+                           <input type="date" id="end-${s.email}">
+                           <button class="btn-validate" onclick="app.validateSub('${s.email}')">Valider</button>
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+        } catch(e) {
+            this.showError(e.message);
+        }
     },
 
-    resetPwd: async (targetEmail) => {
-        const res = await app.actions.apiCall({ action: 'adminResetPassword', token: app.state.token, email: app.state.email, targetEmail: targetEmail });
-        if(res.success) alert("Nouveau code temporaire : " + res.newCode);
+    validateSub: async function(email) {
+        // Get dates
+        // Note: IDs with email can be tricky with special chars, better to use unique ID or robust selector.
+        // Assuming email is safe enough for basic ID or we escape it.
+        // We'll use getElementById which handles standard email chars usually ok, but better to escape.
+        // For now, let's assume it works or use querySelector.
+        const start = document.getElementById(`start-${email}`).value;
+        const end = document.getElementById(`end-${email}`).value;
+
+        if (!start || !end) return this.showError("Remplissez les dates.");
+
+        try {
+            await this.api('adminValidateSubscription', { targetEmail: email, startDate: start, endDate: end });
+            this.showSuccess("Abonnement validé !");
+            this.loadAdminSubscriptions();
+        } catch(e) {
+            this.showError(e.message);
+        }
     },
 
-    validateSub: async (targetEmail) => {
-        const months = prompt("Nombre de mois ?", "1");
-        if(!months) return;
-        const start = new Date();
-        const end = new Date();
-        end.setMonth(end.getMonth() + parseInt(months));
-
-        await app.actions.apiCall({
-            action: 'adminValidateSubscription',
-            token: app.state.token,
-            email: app.state.email,
-            targetEmail: targetEmail,
-            startDate: start.toISOString(),
-            endDate: end.toISOString()
-        });
-        admin.refreshSubs();
+    loadAdminSettings: async function() {
+        try {
+            const res = await this.api('adminGetSettings');
+            const form = document.getElementById('admin-settings');
+            form.innerHTML = `
+                <div class="setting-row">
+                    <label>Abonnements activés</label>
+                    <input type="checkbox" id="set-enabled" ${res.settings.subscriptionEnabled ? 'checked' : ''} onchange="app.saveSettings()">
+                </div>
+                <div class="setting-row">
+                    <label>Prix (€)</label>
+                    <input type="number" id="set-price" value="${res.settings.subscriptionPrice}" onchange="app.saveSettings()">
+                </div>
+            `;
+        } catch(e) {}
     },
 
-    saveSettings: async () => {
-         // Placeholder for settings save logic
-         app.ui.toast("Sauvegardé");
-    }
+    saveSettings: async function() {
+        const settings = {
+            subscriptionEnabled: document.getElementById('set-enabled').checked,
+            subscriptionPrice: parseFloat(document.getElementById('set-price').value),
+            paypalLink: "https://paypal.me/ChaouiEngage5?country.x=FR&locale.x=fr_FR"
+        };
+        try {
+            await this.api('adminUpdateSettings', { settings });
+        } catch(e) {}
+    },
+
+    // ==========================================
+    // UI UTILS
+    // ==========================================
+    showView: function(viewId) {
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active', 'hidden'));
+        document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+
+        const target = document.getElementById(viewId);
+        target.classList.remove('hidden');
+        target.classList.add('active');
+
+        if (viewId === 'view-dashboard') {
+            document.getElementById('user-greeting').textContent = this.user.firstName;
+
+            // Set Avatar Letter
+            const avatarLet = document.getElementById('user-avatar-letter');
+            if(avatarLet && this.user.firstName) {
+                avatarLet.textContent = this.user.firstName.charAt(0).toUpperCase();
+            }
+
+            // Update FAB
+            this.updateFabButton();
+
+            this.stopPolling();
+            if (this.timerInterval) clearInterval(this.timerInterval);
+            this.loadConversations();
+            this.pollingInterval = setInterval(() => this.loadConversations(), 10000);
+        } else if (viewId !== 'view-chat') {
+            this.stopPolling();
+        }
+    },
+
+    updateFabButton: function() {
+        const btnCreate = document.getElementById('btn-create-fab');
+        const btnSubscribe = document.getElementById('btn-subscribe-fab');
+
+        // Check if user has ANY create right (Admin, Creator, Subscriber)
+        if (this.user.isAdmin || this.user.canCreate || this.user.isSubscriber) {
+            btnCreate.classList.remove('hidden');
+            btnSubscribe.classList.add('hidden');
+        } else {
+            btnCreate.classList.add('hidden');
+            btnSubscribe.classList.remove('hidden');
+        }
+    },
+
+    openSubscription: async function() {
+        try {
+            this.toggleLoader(true);
+            const res = await this.api('getSubscriptionCode');
+
+            document.getElementById('sub-code').textContent = res.code;
+            document.getElementById('sub-price').textContent = res.price + ' €';
+            document.getElementById('sub-paypal-link').href = res.paypalLink;
+
+            document.getElementById('subscription-modal').classList.remove('hidden');
+        } catch(e) {
+            this.showError(e.message);
+        } finally {
+            this.toggleLoader(false);
+        }
+    },
+
+    copySubCode: function() {
+        const code = document.getElementById('sub-code').textContent;
+        navigator.clipboard.writeText(code);
+        this.showInfo("Code copié !");
+    },
+
+    submitSubscription: async function() {
+        const txn = document.getElementById('sub-transaction').value.trim();
+        if (!txn) return this.showError("Entrez le numéro de transaction.");
+
+        try {
+            this.toggleLoader(true);
+            const res = await this.api('submitSubscription', { paypalTransaction: txn });
+            this.showSuccess(res.message);
+            document.getElementById('subscription-modal').classList.add('hidden');
+        } catch(e) {
+            this.showError(e.message);
+        } finally {
+            this.toggleLoader(false);
+        }
+    },
+
+    showLogin: function() {
+        this.showView('view-auth');
+        document.getElementById('form-login').classList.remove('hidden');
+        document.getElementById('form-register').classList.add('hidden');
+    },
+
+    showRegister: function() {
+        document.getElementById('form-login').classList.add('hidden');
+        document.getElementById('form-register').classList.remove('hidden');
+    },
+
+    showDashboard: function() { this.showView('view-dashboard'); },
+    showNewChat: function() { this.showView('view-new-chat'); },
+
+    toggleLoader: function(show) {
+        const l = document.getElementById('loader');
+        if (show) l.classList.remove('hidden'); else l.classList.add('hidden');
+    },
+
+    stopPolling: function() { if (this.pollingInterval) clearInterval(this.pollingInterval); }
 };
 
-// Utils
-function escapeHtml(text) {
-  if (!text) return text;
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-window.app = app; // Expose to global scope for Playwright
-// Start
-window.app = app; // Ensure global access immediately
-document.addEventListener('DOMContentLoaded', app.init);
+window.onload = () => app.init();
