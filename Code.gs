@@ -326,7 +326,18 @@ function apiGetConversations(token, email) {
                    validChats.push(newObj);
                    dbChatsToKeep.push(newObj);
                    changed = true;
-               } catch(e) { changed = true; }
+               } catch(e) {
+                   // If we can't open the doc (e.g. transient error), keep it in DB!
+                   // Do NOT set changed = true unless we want to delete it.
+                   // We return a placeholder so the user sees *something*.
+                   dbChatsToKeep.push(chat);
+                   validChats.push({
+                        id: chat,
+                        names: "Chargement...",
+                        expiresAt: null,
+                        lastMessage: { content: "...", sender: "..." }
+                   });
+               }
           } else {
                validChats.push(chat);
                dbChatsToKeep.push(chat);
@@ -341,7 +352,7 @@ function apiGetConversations(token, email) {
       writeUsersDb(db);
   }
 
-  return { success: true, conversations: validChats };
+  return { success: true, chats: validChats, user: sanitizeUser(user) };
 }
 
 function apiCreateChat(token, email, participants, durationStr) {
