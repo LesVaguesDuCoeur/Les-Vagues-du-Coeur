@@ -316,23 +316,26 @@ function apiGetConversations(token, email) {
   if (changed) {
       const lock = LockService.getScriptLock();
       try {
-          // Short lock to ensure we don't overwrite concurrent updates
-          if (lock.tryLock(5000)) {
-              const db = readUsersDb();
-              const u = db.users.find(x => x.email === email);
-              if (u) {
-                  u.activeChats = validChats;
-                  writeUsersDb(db);
-                  user.activeChats = validChats;
-                  // Also update permissions in case they changed
-                  if (u.isAdmin !== user.isAdmin || u.canCreate !== user.canCreate || u.isSubscriber !== user.isSubscriber) {
-                      user.isAdmin = u.isAdmin;
-                      user.canCreate = u.canCreate;
-                      user.isSubscriber = u.isSubscriber;
-                  }
+          // Robust lock to ensure ghost chats are removed permanently
+          lock.waitLock(10000);
+          const db = readUsersDb();
+          const u = db.users.find(x => x.email === email);
+          if (u) {
+              u.activeChats = validChats;
+
+              // Verify permissions while we have the lock
+              if (u.isAdmin !== user.isAdmin || u.canCreate !== user.canCreate || u.isSubscriber !== user.isSubscriber) {
+                  user.isAdmin = u.isAdmin;
+                  user.canCreate = u.canCreate;
+                  user.isSubscriber = u.isSubscriber;
               }
+
+              writeUsersDb(db);
           }
-      } catch(e) {} finally { lock.releaseLock(); }
+      } catch(e) {
+          // If lock fails, we still return the valid list to the user so the UI is correct
+          console.error("Lock failed in getConversations", e);
+      } finally { lock.releaseLock(); }
   }
 
   return { success: true, chats: validChats, user: sanitizeUser(user) };
