@@ -68,7 +68,7 @@
         <!-- Bouton Création (Admin/Creator/Subscriber) -->
         <button id="btn-create-fab" class="fab-btn hidden" onclick="app.showNewChat()">+</button>
         <!-- Bouton Abonnement (Free User) -->
-        <button id="btn-subscribe-fab" class="fab-btn hidden" onclick="app.openSubscription()" style="background:#222; border:1px solid var(--gold); color:var(--gold);">💳</button>
+        <button id="btn-subscribe-fab" class="fab-btn hidden" onclick="app.openSubscription()">★</button>
 
         <!-- Contact Support Button -->
         <button id="btn-contact-fab" class="contact-fab" onclick="app.contactSupport()" title="Contacter le Support">📞</button>
@@ -107,7 +107,8 @@
                 <small id="chat-timer-display" style="display:block; font-size:0.7rem; color:var(--gold);"></small>
             </div>
             <div class="header-actions">
-                <button id="btn-add-member" class="icon-btn" style="margin-right:10px;">+</button>
+                <button id="btn-delete-chat" class="icon-btn hidden" title="Supprimer définitivement" style="color:#d00; margin-right:10px;">🗑️</button>
+                <button id="btn-add-member" class="icon-btn" style="margin-right:5px;">+</button>
                 <button id="btn-refresh-chat" class="icon-btn">↻</button>
             </div>
         </header>

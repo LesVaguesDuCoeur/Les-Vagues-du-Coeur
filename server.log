@@ -1,12 +1,19 @@
-127.0.0.1 - - [13/Jan/2026 23:55:36] "GET / HTTP/1.1" 200 -
-127.0.0.1 - - [13/Jan/2026 23:55:36] "GET /style.css HTTP/1.1" 200 -
-127.0.0.1 - - [13/Jan/2026 23:55:36] "GET /logo.js HTTP/1.1" 200 -
-127.0.0.1 - - [13/Jan/2026 23:55:36] "GET /app.js HTTP/1.1" 200 -
-127.0.0.1 - - [13/Jan/2026 23:57:02] "GET / HTTP/1.1" 200 -
-127.0.0.1 - - [13/Jan/2026 23:57:02] "GET /style.css HTTP/1.1" 200 -
-127.0.0.1 - - [13/Jan/2026 23:57:02] "GET /logo.js HTTP/1.1" 200 -
-127.0.0.1 - - [13/Jan/2026 23:57:02] "GET /app.js HTTP/1.1" 200 -
-127.0.0.1 - - [14/Jan/2026 00:03:03] "GET / HTTP/1.1" 200 -
-127.0.0.1 - - [14/Jan/2026 00:03:03] "GET /style.css HTTP/1.1" 200 -
-127.0.0.1 - - [14/Jan/2026 00:03:03] "GET /logo.js HTTP/1.1" 200 -
-127.0.0.1 - - [14/Jan/2026 00:03:03] "GET /app.js HTTP/1.1" 200 -
+Exception in thread Thread-1 (start_server):
+Traceback (most recent call last):
+  File "/home/jules/.pyenv/versions/3.12.12/lib/python3.12/threading.py", line 1075, in _bootstrap_inner
+    self.run()
+  File "/home/jules/.pyenv/versions/3.12.12/lib/python3.12/threading.py", line 1012, in run
+    self._target(*self._args, **self._kwargs)
+  File "/app/start_server.py", line 15, in start_server
+    with socketserver.TCPServer(("", PORT), Handler) as httpd:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jules/.pyenv/versions/3.12.12/lib/python3.12/socketserver.py", line 457, in __init__
+    self.server_bind()
+  File "/home/jules/.pyenv/versions/3.12.12/lib/python3.12/socketserver.py", line 478, in server_bind
+    self.socket.bind(self.server_address)
+OSError: [Errno 98] Address already in use
+127.0.0.1 - - [14/Jan/2026 02:40:00] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [14/Jan/2026 02:40:00] "GET /style.css HTTP/1.1" 200 -
+127.0.0.1 - - [14/Jan/2026 02:40:00] "GET /logo.js HTTP/1.1" 200 -
+127.0.0.1 - - [14/Jan/2026 02:40:00] "GET /app.js HTTP/1.1" 200 -
+127.0.0.1 - - [14/Jan/2026 02:40:01] "GET / HTTP/1.1" 304 -

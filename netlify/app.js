@@ -134,6 +134,7 @@ const app = {
         document.getElementById('message-input').onkeypress = (e) => { if(e.key === 'Enter') this.sendMessage(); };
         document.getElementById('btn-refresh-chat').onclick = () => this.loadMessages(this.currentChatId);
         document.getElementById('btn-add-member').onclick = () => this.addMember();
+        document.getElementById('btn-delete-chat').onclick = () => this.deleteChat(); // New Listener
 
         // Admin Access - Click on Avatar
         const adminBtn = document.getElementById('btn-admin-access');
@@ -294,7 +295,6 @@ const app = {
                 }
 
                 // UNREAD LOGIC
-                // Check if we have a locally stored lastRead time for this chat
                 const lastRead = localStorage.getItem(`read_${chat.id}`);
                 let isUnread = false;
                 if (chat.lastMessage && chat.lastMessage.timestamp) {
@@ -388,13 +388,35 @@ const app = {
         // Mark as Read
         localStorage.setItem(`read_${chatId}`, new Date().toISOString());
 
+        // Show/Hide Delete Button based on permissions
+        const delBtn = document.getElementById('btn-delete-chat');
+        if (this.user.isAdmin || this.user.isSubscriber || this.user.canCreate) {
+             delBtn.classList.remove('hidden');
+        } else {
+             delBtn.classList.add('hidden');
+        }
+
         this.showView('view-chat');
         this.loadMessages(chatId);
         this.startTimer();
 
         this.stopPolling();
-        // Poll messages faster
         this.pollingInterval = setInterval(() => this.loadMessages(chatId), 3000);
+    },
+
+    deleteChat: async function() {
+        if (!await this.showConfirm("Supprimer définitivement cette conversation ?")) return;
+
+        try {
+            this.toggleLoader(true);
+            await this.api('deleteChat', { chatId: this.currentChatId });
+            this.showDashboard();
+            this.showSuccess("Conversation supprimée.");
+        } catch (e) {
+            this.showError(e.message);
+        } finally {
+            this.toggleLoader(false);
+        }
     },
 
     startTimer: function() {
@@ -444,7 +466,6 @@ const app = {
                 return;
             }
 
-            // Update Last Read
             localStorage.setItem(`read_${chatId}`, new Date().toISOString());
 
             const area = document.getElementById('messages-area');
@@ -461,7 +482,6 @@ const app = {
                 } else {
                     let content = '';
                     if (msg.type === 'image') {
-                        // Image with click to zoom
                         content = `<img src="${msg.content}" onclick="app.showImageModal('${msg.content}')">`;
                     } else {
                         content = `<div>${msg.content}</div>`;
@@ -489,7 +509,7 @@ const app = {
         const dl = document.getElementById('image-modal-dl');
 
         img.src = src;
-        dl.href = src; // Base64 link works for download
+        dl.href = src;
         modal.classList.remove('hidden');
     },
 
@@ -503,7 +523,6 @@ const app = {
 
         if (!text.trim() && !hasFile) return;
 
-        // Optimistic: Disable
         btn.disabled = true;
         btn.style.opacity = "0.5";
 
@@ -530,7 +549,6 @@ const app = {
     },
 
     sendPayload: async function(content, type) {
-        // Optimistic UI for text? Hard with encryption. Just wait.
         await this.api('sendMessage', { chatId: this.currentChatId, content, type });
         await this.loadMessages(this.currentChatId);
     },
@@ -603,8 +621,7 @@ const app = {
     toggleRole: async function(targetEmail, role) {
         if (targetEmail === 'chaouiengage@gmail.com') return this.showError("Impossible de modifier le Super Admin.");
 
-        // Optimistic toggle locally
-        const btn = event.currentTarget; // Hacky but works for instant feedback
+        const btn = event.currentTarget;
         btn.classList.toggle('active');
 
         try {
@@ -614,9 +631,8 @@ const app = {
             updates[role] = !target[role];
 
             await this.api('adminUpdateUser', { targetEmail, ...updates });
-            // this.loadAdminUsers(); // No reload to keep it smooth
         } catch(e) {
-            btn.classList.toggle('active'); // Revert
+            btn.classList.toggle('active');
             this.showError(e.message);
         }
     },
