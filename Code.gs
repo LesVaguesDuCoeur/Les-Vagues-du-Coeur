@@ -20,7 +20,14 @@ const INVOICES_DB_FILENAME = "Invoices.db";
 
 function decodeSecret(str) { return Utilities.newBlob(Utilities.base64DecodeWebSafe(str, Utilities.Charset.UTF_8)).getDataAsString(); }
 
-function doGet(e) { return createJSONOutput({ status: "Online", message: "Use POST requests." }); }
+function doGet(e) {
+    try {
+        initializeDatabase();
+        return createJSONOutput({ status: "Online", message: "Database Initialized/Checked.", time: new Date().toISOString() });
+    } catch(e) {
+        return createJSONOutput({ status: "Error", error: e.message });
+    }
+}
 
 function doPost(e) {
   const lock = LockService.getScriptLock();
