@@ -6,7 +6,7 @@ function getConfig(key) {
     const props = PropertiesService.getScriptProperties();
     const val = props.getProperty(key);
     if (!val) throw new Error("Missing config: " + key);
-    return val;
+    return val.trim();
 }
 
 const FOLDER_ID = getConfig('FOLDER_ID');
@@ -128,6 +128,15 @@ function createJSONOutput(data) {
 function getEncryptionKey() { return SECRET_KEY; }
 
 function initializeDatabase() {
+    // Force read (and creation if missing) of all DB files
+    try {
+        readUsersDb();
+        readSettingsDb();
+        readSubscriptionsDb();
+        readInvoicesDb();
+    } catch(e) {
+        throw new Error("Init DB Failed: " + e.message);
+    }
 }
 
 function apiLogin(email, code, ip) {
@@ -890,7 +899,14 @@ function apiAdminDeleteSubscription(token, email, targetEmail) {
     return { success: true };
 }
 
-function getFolder() { return DriveApp.getFolderById(FOLDER_ID); }
+function getFolder() {
+    try {
+        return DriveApp.getFolderById(FOLDER_ID);
+    } catch(e) {
+        throw new Error("Drive Folder Access Error. Please check FOLDER_ID in Script Properties. (ID provided: " + (FOLDER_ID ? FOLDER_ID.substring(0,5) + "..." : "null") + ")");
+    }
+}
+
 function readDb(filename, defaultData) {
   const folder = getFolder();
   const files = folder.getFilesByName(filename);
