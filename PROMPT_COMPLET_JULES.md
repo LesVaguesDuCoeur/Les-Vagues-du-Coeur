@@ -15,14 +15,15 @@
 ## 📋 TABLE DES MATIÈRES
 
 1. [Architecture & Contexte](#contexte-du-projet)
-2. [Initialisation Automatique](#initialisation-automatique---fichiers-google-drive)
-3. [Bugs Critiques à Corriger](#bugs-critiques-à-corriger-immédiatement)
-4. [Module Emails Automatiques](#module-dautomatisation-des-emails-nouveau)
-5. [Optimisations Apps Script](#optimisations-avancées-apps-script)
-6. [Sécurité & Cryptage](#sécurité--cryptage-priorité-absolue---rgpd)
-7. [Design & UI](#design--ui-branding-chaoui-engagé)
-8. [Fonctionnalités](#fonctionnalités-requises)
-9. [Checklist de Vérification](#checklist-de-vérification-à-faire-avant-de-livrer)
+2. [🚨 CORRECTION SÉCURITÉ CRITIQUE](#correction-sécurité-critique---migration-obligatoire)
+3. [Initialisation Automatique](#initialisation-automatique---fichiers-google-drive)
+4. [Bugs Critiques à Corriger](#bugs-critiques-à-corriger-immédiatement)
+5. [Module Emails Automatiques](#module-dautomatisation-des-emails-nouveau)
+6. [Optimisations Apps Script](#optimisations-avancées-apps-script)
+7. [Sécurité & Cryptage](#sécurité--cryptage-priorité-absolue---rgpd)
+8. [Design & UI](#design--ui-branding-chaoui-engagé)
+9. [Fonctionnalités](#fonctionnalités-requises)
+10. [Checklist de Vérification](#checklist-de-vérification-à-faire-avant-de-livrer)
 
 ---
 
@@ -56,6 +57,186 @@ netlify/
 
 ---
 
+## 🚨🚨🚨 CORRECTION SÉCURITÉ CRITIQUE - MIGRATION OBLIGATOIRE 🚨🚨🚨
+
+### LE PROBLÈME QUE TU AS CRÉÉ
+
+Tu as cassé l'application en supprimant BRUTALEMENT le système legacy sans prévoir de migration. Résultat :
+- Les fichiers ne se créent plus sur Google Drive
+- L'application ne peut plus lire les données existantes
+- `getConfig()` plante car les Script Properties ne sont pas configurées
+
+### CE QUE TU AS MAL FAIT
+
+```javascript
+// ❌ MAUVAIS - Tu as fait ça :
+function getConfig(key) {
+  const val = props.getProperty(key);
+  if (!val) throw new Error("Missing config: " + key); // CRASH !
+  return val.trim();
+}
+
+// ❌ MAUVAIS - Tu as supprimé le fallback legacy :
+function decrypt(cipher) {
+  if (cipher.startsWith("v1:")) {
+    // ... nouveau déchiffrement
+  } else {
+    throw new Error("Invalid or legacy cipher version"); // CRASH !
+  }
+}
+```
+
+### LA BONNE APPROCHE - MIGRATION PROGRESSIVE
+
+**Principe : LIRE avec legacy fallback, ÉCRIRE avec nouveau chiffrement**
+
+Cela permet de migrer automatiquement les données existantes vers le nouveau format.
+
+### CODE CORRECT POUR getConfig()
+
+```javascript
+// Configuration LEGACY encodée en Base64 (pour migration)
+const LEGACY_CONF = {
+  folder: "MUlOMnBTSWhqVl8zRm4tQl9XTE1VZ05GY1FkTE9qYlly",
+  admin: "Y2hhb3VpZW5nYWdlQGdtYWlsLmNvbQ==",
+  key: "Q2hhb3VpU2VjcmV0S2V5VjJfTmF0aXZl"
+};
+
+const props = PropertiesService.getScriptProperties();
+
+// ✅ CORRECT - Avec fallback et migration automatique
+function getConfig(key, legacyVal) {
+  let val = props.getProperty(key);
+
+  // Si pas de valeur en Script Properties, utiliser legacy ET migrer
+  if (!val && legacyVal) {
+    val = legacyVal;
+    props.setProperty(key, val); // Migration vers Script Properties
+  }
+
+  if (!val) {
+    throw new Error("Configuration manquante : " + key);
+  }
+
+  return val.trim();
+}
+
+// Utilisation :
+function getFolderId() {
+  return atob(getConfig('FOLDER_ID', LEGACY_CONF.folder));
+}
+
+function getAdminEmail() {
+  return atob(getConfig('ADMIN_EMAIL', LEGACY_CONF.admin));
+}
+
+function getSecretKey() {
+  return atob(getConfig('SECRET_KEY', LEGACY_CONF.key));
+}
+```
+
+### CODE CORRECT POUR LE CHIFFREMENT (AVEC MIGRATION)
+
+```javascript
+// ✅ Nouveau chiffrement Hash-Stream Cipher (pour l'écriture)
+function encrypt(text) {
+  const key = getSecretKey();
+  const nonce = Utilities.getUuid().replace(/-/g, '').slice(0, 16);
+  const textBytes = Utilities.newBlob(text).getBytes();
+  const keyStream = generateKeyStream(key, nonce, textBytes.length);
+
+  const encrypted = textBytes.map((b, i) => b ^ keyStream[i]);
+  const encryptedB64 = Utilities.base64Encode(encrypted);
+
+  return "v1:" + nonce + ":" + encryptedB64;
+}
+
+function generateKeyStream(key, nonce, length) {
+  const stream = [];
+  let counter = 0;
+
+  while (stream.length < length) {
+    const input = key + nonce + counter.toString();
+    const hash = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, input);
+    hash.forEach(b => stream.push(b & 0xFF));
+    counter++;
+  }
+
+  return stream.slice(0, length);
+}
+
+// ✅ Déchiffrement AVEC fallback legacy (pour la lecture)
+function decrypt(cipher) {
+  // Nouveau format v1:nonce:data
+  if (cipher.startsWith("v1:")) {
+    const parts = cipher.split(":");
+    const nonce = parts[1];
+    const encryptedB64 = parts[2];
+    const key = getSecretKey();
+
+    const encrypted = Utilities.base64Decode(encryptedB64);
+    const keyStream = generateKeyStream(key, nonce, encrypted.length);
+
+    const decrypted = encrypted.map((b, i) => b ^ keyStream[i]);
+    return Utilities.newBlob(decrypted).getDataAsString();
+  }
+
+  // ✅ FALLBACK LEGACY - NE PAS SUPPRIMER !
+  return decryptLegacyXor(cipher);
+}
+
+// ✅ Fonction legacy à GARDER pour lire les anciennes données
+function decryptLegacyXor(cipher) {
+  const key = getSecretKey();
+  const decoded = Utilities.newBlob(Utilities.base64Decode(cipher)).getDataAsString();
+  let result = "";
+
+  for (let i = 0; i < decoded.length; i++) {
+    const charCode = decoded.charCodeAt(i);
+    const keyChar = key.charCodeAt(i % key.length);
+    result += String.fromCharCode(charCode ^ keyChar);
+  }
+
+  return Utilities.newBlob(Utilities.base64Decode(result)).getDataAsString();
+}
+```
+
+### MIGRATION AUTOMATIQUE DES DONNÉES
+
+```javascript
+// Quand tu lis un fichier, si c'est du legacy, réécris-le avec le nouveau format
+function readAndMigrateFile(fileId) {
+  const file = DriveApp.getFileById(fileId);
+  const content = file.getBlob().getDataAsString();
+  const decrypted = decrypt(content); // Utilise le fallback si nécessaire
+
+  // Si c'était du legacy (pas de préfixe v1:), migrer vers nouveau format
+  if (!content.startsWith("v1:")) {
+    const newEncrypted = encrypt(decrypted);
+    file.setContent(newEncrypted);
+    Logger.log("Fichier migré vers nouveau chiffrement: " + fileId);
+  }
+
+  return decrypted;
+}
+```
+
+### CE QU'IL NE FAUT JAMAIS FAIRE
+
+1. ❌ **NE JAMAIS** supprimer `decryptLegacyXor()` tant qu'il y a des données legacy
+2. ❌ **NE JAMAIS** faire `throw new Error()` dans `getConfig()` sans fallback
+3. ❌ **NE JAMAIS** rejeter les données sans préfixe `v1:`
+4. ❌ **NE JAMAIS** supprimer `LEGACY_CONF` avant migration complète
+
+### CE QU'IL FAUT FAIRE
+
+1. ✅ Garder `LEGACY_CONF` pour l'initialisation
+2. ✅ Garder `decryptLegacyXor()` pour lire les anciennes données
+3. ✅ Utiliser le nouveau chiffrement UNIQUEMENT pour l'écriture
+4. ✅ Migrer automatiquement les données lors de la relecture
+
+---
+
 ## ⚠️⚠️⚠️ INITIALISATION AUTOMATIQUE - FICHIERS GOOGLE DRIVE ⚠️⚠️⚠️
 
 **Le backend DOIT créer automatiquement les fichiers de base de données s'ils n'existent pas !**
@@ -63,7 +244,8 @@ netlify/
 ```javascript
 // Dans Code.gs, au début, ajouter cette fonction d'initialisation :
 function initializeDatabase() {
-  const folder = DriveApp.getFolderById(FOLDER_ID);
+  const folderId = getFolderId();
+  const folder = DriveApp.getFolderById(folderId);
 
   // Vérifier/Créer users.json
   let usersFile = getFileByName(folder, 'users.json');
@@ -147,7 +329,7 @@ init: function() {
 ### BUG 3 : "Accès refusé" pour l'admin
 ```javascript
 // Backend - Forcer isAdmin si email = admin
-if (cleanEmail === ADMIN_EMAIL) {
+if (cleanEmail === getAdminEmail()) {
     user.isAdmin = true;
     user.canCreate = true;
 }
@@ -529,10 +711,14 @@ function writeUsersDb(db) {
   try {
     lock.waitLock(15000); // Attendre max 15 secondes
 
-    const folder = DriveApp.getFolderById(FOLDER_ID);
+    const folderId = getFolderId();
+    const folder = DriveApp.getFolderById(folderId);
     const file = getFileByName(folder, 'users.json');
     const encrypted = encrypt(JSON.stringify(db));
     file.setContent(encrypted);
+
+    // Invalider le cache après écriture
+    invalidateUsersCache();
 
   } finally {
     lock.releaseLock();
@@ -627,52 +813,33 @@ function updateLastSeen(userId) {
 
 ---
 
-## Informations de Configuration (À CHIFFRER EN BASE64)
-
-### ⚠️ CRITIQUE : Aucune de ces informations ne doit apparaître en clair !
-
-| Élément | Valeur | Encodage Base64 |
-|---------|--------|-----------------|
-| Dossier Google Drive | `1IN2pSIhjV_3Fn-B_WLMUgNFcQdLOjbYr` | `MUlOMnBTSWhqVl8zRm4tQl9XTE1VZ05GY1FkTE9qYlly` |
-| URL Apps Script | `https://script.google.com/macros/s/AKfycbxzFevbQJzerwD2L-uNcVTRJE9XVJ4HGdC9KUftOyIKT9pqErsvNfPsfSC12MjBEUDQvA/exec` | `aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy9BS2Z5Y2J4ekZldmJRSnplcndEMkwtdW5jVlRSSkU5WFZKNEhHZEM5S1VmdE95SUtUOXBxRXJzdk5mUHNmU0MxMk1qQkVVRFF2QS9leGVj` |
-| Email Super-Admin | `chaouiengage@gmail.com` | `Y2hhb3VpZW5nYWdlQGdtYWlsLmNvbQ==` |
-
----
-
 ## Sécurité & Cryptage (PRIORITÉ ABSOLUE - RGPD)
 
 ### Règles strictes :
 1. **TOUT** ce qui est écrit dans Google Drive doit être chiffré
 2. **AUCUN** lien, email, mot de passe ou donnée sensible en clair
-3. Utiliser un **chiffrement natif** (XOR + Base64) sans bibliothèque externe
+3. Utiliser un **chiffrement natif** (Hash-Stream Cipher + XOR legacy) sans bibliothèque externe
 4. Les utilisateurs ne voient que les **prénoms**, jamais les emails
 5. Protections **anti-capture d'écran** (CSS blur, user-select: none)
 
-### Méthode de chiffrement native :
+### Récapitulatif du système de chiffrement
+
+| Opération | Méthode |
+|-----------|---------|
+| **Écriture** | Hash-Stream Cipher (v1:nonce:data) |
+| **Lecture nouvelle** | Détection préfixe v1: → Hash-Stream |
+| **Lecture legacy** | Pas de préfixe → XOR fallback |
+| **Migration** | Automatique à la relecture |
+
+### Configuration stockée en Script Properties
+
 ```javascript
-const SECRET_KEY = "ChaouiSecretKeyV3";
+// Ces valeurs doivent être stockées en Script Properties (Projet > Paramètres > Propriétés)
+// FOLDER_ID: MUlOMnBTSWhqVl8zRm4tQl9XTE1VZ05GY1FkTE9qYlly
+// ADMIN_EMAIL: Y2hhb3VpZW5nYWdlQGdtYWlsLmNvbQ==
+// SECRET_KEY: Q2hhb3VpU2VjcmV0S2V5VjJfTmF0aXZl
 
-function encrypt(text) {
-  const encoded = Utilities.base64Encode(text, Utilities.Charset.UTF_8);
-  let result = "";
-  for(let i = 0; i < encoded.length; i++) {
-    const charCode = encoded.charCodeAt(i);
-    const keyChar = SECRET_KEY.charCodeAt(i % SECRET_KEY.length);
-    result += String.fromCharCode(charCode ^ keyChar);
-  }
-  return Utilities.base64Encode(result);
-}
-
-function decrypt(cipher) {
-  const decodedStep1 = Utilities.newBlob(Utilities.base64Decode(cipher)).getDataAsString();
-  let result = "";
-  for(let i = 0; i < decodedStep1.length; i++) {
-    const charCode = decodedStep1.charCodeAt(i);
-    const keyChar = SECRET_KEY.charCodeAt(i % SECRET_KEY.length);
-    result += String.fromCharCode(charCode ^ keyChar);
-  }
-  return Utilities.newBlob(Utilities.base64Decode(result)).getDataAsString();
-}
+// Mais le code doit avoir un fallback vers LEGACY_CONF pour la première exécution !
 ```
 
 ---
@@ -693,12 +860,13 @@ function decrypt(cipher) {
 | Code reset invalide | "Code de récupération invalide." |
 | Code reset expiré | "Ce code a expiré. Veuillez en demander un nouveau." |
 | Email envoyé | "Un code de récupération a été envoyé à votre adresse email." |
+| Config manquante | "Configuration manquante : [nom]" |
 
 ---
 
 ## Système de Modales Stylisées (OBLIGATOIRE)
 
-### ❌ INTERDIT : `alert()`, `confirm()`, `prompt()` du navigateur
+### INTERDIT : `alert()`, `confirm()`, `prompt()` du navigateur
 
 ```javascript
 function showModal(type, title, message, showCancel = false, inputPlaceholder = null) {
@@ -831,7 +999,12 @@ const showPrompt = (title, placeholder) => showModal('info', title, '', true, pl
 - [ ] Tous les boutons sont cliquables
 - [ ] Le lien "Mot de passe oublié ?" est présent et fonctionnel
 
-### Sécurité
+### Sécurité & Migration
+- [ ] `LEGACY_CONF` est présent dans le code
+- [ ] `decryptLegacyXor()` est présent et fonctionnel
+- [ ] `getConfig()` a un fallback vers les valeurs legacy
+- [ ] `decrypt()` gère les deux formats (v1: et legacy)
+- [ ] Les fichiers se créent correctement sur Drive
 - [ ] Pas de référence à 15112000 dans le code
 - [ ] L'admin est identifié UNIQUEMENT par email
 - [ ] Toutes les données Drive sont chiffrées
@@ -877,7 +1050,7 @@ const showPrompt = (title, placeholder) => showModal('info', title, '', true, pl
 
 ## Fichiers à Livrer
 
-1. `Code.gs` (avec emails + optimisations)
+1. `Code.gs` (avec emails + optimisations + migration sécurité)
 2. `netlify/index.html` (avec bouton MDP oublié)
 3. `netlify/style.css`
 4. `netlify/app.js` (avec flux récupération MDP)
@@ -886,28 +1059,20 @@ const showPrompt = (title, placeholder) => showModal('info', title, '', true, pl
 
 ---
 
-## 💡 MA TOUCHE PERSONNELLE (Suggestions de Claude)
+## RÉSUMÉ DES CORRECTIONS SÉCURITÉ À APPLIQUER
 
-### Améliorations Recommandées
+### Dans Code.gs, tu DOIS avoir :
 
-1. **Rate Limiting sur forgotPassword** : Limiter à 3 demandes par email par heure pour éviter le spam.
+1. **LEGACY_CONF** en haut du fichier (encodé Base64)
+2. **getConfig(key, legacyVal)** avec fallback
+3. **getFolderId()**, **getAdminEmail()**, **getSecretKey()** utilisant getConfig avec legacy
+4. **encrypt()** utilisant Hash-Stream Cipher (v1:nonce:data)
+5. **decrypt()** avec détection du format et fallback legacy
+6. **decryptLegacyXor()** pour lire les anciennes données
+7. **initializeDatabase()** appelée dans doPost()
 
-2. **Indicateur "En ligne"** : Ajouter un point vert sur l'avatar si `lastSeen < 2 minutes`.
-
-3. **PWA Ready** : Ajouter un `manifest.json` minimal pour permettre l'installation sur mobile :
-```json
-{
-  "name": "WhatsHappen",
-  "short_name": "WH",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#0a0a0a",
-  "theme_color": "#D4AF37"
-}
-```
-
-4. **UI Optimiste** : Afficher le message immédiatement côté client avant confirmation serveur (meilleure UX).
-
-5. **Compression des images** : Réduire les images avant encodage Base64 pour économiser l'espace Drive.
-
-6. **Logs Admin** : Stocker les actions importantes (connexions, créations) dans un fichier `audit.log` pour le super-admin.
+### NE PAS FAIRE :
+- Supprimer LEGACY_CONF
+- Supprimer decryptLegacyXor
+- Faire throw Error dans getConfig sans fallback
+- Rejeter les données sans préfixe v1:
