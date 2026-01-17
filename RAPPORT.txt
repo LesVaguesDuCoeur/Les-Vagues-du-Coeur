@@ -1,0 +1,31 @@
+RAPPORT D'INTERVENTION
+
+1. ARCHITECTURE
+   - Preservation de l'architecture Hybride : Frontend (HTML/JS) + Backend (Google Apps Script).
+   - Utilisation stricte du code "WhatsHappen" fourni.
+   - Aucune dépendance externe lourde (pas de CryptoJS, chiffrement natif XOR conservé).
+
+2. FONCTIONNALITÉS AJOUTÉES
+   - Rôles Utilisateurs :
+     - 👑 Admin : Accès complet console.
+     - ✏️ Créateur : Droit de créer des conversations.
+     - 💳 Abonné : Droit de créer (payant).
+   - Système d'Abonnement :
+     - Modal de paiement (Code Unique + Lien PayPal).
+     - Gestion des statuts (New -> Pending -> Active).
+     - Validation Admin avec dates de début/fin.
+     - Génération automatique de "Facture" (entrée JSON dans Invoices.db).
+   - Console Admin Améliorée :
+     - Navigation par Onglets (Utilisateurs, Abonnements, Paramètres).
+     - Liste interactive des utilisateurs avec boutons de rôles (Toggle).
+     - Protection du Super-Admin (chaouiengage@gmail.com).
+
+3. MODIFICATIONS FICHIERS
+   - Code.gs : Ajout des handlers pour les abonnements et la gestion des rôles. Sécurisation des endpoints.
+   - index.html : Ajout de la structure des onglets Admin et de la Modal Abonnement.
+   - style.css : Ajout du CSS pour les cartes utilisateurs, les boutons de rôles colorés et les onglets.
+   - app.js : Logique frontend pour le FAB conditionnel (Bouton + ou Carte) et la communication API.
+
+4. ÉTAT
+   - Code prêt à être déployé.
+   - Les fichiers DB se créeront automatiquement au premier appel API.
