@@ -1,57 +1,59 @@
-# Instructions de Vérification et Déploiement
+# Instructions de Vérification et Déploiement V4
 
 ## 1. Déploiement Backend (Google Apps Script)
 
-1.  Allez sur [script.google.com](https://script.google.com) et créez un nouveau projet "WhatsHappen".
-2.  Copiez le contenu du fichier `Code.gs` dans l'éditeur.
-3.  **Important** : Le code inclut `LEGACY_CONF` pour une auto-configuration initiale.
-4.  Déployez :
-    *   Bouton "Déployer" > "Nouveau déploiement".
-    *   Type: "Application Web".
-    *   Exécuter en tant que : "Moi" (votre compte).
-    *   Personnes autorisées : "Tout le monde" (ou "Anyone").
-    *   Copiez l'URL de l'application web générée.
+1.  Allez sur [script.google.com](https://script.google.com) et ouvrez votre projet "WhatsHappen".
+2.  Copiez le contenu du fichier `Code.gs` (V4) dans l'éditeur.
+3.  **Note importante** : Le code utilise une obfuscation pour les secrets. Assurez-vous que les variables `_0x`, `_0y`, `_0z` correspondent bien aux valeurs encodées de votre configuration (Folder ID, Admin Email, Secret Key).
+    *   Si c'est une nouvelle installation, le code s'initialisera avec les valeurs par défaut.
+    *   Si c'est une mise à jour, vos `Script Properties` existantes seront utilisées.
+4.  Déployez une nouvelle version :
+    *   Bouton "Déployer" > "Gérer les déploiements" > "Modifier" (crayon) > "Nouvelle version".
+    *   Cliquez sur "Déployer".
+    *   L'URL ne change pas si vous mettez à jour le déploiement existant.
 5.  **Triggers (Déclencheurs)** :
-    *   Allez dans le menu de gauche "Déclencheurs" (l'icône d'horloge).
-    *   Ajoutez un déclencheur pour la fonction `cleanUpExpiredChats`.
-    *   Source de l'événement : "Temporel" (Time-driven).
-    *   Type : "Minutes timer" > "Every 5 minutes" (ou 10/15 min).
+    *   Vérifiez que le déclencheur `cleanUpExpiredChats` est toujours actif (toutes les 5-15 min).
 
 ## 2. Configuration Frontend
 
-1.  Prenez l'URL de votre Web App (ex: `https://script.google.com/macros/s/.../exec`).
-2.  Encodez cette URL en Base64 (vous pouvez utiliser un site comme base64encode.org).
-3.  Ouvrez `netlify/app.js`.
-4.  Remplacez la valeur de `_ENC_URL` par votre URL encodée :
-    ```javascript
-    const _ENC_URL = "VOTRE_URL_BASE64_ICI";
-    ```
-5.  Déployez le dossier `netlify/` sur Netlify (Drag & Drop dans l'interface Netlify).
+1.  Si l'URL de votre Web App a changé, encodez-la en Base64.
+2.  Ouvrez `netlify/app.js`.
+3.  Mettez à jour `_ENC_URL` si nécessaire.
+4.  Déployez le dossier `netlify/` sur Netlify.
 
-## 3. Tests de Vérification
+## 3. Tests de Vérification V4
 
-### Bugs Critiques Corrigés
-- [ ] **Boutons Cliquables** : Vérifiez que les boutons "Connexion", "S'inscrire", etc., fonctionnent correctement (clic et touche Entrée).
-- [ ] **Logo** : Le logo doit s'afficher sur l'écran de connexion (cercle doré).
-- [ ] **Avatar** : L'avatar (initiale du prénom) doit s'afficher en haut à gauche du Dashboard.
+### ⛔ RÈGLE D'OR : Non-régression
+- [ ] **Connexion** : Connectez-vous avec un compte existant.
+- [ ] **Anciens Chats** : Vos anciennes conversations doivent être lisibles (migration automatique si nécessaire).
+- [ ] **Création Chat** : Créez une conversation classique (24h).
 
-### Fonctionnalités Nouvelles & Sécurité
-- [ ] **Mot de Passe Oublié** :
-    1.  Sur l'écran de connexion, cliquez sur "Mot de passe oublié ?".
-    2.  Entrez votre email.
-    3.  Vérifiez votre boîte mail (Email "Code de récupération WhatsHappen").
-    4.  Entrez le code et définissez un nouveau mot de passe.
-    5.  Connectez-vous avec le nouveau code.
-- [ ] **Emails Automatiques** :
-    1.  Créez un nouveau compte : Vérifiez l'email de "Bienvenue".
-    2.  Envoyez un message à un utilisateur inactif (> 5 min sans activité) : Il doit recevoir une notification "Activité détectée".
-- [ ] **Migration & Chiffrement** :
-    *   Les nouveaux fichiers sur Google Drive (`Users.db`, etc.) doivent contenir du texte commençant par `v1:`.
-    *   L'application doit être capable de lire les anciennes données (si vous avez des fichiers existants chiffrés avec l'ancienne méthode XOR).
+### 🚔 Alertes Contenu Illégal
+- [ ] **Détection** : Dans une conversation, envoyez un message contenant un mot-clé (ex: "bombe", "viol"). *Note : C'est pour le test uniquement.*
+- [ ] **Admin** : Connectez-vous en Admin (`chaouiengage@gmail.com` ou le nouvel email).
+- [ ] **Onglet Alertes** : Allez dans l'onglet "🚨". Une nouvelle alerte doit apparaître.
+- [ ] **Accès** : Cliquez sur "Voir". Confirmez l'envoi du code.
+- [ ] **Email** : Vérifiez votre email pour le code d'accès. Entrez-le.
+- [ ] **Preuve** : Le fichier de preuve (raw) doit se télécharger.
 
-### Admin & Chat
-- [ ] **Admin** : Connectez-vous avec `chaouiengage@gmail.com`. Cliquez sur votre avatar pour ouvrir la console Admin.
-- [ ] **Conversations** : Créez un chat, envoyez des messages. Vérifiez que la suppression ("Poubelle") fonctionne et supprime bien le chat de la liste.
+### 👁️ Accès Super Admin
+- [ ] Connectez-vous avec `chaouiengage@icloud.com`.
+- [ ] Allez dans les Paramètres Admin (⚙️).
+- [ ] Cliquez sur "👁️ Accéder à TOUTES les conversations".
+- [ ] Validez le code reçu par email.
+- [ ] La liste de toutes les conversations actives doit s'afficher.
+
+### 💬 Nouvelles Fonctionnalités Chat
+- [ ] **Durées** : Testez la création d'un chat "1 min". Vérifiez qu'il expire vite.
+- [ ] **Typing** : Tapez du texte, vérifiez si l'indicateur apparaît (si vous pouvez tester avec 2 comptes).
+- [ ] **Réponse** : Cliquez sur un message reçu > "Répondre".
+- [ ] **Suppression** : Cliquez sur un message envoyé > "Supprimer pour tous". Le message doit être remplacé par "🚫 Message supprimé".
+- [ ] **Épingler** : Options > Épingler. Le chat doit remonter en haut avec une icône 📌.
+
+### 📱 Mobile & Factures
+- [ ] Allez dans l'onglet Admin > Abonnements (💳).
+- [ ] Cliquez sur "📄 PDF". La facture doit s'ouvrir/se télécharger correctement (même sur mobile).
+- [ ] Cliquez sur "✉️ Email". Vous devez recevoir la facture par email.
 
 ## Note sur la Base de Données
-Le backend créera automatiquement les fichiers nécessaires (`Users.db`, `Chats.db`, etc.) sur votre Google Drive s'ils n'existent pas lors de la première requête.
+Le système créera automatiquement `FlaggedChats/` et `Alerts.db` sur votre Drive s'ils n'existent pas.
