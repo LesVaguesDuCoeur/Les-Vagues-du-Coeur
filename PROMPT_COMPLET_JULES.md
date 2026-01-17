@@ -12,6 +12,50 @@
 
 ---
 
+## 📋 TABLE DES MATIÈRES
+
+1. [Architecture & Contexte](#contexte-du-projet)
+2. [Initialisation Automatique](#initialisation-automatique---fichiers-google-drive)
+3. [Bugs Critiques à Corriger](#bugs-critiques-à-corriger-immédiatement)
+4. [Module Emails Automatiques](#module-dautomatisation-des-emails-nouveau)
+5. [Optimisations Apps Script](#optimisations-avancées-apps-script)
+6. [Sécurité & Cryptage](#sécurité--cryptage-priorité-absolue---rgpd)
+7. [Design & UI](#design--ui-branding-chaoui-engagé)
+8. [Fonctionnalités](#fonctionnalités-requises)
+9. [Checklist de Vérification](#checklist-de-vérification-à-faire-avant-de-livrer)
+
+---
+
+## Contexte du Projet
+
+**WhatsHappen** est une **messagerie instantanée hybride, furtive et éphémère** avec le branding **"Chaoui Engagé"**. Elle offre un anonymat total sans nécessiter de serveurs backend coûteux.
+
+### Architecture "Serverless Hybrid" (NE PAS CHANGER)
+
+| Composant | Technologie | Détails |
+|-----------|-------------|---------|
+| **Frontend** | Netlify | Fichiers statiques HTML/CSS/JS |
+| **Backend** | Google Apps Script | API REST via doPost |
+| **Base de données** | Google Drive | Fichiers JSON chiffrés |
+| **Bibliothèques** | AUCUNE | Chiffrement natif uniquement |
+
+### Structure des Fichiers
+
+```
+Backend (Google Apps Script):
+└── Code.gs              # API unique
+
+Frontend (Netlify):
+netlify/
+├── index.html           # Structure + modales
+├── style.css            # Design Chaoui Engagé
+├── app.js               # Logique applicative
+├── logo.js              # Logo en Base64
+└── email-templates.js   # Templates HTML emails (NOUVEAU)
+```
+
+---
+
 ## ⚠️⚠️⚠️ INITIALISATION AUTOMATIQUE - FICHIERS GOOGLE DRIVE ⚠️⚠️⚠️
 
 **Le backend DOIT créer automatiquement les fichiers de base de données s'ils n'existent pas !**
@@ -45,7 +89,7 @@ function getFileByName(folder, name) {
 
 // Appeler initializeDatabase() au début de doPost()
 function doPost(e) {
-  initializeDatabase(); // <-- IMPORTANT : Créer les fichiers s'ils n'existent pas
+  initializeDatabase(); // <-- IMPORTANT
   // ... reste du code
 }
 ```
@@ -54,132 +98,139 @@ function doPost(e) {
 
 ## ⚠️⚠️⚠️ BUGS CRITIQUES À CORRIGER IMMÉDIATEMENT ⚠️⚠️⚠️
 
-### BUG 0 : IMPOSSIBLE DE CLIQUER SUR LES BOUTONS (Connexion, Inscription, etc.)
+### BUG 0 : IMPOSSIBLE DE CLIQUER SUR LES BOUTONS
 **Problème** : Les boutons ne répondent plus aux clics. L'interface est figée.
-**Causes possibles** :
-1. Les event listeners ne sont pas attachés correctement
-2. Un overlay invisible bloque les clics (z-index)
-3. Le CSS `pointer-events: none` est appliqué quelque part
-4. Une erreur JavaScript empêche l'initialisation
 
-**Solution** :
+**Solution JavaScript** :
 ```javascript
-// Dans app.js, s'assurer que l'initialisation se fait au chargement :
 document.addEventListener('DOMContentLoaded', function() {
   App.init();
 });
 
-// Vérifier que tous les boutons ont leurs listeners :
+// Dans init(), vérifier que tous les listeners sont attachés :
 init: function() {
-  // Boutons de connexion/inscription
   const loginBtn = document.getElementById('btn-login');
   const registerBtn = document.getElementById('btn-register');
   const showRegisterBtn = document.getElementById('show-register');
   const showLoginBtn = document.getElementById('show-login');
+  const forgotPwdBtn = document.getElementById('btn-forgot-password'); // NOUVEAU
 
   if (loginBtn) loginBtn.addEventListener('click', () => this.doLogin());
   if (registerBtn) registerBtn.addEventListener('click', () => this.doRegister());
   if (showRegisterBtn) showRegisterBtn.addEventListener('click', () => this.showRegisterForm());
   if (showLoginBtn) showLoginBtn.addEventListener('click', () => this.showLoginForm());
-
-  // ... autres initialisations
+  if (forgotPwdBtn) forgotPwdBtn.addEventListener('click', () => this.showForgotPassword()); // NOUVEAU
 }
 ```
 
-**Vérifier dans le CSS qu'il n'y a pas :**
+**Vérifier CSS** :
 ```css
-/* NE PAS AVOIR CES RÈGLES SUR LES BOUTONS */
-pointer-events: none;  /* À SUPPRIMER si présent */
-```
-
-**Vérifier que le modal-overlay ne bloque pas :**
-```css
+/* Le modal-overlay ne doit PAS bloquer les clics quand caché */
 .modal-overlay.hidden {
-  display: none;  /* IMPORTANT : doit être display:none, pas visibility:hidden */
+  display: none;
   pointer-events: none;
 }
 ```
 
-### BUG 1 : Logo non affiché sur la page de connexion
-**Problème** : Le logo n'apparaît pas, on voit juste un cercle vide avec "Logo" écrit.
-**Cause** : Le fichier `logo.js` contient un LOGO_BASE64 tronqué/incomplet.
-**Solution** :
-- Le logo Chaoui Engagé est fourni en pièce jointe
-- Il faut le convertir en Base64 COMPLET et le mettre dans `logo.js`
-- Vérifier que l'image est bien chargée dans le DOM
+### BUG 1 : Logo non affiché
+- Convertir le logo en Base64 **COMPLET** dans `logo.js`
+- Vérifier le chargement dans le DOM
 
-### BUG 2 : Avatar avec initiale non affiché dans le header
-**Problème** : Dans le dashboard, on voit une image cassée au lieu d'un cercle avec la première lettre du prénom (ex: "L" pour Lyes).
-**Cause** : Le HTML actuel utilise une balise `<img>` au lieu d'afficher l'initiale :
+### BUG 2 : Avatar avec initiale non affiché
 ```html
-<!-- MAUVAIS (actuel) -->
-<div class="logo-circle-small logo-circle" id="btn-admin-access">
-    <img id="dashboard-logo" src="" alt="Admin">
-</div>
-
-<!-- CORRECT (à faire) -->
+<!-- CORRECT -->
 <div class="user-avatar" id="btn-admin-access">
     <span class="avatar-letter" id="user-avatar-letter">L</span>
 </div>
 ```
-**Solution** :
-- Remplacer l'image par un cercle doré avec la première lettre du prénom
-- Dans `app.js`, mettre à jour dynamiquement : `document.getElementById('user-avatar-letter').textContent = this.user.firstName.charAt(0).toUpperCase();`
 
-### BUG 3 : "Accès refusé" quand on clique sur l'avatar pour accéder à l'admin
-**Problème** : L'utilisateur `chaouiengage@gmail.com` reçoit "Accès refusé" quand il clique sur l'avatar.
-**Causes multiples** :
-1. Le backend vérifie encore `ADMIN_CODE_HASH` (15112000) au lieu de se baser uniquement sur l'email
-2. Le frontend vérifie `this.user.isAdmin` mais cette valeur n'est pas correctement transmise/stockée
-3. La fonction `showAdmin()` appelle `adminGetUsers` qui échoue car `user.isAdmin` est false
-
-**Solution Backend (Code.gs)** :
+### BUG 3 : "Accès refusé" pour l'admin
 ```javascript
-// SUPPRIMER cette ligne :
-const _SEC_2 = "MTUxMTIwMDA="; // Admin Code (15112000)
-const ADMIN_CODE_HASH = decodeSecret(_SEC_2);
-
-// Dans apiLogin, AVANT de générer le token, forcer isAdmin si email = admin :
+// Backend - Forcer isAdmin si email = admin
 if (cleanEmail === ADMIN_EMAIL) {
     user.isAdmin = true;
     user.canCreate = true;
 }
+```
 
-// Dans apiRegister, idem :
-if (cleanEmail === ADMIN_EMAIL) {
-    isAdmin = true;
-    canCreate = true;
+### BUG 4 : Déconnexion automatique
+- Utiliser `LockService` pour garantir la sauvegarde du token
+- Vérifier que le token est bien inclus dans `localStorage`
+
+### BUG 5 : Code admin 15112000 encore présent
+**SUPPRIMER TOUTES les références** au code fixe. L'admin est identifié UNIQUEMENT par email.
+
+---
+
+## 📧 MODULE D'AUTOMATISATION DES EMAILS (NOUVEAU)
+
+### Principe
+Utilisation du service natif `MailApp` de Google Apps Script (100 envois/jour compte gratuit, 1500/jour Workspace).
+
+### Les 3 Types d'Emails Automatiques
+
+#### 1. Email de Bienvenue (Inscription)
+**Déclencheur** : Fonction `register()` après création réussie du compte
+
+```javascript
+// Dans Code.gs, après création du user :
+function sendWelcomeEmail(email, firstName) {
+  const subject = "Bienvenue sur WhatsHappen";
+  const htmlBody = getWelcomeEmailTemplate(firstName);
+
+  MailApp.sendEmail({
+    to: email,
+    subject: subject,
+    htmlBody: htmlBody
+  });
 }
 ```
 
-**Solution Frontend (app.js)** :
+#### 2. Notification "Fantôme" (Nouveau Message)
+**Déclencheur** : Fonction `sendMessage()` si destinataire inactif > 5 minutes
+**Principe de confidentialité** : AUCUNE information sur l'expéditeur ou le contenu !
+
 ```javascript
-// Le check admin doit être plus permissif :
-const adminBtn = document.getElementById('btn-admin-access');
-if (adminBtn) {
-    adminBtn.onclick = () => {
-        // Vérifier AUSSI l'email en plus de isAdmin
-        const adminEmail = atob("Y2hhb3VpZW5nYWdlQGdtYWlsLmNvbQ=="); // chaouiengage@gmail.com
-        if (this.user && (this.user.isAdmin === true || this.user.email === adminEmail)) {
-            this.showAdmin();
-        } else {
-            this.showError("Accès réservé aux administrateurs.");
-        }
-    };
+// Dans Code.gs, dans sendMessage() :
+function notifyInactiveUser(recipientEmail) {
+  // Vérifier si l'utilisateur est inactif depuis > 5 min
+  const user = getUserByEmail(recipientEmail);
+  const lastSeen = new Date(user.lastSeen || 0);
+  const now = new Date();
+  const diffMinutes = (now - lastSeen) / 60000;
+
+  if (diffMinutes > 5) {
+    MailApp.sendEmail({
+      to: recipientEmail,
+      subject: "Activité détectée sur votre compte",
+      htmlBody: getNotificationEmailTemplate()
+    });
+  }
 }
 ```
 
-### BUG 4 : Déconnexion automatique après 2 secondes
-**Problème** : L'utilisateur est déconnecté immédiatement après connexion.
-**Cause** : Le polling `loadConversations()` appelle l'API avec un token qui ne correspond pas à celui stocké dans la DB.
-**Explication** :
-- À la connexion, un token est généré et retourné
-- Mais le `writeUsersDb()` peut ne pas s'exécuter correctement
-- Ou le token stocké en localStorage ne correspond pas
+**Contenu de l'email** (volontairement vague pour la sécurité) :
+- Sujet : "Activité détectée sur votre compte"
+- Corps : "Un événement récent requiert votre attention. Connectez-vous à WhatsHappen pour le consulter."
 
-**Solution Backend (Code.gs)** :
+#### 3. Récupération de Mot de Passe
+**Déclencheur** : Nouvelle action API `forgotPassword`
+
 ```javascript
-function apiLogin(email, code) {
+// Nouvelles actions API à ajouter :
+case 'forgotPassword':
+  return apiForgotPassword(data.email);
+
+case 'verifyResetCode':
+  return apiVerifyResetCode(data.email, data.code);
+
+case 'resetPassword':
+  return apiResetPassword(data.email, data.code, data.newCode);
+```
+
+**Implémentation Backend** :
+```javascript
+function apiForgotPassword(email) {
   const lock = LockService.getScriptLock();
   try {
     lock.waitLock(15000);
@@ -188,103 +239,397 @@ function apiLogin(email, code) {
     const cleanEmail = email.toLowerCase().trim();
     const user = db.users.find(u => u.email === cleanEmail);
 
-    if (!user) throw new Error("Cette adresse email n'est pas inscrite.");
-    if (user.code !== code.toString()) throw new Error("Le code est incorrect.");
-
-    // Force admin si c'est l'email admin
-    if (cleanEmail === ADMIN_EMAIL) {
-        user.isAdmin = true;
-        user.canCreate = true;
+    if (!user) {
+      throw new Error("Cette adresse email n'est pas inscrite.");
     }
 
-    // Générer le token
-    const token = Utilities.getUuid();
-    user.token = token;
+    // Générer code à 6 chiffres valide 10 minutes
+    const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const resetExpiry = Date.now() + (10 * 60 * 1000); // 10 min
 
-    // IMPORTANT : Sauvegarder AVANT de retourner
+    user.resetCode = resetCode;
+    user.resetExpiry = resetExpiry;
     writeUsersDb(db);
 
-    return { success: true, token: token, user: sanitizeUser(user) };
+    // Envoyer l'email
+    MailApp.sendEmail({
+      to: cleanEmail,
+      subject: "Code de récupération WhatsHappen",
+      htmlBody: getResetPasswordEmailTemplate(user.firstName, resetCode)
+    });
+
+    return { success: true, message: "Un code de récupération a été envoyé à votre adresse email." };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function apiVerifyResetCode(email, code) {
+  const db = readUsersDb();
+  const user = db.users.find(u => u.email === email.toLowerCase().trim());
+
+  if (!user || user.resetCode !== code) {
+    throw new Error("Code de récupération invalide.");
+  }
+
+  if (Date.now() > user.resetExpiry) {
+    throw new Error("Ce code a expiré. Veuillez en demander un nouveau.");
+  }
+
+  return { success: true, valid: true };
+}
+
+function apiResetPassword(email, code, newCode) {
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(15000);
+
+    const db = readUsersDb();
+    const user = db.users.find(u => u.email === email.toLowerCase().trim());
+
+    if (!user || user.resetCode !== code || Date.now() > user.resetExpiry) {
+      throw new Error("Code de récupération invalide ou expiré.");
+    }
+
+    // Validation du nouveau code (3 chiffres)
+    if (!/^\d{3}$/.test(newCode)) {
+      throw new Error("Le code doit contenir exactement 3 chiffres.");
+    }
+
+    user.code = newCode;
+    delete user.resetCode;
+    delete user.resetExpiry;
+    writeUsersDb(db);
+
+    return { success: true, message: "Votre code a été réinitialisé avec succès." };
   } finally {
     lock.releaseLock();
   }
 }
 ```
 
-**Solution Frontend (app.js)** :
-```javascript
-// Stocker le token correctement après login
-doLogin: async function() {
-    const email = document.getElementById('login-email').value;
-    const code = document.getElementById('login-code').value;
+### Interface Frontend - Bouton "Mot de passe oublié"
 
-    try {
-        this.toggleLoader(true);
-        const res = await this.api('login', { email, code });
+**Ajouter dans index.html** (sous le formulaire de connexion) :
+```html
+<div class="forgot-password-container">
+  <a href="#" id="btn-forgot-password" class="forgot-password-link">
+    Mot de passe oublié ?
+  </a>
+</div>
+```
 
-        if (res.requireNewPassword) {
-            await this.handleChangePassword(email, code);
-            return;
-        }
+**CSS** :
+```css
+.forgot-password-container {
+  text-align: center;
+  margin-top: 15px;
+}
 
-        // S'assurer que le token est bien stocké
-        this.user = {
-            ...res.user,
-            token: res.token  // IMPORTANT : inclure le token !
-        };
-        localStorage.setItem('wh_user', JSON.stringify(this.user));
-        this.showDashboard();
-    } catch (e) {
-        this.showError(e.message);
-    } finally {
-        this.toggleLoader(false);
-    }
+.forgot-password-link {
+  color: #888;
+  font-size: 0.85rem;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.forgot-password-link:hover {
+  color: #D4AF37;
+  text-decoration: underline;
 }
 ```
 
-### BUG 5 : Le code admin 15112000 est encore dans le code
-**Problème** : Le backend contient encore des références au code 15112000.
-**Solution** : Supprimer TOUTES les références :
+**JavaScript (app.js)** :
 ```javascript
-// SUPPRIMER ces lignes dans Code.gs :
-const _SEC_2 = "MTUxMTIwMDA="; // Admin Code (15112000)
-const ADMIN_CODE_HASH = decodeSecret(_SEC_2);
+showForgotPassword: async function() {
+  // Étape 1 : Demander l'email
+  const email = await showPrompt("Récupération de compte", "Entrez votre adresse email");
+  if (!email) return;
+
+  try {
+    this.toggleLoader(true);
+    await this.api('forgotPassword', { email });
+
+    // Étape 2 : Demander le code reçu par email
+    const code = await showPrompt("Code de récupération", "Entrez le code à 6 chiffres reçu par email");
+    if (!code) return;
+
+    // Vérifier le code
+    await this.api('verifyResetCode', { email, code });
+
+    // Étape 3 : Nouveau mot de passe
+    const newCode = await showPrompt("Nouveau code", "Choisissez un nouveau code à 3 chiffres");
+    if (!newCode) return;
+
+    await this.api('resetPassword', { email, code, newCode });
+    await showSuccess("Votre code a été réinitialisé. Vous pouvez maintenant vous connecter.");
+
+  } catch (e) {
+    this.showError(e.message);
+  } finally {
+    this.toggleLoader(false);
+  }
+}
 ```
 
 ---
 
-## CHECKLIST DE VÉRIFICATION (À FAIRE AVANT DE LIVRER)
+## 📨 DESIGN DES TEMPLATES EMAILS
 
-Avant de soumettre le code, Jules doit vérifier :
+### Direction Artistique
+- **Style** : Dark Mode par défaut (cohérent avec l'app)
+- **Typographie** : Police Monospace (aspect technique/sécurisé)
+- **Couleurs** : Noir #1a1a1a, Or #D4AF37, Gris #888
+- **Logo** : Centré en haut, rond avec bordure dorée
+- **Ton** : Direct, professionnel, mystérieux
 
-- [ ] Le logo s'affiche sur la page de connexion
-- [ ] L'avatar affiche la première lettre du prénom (pas une image)
-- [ ] L'avatar est cliquable et ouvre l'admin pour `chaouiengage@gmail.com`
-- [ ] Pas de déconnexion automatique après connexion
-- [ ] Pas de référence à 15112000 dans le code
-- [ ] L'admin est identifié UNIQUEMENT par email
-- [ ] Toutes les erreurs sont en français
-- [ ] Pas d'utilisation de `alert()`, `confirm()`, `prompt()`
+### Template de Base (email-templates.js ou dans Code.gs)
+
+```javascript
+function getEmailBaseTemplate(content) {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: 'Courier New', monospace;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" max-width="500px" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%); border: 2px solid #D4AF37; border-radius: 15px; padding: 30px;">
+
+          <!-- Logo -->
+          <tr>
+            <td align="center" style="padding-bottom: 25px;">
+              <div style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid #D4AF37; overflow: hidden; display: inline-block;">
+                <img src="[LOGO_URL_OR_BASE64]" alt="WhatsHappen" style="width: 100%; height: 100%; object-fit: cover;">
+              </div>
+            </td>
+          </tr>
+
+          <!-- Titre -->
+          <tr>
+            <td align="center" style="padding-bottom: 10px;">
+              <h1 style="color: #D4AF37; font-size: 24px; margin: 0; letter-spacing: 2px;">WHATSHAPPEN</h1>
+            </td>
+          </tr>
+
+          <!-- Sous-titre -->
+          <tr>
+            <td align="center" style="padding-bottom: 25px;">
+              <p style="color: #888; font-size: 12px; margin: 0;">Messagerie Sécurisée & Éphémère</p>
+            </td>
+          </tr>
+
+          <!-- Contenu dynamique -->
+          ${content}
+
+          <!-- Footer -->
+          <tr>
+            <td align="center" style="padding-top: 30px; border-top: 1px solid #333;">
+              <p style="color: #555; font-size: 11px; margin: 0;">
+                Message généré automatiquement par le protocole WhatsHappen.<br>
+                Cet email est confidentiel et sécurisé.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `;
+}
+
+// Template Email de Bienvenue
+function getWelcomeEmailTemplate(firstName) {
+  const content = `
+    <tr>
+      <td align="center" style="padding: 20px;">
+        <p style="color: #fff; font-size: 16px; line-height: 1.6;">
+          Bienvenue <strong style="color: #D4AF37;">${firstName}</strong>,
+        </p>
+        <p style="color: #ccc; font-size: 14px; line-height: 1.6;">
+          Votre compte WhatsHappen a été créé avec succès.
+        </p>
+        <p style="color: #888; font-size: 13px; line-height: 1.6; margin-top: 20px;">
+          Rappel : Ici, rien n'est gardé.<br>
+          Vos conversations sont éphémères et chiffrées.
+        </p>
+      </td>
+    </tr>
+  `;
+  return getEmailBaseTemplate(content);
+}
+
+// Template Notification Fantôme
+function getNotificationEmailTemplate() {
+  const content = `
+    <tr>
+      <td align="center" style="padding: 20px;">
+        <p style="color: #D4AF37; font-size: 18px; margin-bottom: 15px;">
+          ⚡ Activité détectée
+        </p>
+        <p style="color: #ccc; font-size: 14px; line-height: 1.6;">
+          Un événement récent requiert votre attention.
+        </p>
+        <p style="color: #888; font-size: 13px; line-height: 1.6; margin-top: 15px;">
+          Connectez-vous à WhatsHappen pour le consulter.
+        </p>
+      </td>
+    </tr>
+  `;
+  return getEmailBaseTemplate(content);
+}
+
+// Template Récupération MDP
+function getResetPasswordEmailTemplate(firstName, code) {
+  const content = `
+    <tr>
+      <td align="center" style="padding: 20px;">
+        <p style="color: #fff; font-size: 16px; line-height: 1.6;">
+          Bonjour <strong style="color: #D4AF37;">${firstName}</strong>,
+        </p>
+        <p style="color: #ccc; font-size: 14px; line-height: 1.6;">
+          Vous avez demandé à réinitialiser votre code d'accès.
+        </p>
+        <div style="background: #0a0a0a; border: 2px solid #D4AF37; border-radius: 10px; padding: 20px; margin: 25px 0;">
+          <p style="color: #888; font-size: 12px; margin: 0 0 10px 0;">Votre code de récupération :</p>
+          <p style="color: #D4AF37; font-size: 32px; font-weight: bold; letter-spacing: 8px; margin: 0;">${code}</p>
+        </div>
+        <p style="color: #ff6b6b; font-size: 12px;">
+          ⏱️ Ce code expire dans 10 minutes.
+        </p>
+        <p style="color: #666; font-size: 11px; margin-top: 20px;">
+          Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.
+        </p>
+      </td>
+    </tr>
+  `;
+  return getEmailBaseTemplate(content);
+}
+```
 
 ---
 
+## ⚡ OPTIMISATIONS AVANCÉES APPS SCRIPT
+
+### 1. Gestion de la Concurrence (LockService) - CRITIQUE
+
+**Problème** : Deux écritures simultanées peuvent corrompre les données.
+
+```javascript
+// ENCAPSULER TOUTES les fonctions d'écriture avec LockService
+function writeUsersDb(db) {
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(15000); // Attendre max 15 secondes
+
+    const folder = DriveApp.getFolderById(FOLDER_ID);
+    const file = getFileByName(folder, 'users.json');
+    const encrypted = encrypt(JSON.stringify(db));
+    file.setContent(encrypted);
+
+  } finally {
+    lock.releaseLock();
+  }
+}
+```
+
+### 2. Accélération via Cache (CacheService)
+
+**Gain estimé** : x10 sur les lectures répétées
+
+```javascript
+const CACHE_DURATION = 600; // 10 minutes
+
+function readUsersDbCached() {
+  const cache = CacheService.getScriptCache();
+  const cached = cache.get('users_db');
+
+  if (cached) {
+    return JSON.parse(cached);
+  }
+
+  // Pas en cache, lire depuis Drive
+  const db = readUsersDb();
+  cache.put('users_db', JSON.stringify(db), CACHE_DURATION);
+  return db;
+}
+
+// Invalider le cache après une écriture
+function invalidateUsersCache() {
+  CacheService.getScriptCache().remove('users_db');
+}
+```
+
+### 3. Trigger de Nettoyage Automatique
+
+**Configuration** : Exécuter `cleanUpExpiredChats` toutes les 5-15 minutes
+
+```javascript
+function cleanUpExpiredChats() {
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(30000);
+
+    const db = readChatsDb();
+    const now = Date.now();
+    let deleted = 0;
+
+    db.chats = db.chats.filter(chat => {
+      if (chat.expiryTime && now > chat.expiryTime) {
+        // Supprimer le fichier de conversation sur Drive
+        try {
+          const file = DriveApp.getFileById(chat.fileId);
+          file.setTrashed(true);
+        } catch (e) {
+          Logger.log('Fichier déjà supprimé: ' + chat.id);
+        }
+        deleted++;
+        return false; // Retirer du tableau
+      }
+      return true; // Garder
+    });
+
+    if (deleted > 0) {
+      writeChatsDb(db);
+      Logger.log(deleted + ' conversation(s) expirée(s) supprimée(s)');
+    }
+
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// À configurer dans Apps Script : Triggers > Add Trigger > cleanUpExpiredChats > Time-driven > Minutes timer > Every 5 minutes
+```
+
+### 4. Mise à jour du Last Seen (pour notifications)
+
+```javascript
+function updateLastSeen(userId) {
+  const db = readUsersDb();
+  const user = db.users.find(u => u.id === userId);
+  if (user) {
+    user.lastSeen = Date.now();
+    writeUsersDb(db);
+    invalidateUsersCache();
+  }
+}
+
+// Appeler dans getState() et getMessages()
+```
+
 ---
 
-## Contexte du Projet
+## Informations de Configuration (À CHIFFRER EN BASE64)
 
-Je souhaite développer une **application de messagerie instantanée sécurisée** (type WhatsApp) nommée **"WhatsHappen"** avec le branding **"Chaoui Engagé"**.
-
-### Architecture Obligatoire
-- **Frontend** : Hébergé sur **Netlify** (app.netlify.com) - fichiers HTML/CSS/JS statiques
-- **Backend** : **Google Apps Script** servant d'API JSON (doPost)
-- **Base de données** : **Google Drive** - les fichiers Google Docs servent de stockage de données chiffrées
-- **PAS de bibliothèques externes** (pas de CryptoJS, etc.) - utiliser un chiffrement natif (XOR/Base64)
-
----
-
-## Informations de Configuration (À CHIFFRER EN BASE64 DANS LE CODE)
-
-### ⚠️ CRITIQUE : Aucune de ces informations ne doit apparaître en clair dans AUCUN fichier !
+### ⚠️ CRITIQUE : Aucune de ces informations ne doit apparaître en clair !
 
 | Élément | Valeur | Encodage Base64 |
 |---------|--------|-----------------|
@@ -292,15 +637,13 @@ Je souhaite développer une **application de messagerie instantanée sécurisée
 | URL Apps Script | `https://script.google.com/macros/s/AKfycbxzFevbQJzerwD2L-uNcVTRJE9XVJ4HGdC9KUftOyIKT9pqErsvNfPsfSC12MjBEUDQvA/exec` | `aHR0cHM6Ly9zY3JpcHQuZ29vZ2xlLmNvbS9tYWNyb3Mvcy9BS2Z5Y2J4ekZldmJRSnplcndEMkwtdW5jVlRSSkU5WFZKNEhHZEM5S1VmdE95SUtUOXBxRXJzdk5mUHNmU0MxMk1qQkVVRFF2QS9leGVj` |
 | Email Super-Admin | `chaouiengage@gmail.com` | `Y2hhb3VpZW5nYWdlQGdtYWlsLmNvbQ==` |
 
-**⚠️ IMPORTANT : PAS de code admin fixe !** Le super-admin est identifié **UNIQUEMENT par son email**. Il choisit son code à 3 chiffres comme tout le monde.
-
 ---
 
 ## Sécurité & Cryptage (PRIORITÉ ABSOLUE - RGPD)
 
 ### Règles strictes :
 1. **TOUT** ce qui est écrit dans Google Drive doit être chiffré
-2. **AUCUN lien, email, mot de passe ou donnée sensible** ne doit apparaître en clair
+2. **AUCUN** lien, email, mot de passe ou donnée sensible en clair
 3. Utiliser un **chiffrement natif** (XOR + Base64) sans bibliothèque externe
 4. Les utilisateurs ne voient que les **prénoms**, jamais les emails
 5. Protections **anti-capture d'écran** (CSS blur, user-select: none)
@@ -336,24 +679,20 @@ function decrypt(cipher) {
 
 ## Messages d'Erreur en FRANÇAIS (OBLIGATOIRE)
 
-### ⚠️ TOUS les messages doivent être en français et compréhensibles :
-
 | Situation | Message |
 |-----------|---------|
 | Email non trouvé | "Cette adresse email n'est pas inscrite." |
 | Code incorrect | "Le code est incorrect." |
 | Email déjà inscrit | "Cette adresse email est déjà utilisée." |
-| Code invalide (pas 3 chiffres) | "Le code doit contenir exactement 3 chiffres." |
+| Code invalide | "Le code doit contenir exactement 3 chiffres." |
 | Session expirée | "Votre session a expiré. Veuillez vous reconnecter." |
 | Utilisateur introuvable | "Cet utilisateur n'existe pas dans le système." |
 | Pas de droits création | "Vous n'avez pas les droits pour créer une conversation." |
-| Pas de droits ajout | "Vous n'avez pas les droits pour ajouter des participants." |
 | Conversation expirée | "Cette conversation a expiré et a été supprimée." |
 | Erreur serveur | "Une erreur est survenue. Veuillez réessayer." |
-| Champ vide | "Veuillez remplir tous les champs." |
-| Participant déjà présent | "Cette personne est déjà dans la conversation." |
-| Impossible supprimer admin | "Impossible de supprimer le super-administrateur." |
-| Connexion requise | "Veuillez vous connecter pour accéder à cette fonctionnalité." |
+| Code reset invalide | "Code de récupération invalide." |
+| Code reset expiré | "Ce code a expiré. Veuillez en demander un nouveau." |
+| Email envoyé | "Un code de récupération a été envoyé à votre adresse email." |
 
 ---
 
@@ -361,104 +700,6 @@ function decrypt(cipher) {
 
 ### ❌ INTERDIT : `alert()`, `confirm()`, `prompt()` du navigateur
 
-### Structure HTML des modales :
-```html
-<div id="modal-overlay" class="modal-overlay hidden">
-  <div id="modal-box" class="modal-box">
-    <div class="modal-icon"></div>
-    <div class="modal-title"></div>
-    <div class="modal-message"></div>
-    <div class="modal-input-container hidden">
-      <input type="text" id="modal-input" class="modal-input" />
-    </div>
-    <div class="modal-buttons">
-      <button id="modal-cancel" class="btn-modal btn-cancel hidden">Annuler</button>
-      <button id="modal-confirm" class="btn-modal btn-confirm">OK</button>
-    </div>
-  </div>
-</div>
-```
-
-### CSS des modales :
-```css
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.85);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-  backdrop-filter: blur(5px);
-}
-
-.modal-overlay.hidden { display: none; }
-
-.modal-box {
-  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-  border: 2px solid #D4AF37;
-  border-radius: 15px;
-  padding: 30px;
-  max-width: 400px;
-  width: 90%;
-  text-align: center;
-  box-shadow: 0 0 30px rgba(212, 175, 55, 0.3);
-  animation: modalAppear 0.3s ease-out;
-}
-
-@keyframes modalAppear {
-  from { transform: scale(0.8); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
-}
-
-.modal-icon { font-size: 48px; margin-bottom: 15px; }
-.modal-title { color: #D4AF37; font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; }
-.modal-message { color: #fff; font-size: 1rem; margin-bottom: 20px; line-height: 1.5; }
-
-.modal-input {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #D4AF37;
-  border-radius: 8px;
-  background: #333;
-  color: #fff;
-  font-size: 1rem;
-  margin-bottom: 15px;
-}
-
-.btn-modal {
-  padding: 12px 30px;
-  border: none;
-  border-radius: 25px;
-  font-size: 1rem;
-  font-weight: bold;
-  cursor: pointer;
-  margin: 5px;
-  transition: all 0.3s ease;
-}
-
-.btn-confirm {
-  background: linear-gradient(135deg, #D4AF37 0%, #C9A227 100%);
-  color: #000;
-}
-
-.btn-cancel {
-  background: transparent;
-  border: 1px solid #666;
-  color: #999;
-}
-
-.modal-box.error .modal-icon::before { content: "❌"; }
-.modal-box.success .modal-icon::before { content: "✅"; }
-.modal-box.info .modal-icon::before { content: "ℹ️"; }
-.modal-box.warning .modal-icon::before { content: "⚠️"; }
-.modal-box.confirm .modal-icon::before { content: "❓"; }
-```
-
-### Fonctions JavaScript :
 ```javascript
 function showModal(type, title, message, showCancel = false, inputPlaceholder = null) {
   return new Promise((resolve) => {
@@ -497,7 +738,7 @@ function showModal(type, title, message, showCancel = false, inputPlaceholder = 
   });
 }
 
-// Raccourcis en français
+// Raccourcis
 const showError = (msg) => showModal('error', 'Erreur', msg);
 const showSuccess = (msg) => showModal('success', 'Succès', msg);
 const showInfo = (msg) => showModal('info', 'Information', msg);
@@ -510,146 +751,31 @@ const showPrompt = (title, placeholder) => showModal('info', title, '', true, pl
 ## Fonctionnalités Requises
 
 ### 1. Authentification
+- **Email** + **Prénom** + **Code à 3 chiffres** pour tous
+- Super-admin identifié UNIQUEMENT par email (`chaouiengage@gmail.com`)
+- Token de session UUID stocké serveur + LocalStorage
+- **NOUVEAU** : Bouton "Mot de passe oublié" avec récupération par email
 
-#### Inscription :
-- **Email** + **Prénom** + **Code à 3 chiffres**
-- **TOUT LE MONDE** choisit un code à 3 chiffres, y compris l'admin
-- Le super-admin est identifié **UNIQUEMENT par son email** (`chaouiengage@gmail.com`)
-- À l'inscription, si l'email = super-admin → automatiquement `isAdmin: true` et `canCreate: true`
-- Validation : le code doit faire **exactement 3 chiffres** pour TOUS
-
-#### Connexion :
-- **Email** + **Code à 3 chiffres**
-- Token de session (UUID) stocké côté serveur et en LocalStorage
-
-### 2. Interface Header avec Avatar Cliquable
-
-#### Structure du header (TRÈS IMPORTANT) :
-```
-┌─────────────────────────────────────────────────┐
-│  [Avatar]  Prénom            [Refresh] [Logout] │
-│     ↓                                           │
-│  Cliquable!                                     │
-└─────────────────────────────────────────────────┘
-```
-
-#### Avatar :
-- **Cercle avec la première lettre du prénom** (ex: "L" pour Lyes)
-- Bordure dorée
-- **CLIQUABLE pour TOUS les utilisateurs**
-- Quand on clique :
-  - **Si admin** → Ouvre le panneau admin
-  - **Si non-admin** → Ouvre le profil utilisateur
-
-#### HTML de l'avatar :
-```html
-<div class="user-header">
-  <div class="user-avatar" id="avatar-btn" title="Cliquez pour accéder aux options">
-    <span class="avatar-letter">L</span>
-  </div>
-  <span class="user-name">Lyes</span>
-  <!-- Afficher "Admin" seulement si isAdmin -->
-  <span class="admin-badge" id="admin-badge" style="display: none;">Admin</span>
-</div>
-```
-
-#### CSS de l'avatar :
-```css
-.user-avatar {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  border: 2px solid #D4AF37;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-}
-
-.user-avatar:hover {
-  box-shadow: 0 0 15px rgba(212, 175, 55, 0.5);
-  transform: scale(1.05);
-}
-
-.avatar-letter {
-  color: #D4AF37;
-  font-size: 1.5rem;
-  font-weight: bold;
-}
-
-.admin-badge {
-  background: #D4AF37;
-  color: #000;
-  padding: 2px 8px;
-  border-radius: 10px;
-  font-size: 0.7rem;
-  font-weight: bold;
-  margin-left: 5px;
-}
-```
+### 2. Header avec Avatar Cliquable
+- Cercle avec première lettre du prénom
+- Bordure dorée, cliquable
+- Admin → Panneau admin / Non-admin → Profil
 
 ### 3. Conversations
-
-#### Création :
-- Choix de la durée : **10min**, **12h**, **24h**, **48h**, ou **Illimité**
-- **ON PEUT CRÉER UNE CONVERSATION AVEC SOI-MÊME** (pour notes personnelles)
-- Sélection des participants par email
-- Si email non inscrit → Modal "Cet utilisateur n'existe pas dans le système."
-- Seuls les **admins** ou les utilisateurs avec **droits de création** peuvent créer
-
-#### Bouton de création :
-- Le bouton "+" est **INVISIBLE** (pas juste désactivé) si l'utilisateur n'a pas les droits
-- Position : en bas à droite, flottant
-
-#### Messages :
-- Envoi de texte, images et fichiers (Base64)
-- Polling toutes les 3 secondes
-- Affiche le **prénom** de l'expéditeur
-
-#### Suppression immédiate à expiration :
-- Quand le timer atteint 0 → suppression instantanée
-- Modal "Cette conversation a expiré et a été supprimée."
-- Redirection vers le dashboard
+- Durées : **10min**, **12h**, **24h**, **48h**, **Illimité**
+- Conversations avec soi-même autorisées
+- Bouton "+" invisible si pas les droits
+- Suppression immédiate à expiration
 
 ### 4. Console Admin
-
-#### Accès :
-- Cliquer sur l'**avatar** (cercle avec initiale) dans le header
-- Seuls les utilisateurs avec `isAdmin: true` voient le panneau admin
-- Les non-admins voient leur profil
-
-#### Fonctionnalités admin :
-| Action | Description |
-|--------|-------------|
-| Voir utilisateurs | Liste avec email, prénom, droits, date |
-| Supprimer utilisateur | Modal de confirmation (impossible pour super-admin) |
-| Donner/retirer droits création | Toggle |
-| Promouvoir/rétrograder admin | Toggle (impossible pour super-admin) |
-| Réinitialiser mot de passe | Génère code temporaire à 4 chiffres |
-
-#### Protections super-admin :
-- `chaouiengage@gmail.com` NE PEUT JAMAIS :
-  - Perdre son statut admin
-  - Perdre ses droits de création
-  - Être supprimé
-
-### 5. Profil Utilisateur (pour non-admins)
-
-Quand un utilisateur non-admin clique sur son avatar :
-- Voir son prénom et email (partiellement masqué)
-- Changer son code
-- Se déconnecter
+- Gestion des utilisateurs
+- Donner/retirer droits
+- Réinitialiser mot de passe
+- Protection super-admin absolue
 
 ---
 
 ## Design & UI (Branding "Chaoui Engagé")
-
-### Logo :
-- **Le logo doit être affiché sur la page de connexion**
-- Format : rond avec bordure dorée
-- Le logo est fourni en pièce jointe (à encoder en Base64)
 
 ### Palette :
 ```css
@@ -665,94 +791,66 @@ Quand un utilisateur non-admin clique sur son avatar :
 ```
 
 ### Page de connexion :
-- Logo Chaoui Engagé centré en haut
+- Logo centré en haut
 - Titre "CHAOUI ENGAGÉ" en doré
-- Sous-titre "Messagerie Sécurisée & Éphémère" en gris
-- Champ email : fond clair
-- Champ code : fond sombre, type password
-
-### Dashboard :
-- Header avec avatar cliquable + prénom + badge "Admin" si applicable
-- Liste des conversations en cartes glassmorphism
-- Bouton "+" flottant (si autorisé)
-
----
-
-## Structure des Fichiers
-
-### Backend - `Code.gs` (UN SEUL FICHIER)
-
-```javascript
-// Actions API (noms exacts à utiliser) :
-switch (action) {
-  case 'login': ...
-  case 'register': ...
-  case 'changePassword': ...
-  case 'getState': ...
-  case 'createChat': ...        // PAS "createConversation" !
-  case 'sendMessage': ...
-  case 'getMessages': ...
-  case 'addParticipant': ...
-  case 'expireChat': ...
-  case 'adminGetUsers': ...
-  case 'adminUpdateUser': ...
-  case 'adminDeleteUser': ...
-  case 'adminResetPassword': ...
-}
-```
-
-### Frontend - Dossier `netlify/`
-
-```
-netlify/
-├── index.html      # Structure complète avec modales
-├── style.css       # Design Chaoui Engagé
-├── app.js          # Logique (actions doivent matcher le backend!)
-├── logo.js         # Logo en Base64
-└── logo.jpeg       # Logo fichier
-```
+- Sous-titre "Messagerie Sécurisée & Éphémère"
+- Lien "Mot de passe oublié ?" discret sous le formulaire
 
 ---
 
 ## Actions API (NOMS EXACTS)
 
-| Action Frontend | Action Backend | Description |
-|-----------------|---------------|-------------|
-| `login` | `login` | Connexion |
-| `register` | `register` | Inscription |
-| `changePassword` | `changePassword` | Changer code |
-| `getState` | `getState` | Récupérer conversations |
-| `createChat` | `createChat` | Créer conversation |
-| `sendMessage` | `sendMessage` | Envoyer message |
-| `getMessages` | `getMessages` | Récupérer messages |
-| `addParticipant` | `addParticipant` | Ajouter participant |
-| `expireChat` | `expireChat` | Supprimer conversation expirée |
-| `adminGetUsers` | `adminGetUsers` | Liste utilisateurs (admin) |
-| `adminUpdateUser` | `adminUpdateUser` | Modifier droits (admin) |
-| `adminDeleteUser` | `adminDeleteUser` | Supprimer utilisateur (admin) |
-| `adminResetPassword` | `adminResetPassword` | Reset mot de passe (admin) |
+| Action | Description |
+|--------|-------------|
+| `login` | Connexion |
+| `register` | Inscription + Email de bienvenue |
+| `changePassword` | Changer code |
+| `forgotPassword` | **NOUVEAU** - Demander reset |
+| `verifyResetCode` | **NOUVEAU** - Vérifier code |
+| `resetPassword` | **NOUVEAU** - Nouveau code |
+| `getState` | Récupérer conversations |
+| `createChat` | Créer conversation |
+| `sendMessage` | Envoyer message + Notif si inactif |
+| `getMessages` | Récupérer messages |
+| `addParticipant` | Ajouter participant |
+| `expireChat` | Supprimer conversation expirée |
+| `adminGetUsers` | Liste utilisateurs (admin) |
+| `adminUpdateUser` | Modifier droits (admin) |
+| `adminDeleteUser` | Supprimer utilisateur (admin) |
+| `adminResetPassword` | Reset mot de passe (admin) |
 
 ---
 
-## Checklist Critique
+## CHECKLIST DE VÉRIFICATION (À FAIRE AVANT DE LIVRER)
 
-### ❌ NE JAMAIS FAIRE :
-- [ ] Afficher données sensibles en clair
-- [ ] Utiliser `alert()`, `confirm()`, `prompt()`
-- [ ] Utiliser un code admin fixe (pas de 15112000 !)
-- [ ] Empêcher les conversations avec soi-même
-- [ ] Afficher le bouton "+" si pas les droits
-- [ ] Avoir des noms d'actions différents frontend/backend
-- [ ] Messages d'erreur en anglais
+### Interface & Bugs
+- [ ] Le logo s'affiche sur la page de connexion
+- [ ] L'avatar affiche la première lettre du prénom
+- [ ] L'avatar est cliquable et ouvre l'admin pour l'email admin
+- [ ] Pas de déconnexion automatique après connexion
+- [ ] Tous les boutons sont cliquables
+- [ ] Le lien "Mot de passe oublié ?" est présent et fonctionnel
 
-### ✅ TOUJOURS FAIRE :
-- [ ] Identifier l'admin UNIQUEMENT par email
-- [ ] Code à 3 chiffres pour TOUS (y compris admin)
-- [ ] Avatar cliquable → admin ou profil
-- [ ] Messages d'erreur en français
-- [ ] Permettre conversation avec soi-même
-- [ ] Supprimer immédiatement à expiration
-- [ ] Afficher le logo sur la page de connexion
+### Sécurité
+- [ ] Pas de référence à 15112000 dans le code
+- [ ] L'admin est identifié UNIQUEMENT par email
+- [ ] Toutes les données Drive sont chiffrées
+- [ ] Pas d'utilisation de `alert()`, `confirm()`, `prompt()`
+
+### Emails
+- [ ] Email de bienvenue envoyé à l'inscription
+- [ ] Notification fantôme envoyée si destinataire inactif
+- [ ] Récupération de mot de passe fonctionnelle
+- [ ] Templates emails en Dark Mode avec logo
+
+### Optimisations
+- [ ] LockService sur toutes les écritures
+- [ ] CacheService pour les lectures fréquentes
+- [ ] Trigger de nettoyage configuré (5-15 min)
+
+### Langue
+- [ ] Toutes les erreurs sont en français
+- [ ] Interface entièrement en français
 
 ---
 
@@ -762,7 +860,9 @@ netlify/
 1. script.google.com → Nouveau projet "WhatsHappen"
 2. Coller Code.gs
 3. Déployer → Application Web → Tout le monde
-4. Trigger : `cleanUpExpiredChats` toutes les 5 minutes
+4. **Triggers** :
+   - `cleanUpExpiredChats` : Toutes les 5 minutes
+   - (Optionnel) `initializeDatabase` : Au démarrage
 
 ### Frontend :
 1. app.netlify.com
@@ -770,36 +870,44 @@ netlify/
 
 ### Premier lancement :
 1. Créer un compte avec `chaouiengage@gmail.com`
-2. Choisir un code à 3 chiffres (celui que tu veux)
+2. Choisir un code à 3 chiffres
 3. Tu seras automatiquement admin
 
 ---
 
-## Logo
+## Fichiers à Livrer
 
-**Le logo Chaoui Engagé est fourni en pièce jointe.** Il doit être :
-1. Encodé en Base64 dans `logo.js`
-2. Affiché sur la page de connexion (rond, bordure dorée)
-3. Visible et bien centré
+1. `Code.gs` (avec emails + optimisations)
+2. `netlify/index.html` (avec bouton MDP oublié)
+3. `netlify/style.css`
+4. `netlify/app.js` (avec flux récupération MDP)
+5. `netlify/logo.js`
+6. `INSTRUCTIONS.md`
 
 ---
 
-## Rappel Final
+## 💡 MA TOUCHE PERSONNELLE (Suggestions de Claude)
 
-Ce que je veux :
-- ✅ Admin identifié par email uniquement (pas de code fixe)
-- ✅ Code à 3 chiffres pour tout le monde
-- ✅ Avatar cliquable pour accéder à admin/profil
-- ✅ Conversations avec soi-même possibles
-- ✅ Messages d'erreur en français
-- ✅ Modales stylisées (pas d'alerts)
-- ✅ Logo affiché sur la page de connexion
-- ✅ Actions API harmonisées (createChat partout)
+### Améliorations Recommandées
 
-Fichiers à livrer :
-1. `Code.gs`
-2. `netlify/index.html`
-3. `netlify/style.css`
-4. `netlify/app.js`
-5. `netlify/logo.js`
-6. `INSTRUCTIONS.md`
+1. **Rate Limiting sur forgotPassword** : Limiter à 3 demandes par email par heure pour éviter le spam.
+
+2. **Indicateur "En ligne"** : Ajouter un point vert sur l'avatar si `lastSeen < 2 minutes`.
+
+3. **PWA Ready** : Ajouter un `manifest.json` minimal pour permettre l'installation sur mobile :
+```json
+{
+  "name": "WhatsHappen",
+  "short_name": "WH",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#D4AF37"
+}
+```
+
+4. **UI Optimiste** : Afficher le message immédiatement côté client avant confirmation serveur (meilleure UX).
+
+5. **Compression des images** : Réduire les images avant encodage Base64 pour économiser l'espace Drive.
+
+6. **Logs Admin** : Stocker les actions importantes (connexions, créations) dans un fichier `audit.log` pour le super-admin.
