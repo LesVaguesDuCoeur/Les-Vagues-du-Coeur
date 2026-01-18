@@ -359,6 +359,9 @@ const app = {
         btn.disabled = true;
         try {
             const res = await this.api('createConversation', { participants: emails, duration: duration });
+            if (res.invited && res.invited.length > 0) {
+                await this.showInfo(`Invitation envoyée à : ${res.invited.join(', ')}`);
+            }
             this.enterChat(res.chatId, null);
         } catch (e) { this.showError(e.message); } finally { btn.textContent = originalText; btn.disabled = false; }
     },

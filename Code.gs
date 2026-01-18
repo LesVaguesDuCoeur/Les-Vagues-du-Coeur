@@ -593,17 +593,26 @@ function apiCreateChat(token, email, participants, durationStr) {
     const db = readUsersDb();
     const user = db.users.find(u => u.email === email && u.token === token);
     if (!user) throw new Error("Session invalide");
-    const isSupportChat = participants.some(p => p.trim().toLowerCase() === ADMIN_EMAIL);
+
+    // Normalize emails
+    const cleanParticipants = participants.map(e => e.trim().toLowerCase()).filter(e => e.length > 0);
+    const isSupportChat = cleanParticipants.includes(ADMIN_EMAIL);
+
     if (!user.canCreate && !user.isAdmin && !user.isSubscriber && !isSupportChat) throw new Error("Droits insuffisants.");
 
-    const uniqueEmails = [...new Set([user.email, ...participants.map(e => e.trim().toLowerCase())])];
+    const uniqueEmails = [...new Set([user.email, ...cleanParticipants])];
     const validEmails = [];
     const validNames = [];
+    const invitedEmails = [];
+
     uniqueEmails.forEach(pEmail => {
       const p = db.users.find(u => u.email === pEmail);
       if (p) {
         validEmails.push(p.email);
         validNames.push(p.firstName);
+      } else {
+        // Invite handling
+        invitedEmails.push(pEmail);
       }
     });
 
@@ -659,7 +668,18 @@ function apiCreateChat(token, email, participants, durationStr) {
     chatsDb.chats.push({ id: doc.getId(), expiresAt: expiresAt });
     writeChatsDb(chatsDb);
 
-    return { success: true, chatId: doc.getId() };
+    // Send invitations
+    invitedEmails.forEach(invitee => {
+        try {
+            MailApp.sendEmail({
+                to: invitee,
+                subject: `${user.firstName} vous invite sur WhatsHappen`,
+                htmlBody: getInvitationEmailTemplate(user.firstName)
+            });
+        } catch(e) {}
+    });
+
+    return { success: true, chatId: doc.getId(), invited: invitedEmails };
   } finally {
     lock.releaseLock();
   }
@@ -1477,25 +1497,35 @@ function apiSendInvoiceEmail(token, email, invoiceId, targetEmail) {
     const invDb = readInvoicesDb();
     let invoice = null;
 
+    // Normalize target email if provided
+    let searchEmail = (user.isAdmin && targetEmail) ? targetEmail.trim().toLowerCase() : email.trim().toLowerCase();
+
+    // 1. Try finding by ID
     if (invoiceId && invoiceId !== 'latest' && !invoiceId.includes('@')) {
         invoice = invDb.invoices.find(i => i.reference === invoiceId);
     }
 
+    // 2. Try finding latest for email
     if (!invoice) {
-        const searchEmail = (user.isAdmin && targetEmail) ? targetEmail : email;
-        const userInvoices = invDb.invoices.filter(i => i.email === searchEmail);
+        // Handle case where invoiceId might be passed as an email by mistake or intention in admin context
+        if (user.isAdmin && invoiceId && invoiceId.includes('@')) {
+            searchEmail = invoiceId.trim().toLowerCase();
+        }
+
+        const userInvoices = invDb.invoices.filter(i => i.email.trim().toLowerCase() === searchEmail);
         if (userInvoices.length > 0) {
+            // Sort by date to ensure we get the latest
+            userInvoices.sort((a,b) => new Date(a.issuedAt) - new Date(b.issuedAt));
             invoice = userInvoices[userInvoices.length - 1];
         }
     }
 
-    if (!invoice && user.isAdmin && invoiceId && invoiceId.includes('@')) {
-         const userInvoices = invDb.invoices.filter(i => i.email === invoiceId);
-         if (userInvoices.length > 0) invoice = userInvoices[userInvoices.length - 1];
-    }
+    if (!invoice) throw new Error("Facture introuvable pour " + searchEmail);
 
-    if (!invoice) throw new Error("Facture introuvable");
-    if (invoice.email !== email && !user.isAdmin) throw new Error("Accès refusé");
+    // Security check
+    if (invoice.email.trim().toLowerCase() !== email.trim().toLowerCase() && !user.isAdmin) {
+        throw new Error("Accès refusé");
+    }
 
     MailApp.sendEmail({
         to: invoice.email,
@@ -1563,6 +1593,24 @@ function getAccessCodeEmailTemplate(code, alertId) {
 
 function getInvoiceEmailTemplate(firstName, invoice) {
     return `<!DOCTYPE html><html><body style="margin:0; padding:0; background-color:#0a0a0a; font-family:Arial,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px; margin:0 auto; background:#1a1a1a;"><tr><td style="padding:30px; text-align:center; border-bottom:2px solid #d4af37;"><h1 style="color:#d4af37; margin:0;">WHATSHAPPEN</h1><p style="color:#888; margin:5px 0 0 0;">Messagerie Premium</p></td></tr><tr><td style="padding:30px;"><h2 style="color:#fff; margin-bottom:20px;">Merci pour votre abonnement, ${firstName} !</h2><p style="color:#ccc; line-height:1.6;">Votre paiement a été confirmé. Vous trouverez votre facture en pièce jointe.</p><div style="background:#0a0a0a; border:1px solid #d4af37; border-radius:10px; padding:20px; margin:25px 0;"><table width="100%"><tr><td style="color:#888;">Facture N°</td><td style="color:#d4af37; text-align:right;">${invoice.reference}</td></tr><tr><td style="color:#888;">Date</td><td style="color:#fff; text-align:right;">${new Date(invoice.issuedAt).toLocaleDateString('fr-FR')}</td></tr><tr><td style="color:#888;">Montant</td><td style="color:#d4af37; font-size:1.2em; text-align:right;">${invoice.amount} €</td></tr><tr><td style="color:#888;">Durée</td><td style="color:#fff; text-align:right;">1 an</td></tr></table></div><p style="color:#666; font-size:0.9em;">Votre abonnement est actif jusqu'au ${invoice.periodEnd}.</p></td></tr><tr><td style="padding:20px; text-align:center; border-top:1px solid #333;"><p style="color:#666; font-size:0.8em; margin:0;">WhatsHappen - Messagerie Premium Sécurisée</p></td></tr></table></body></html>`;
+}
+
+function getInvitationEmailTemplate(senderName) {
+    return getEmailBaseTemplate(`
+    <tr><td align="center" style="padding:20px;">
+        <p style="color:#fff;font-size:16px;line-height:1.6;">Bonjour,</p>
+        <p style="color:#ccc;font-size:14px;line-height:1.6;">
+            <strong style="color:#D4AF37;">${senderName}</strong> vous invite à rejoindre une conversation sécurisée sur <strong>WhatsHappen</strong>.
+        </p>
+        <div style="background:#0a0a0a;border:2px solid #D4AF37;border-radius:10px;padding:20px;margin:25px 0;text-align:center;">
+            <p style="color:#888;font-size:12px;margin:0 0 10px 0;">Pour rejoindre la conversation :</p>
+            <p style="color:#fff;font-size:14px;margin-bottom:15px;">Créez votre compte gratuit maintenant.</p>
+            <a href="https://whatshappen-v5.netlify.app" style="background:#D4AF37;color:#000;text-decoration:none;padding:10px 20px;border-radius:5px;font-weight:bold;">Créer mon compte</a>
+        </div>
+        <p style="color:#666;font-size:11px;margin-top:20px;">
+            WhatsHappen est une messagerie éphémère. Vos données ne sont pas conservées.
+        </p>
+    </td></tr>`);
 }
 
 // ENCRYPTION
