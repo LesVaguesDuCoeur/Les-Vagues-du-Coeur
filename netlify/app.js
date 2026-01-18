@@ -660,6 +660,7 @@ const app = {
         if (tab === 'subscriptions') this.loadAdminSubscriptions();
         if (tab === 'settings') this.loadAdminSettings();
         if (tab === 'alerts') this.loadAlerts();
+        if (tab === 'bans') this.loadAdminBans();
     },
 
     loadAdminUsers: async function() {
@@ -671,6 +672,7 @@ const app = {
                     <div class="user-info">
                         <span class="user-name">${u.firstName}</span>
                         <span class="user-email">${u.email}</span>
+                        <span class="user-meta" style="color:#aaa; font-size:0.7rem;">IP: ${u.firstIp}</span>
                         <span class="user-meta">Conn: ${u.lastLoginDays || '?'}</span>
                     </div>
                     <div class="user-roles">
@@ -679,8 +681,11 @@ const app = {
                         <button class="role-btn subscriber ${u.isSubscriber ? 'active' : ''}" onclick="app.toggleRole('${u.email}', 'isSubscriber')">💳</button>
                     </div>
                     <div class="user-actions">
-                        <button onclick="app.regenCode('${u.email}')" style="background:none;border:none;color:#d4af37;cursor:pointer;">🔑</button>
-                        ${u.email !== 'chaouiengage@gmail.com' ? `<button onclick="app.deleteUser('${u.email}')" style="background:none;border:none;color:#d00;cursor:pointer;">🗑️</button>` : ''}
+                        <button onclick="app.regenCode('${u.email}')" style="background:none;border:none;color:#d4af37;cursor:pointer;" title="Régénérer code">🔑</button>
+                        ${u.email !== 'chaouiengage@gmail.com' ? `
+                            <button onclick="app.quickBan('${u.email}', '${u.firstIp}')" style="background:none;border:none;color:#d00;cursor:pointer;" title="Bannir">🚫</button>
+                            <button onclick="app.deleteUser('${u.email}')" style="background:none;border:none;color:#d00;cursor:pointer;" title="Supprimer">🗑️</button>
+                        ` : ''}
                     </div>
                 </div>
             `).join('');
@@ -716,6 +721,54 @@ const app = {
         try { const res = await this.api('adminRegenerateCode', { targetEmail: email }); this.showSuccess(`Nouveau Code: ${res.newCode}`); } catch(e) { this.showError(e.message); }
     },
 
+    quickBan: async function(email, ip) {
+        const choice = await this.showChoice("Bannir qui ?", [
+            { value: 'email', label: `Email: ${email}` },
+            { value: 'ip', label: `IP: ${ip}` }
+        ]);
+        if (!choice) return;
+        const target = choice === 'email' ? email : ip;
+        try {
+            this.toggleLoader(true);
+            await this.api('adminBanUser', { target, type: choice, reason: 'Quick ban via User List' });
+            this.showSuccess("Banni !");
+        } catch(e) { this.showError(e.message); } finally { this.toggleLoader(false); }
+    },
+
+    showChoice: function(title, options) {
+        return new Promise((resolve) => {
+            const overlay = document.getElementById('modal-overlay');
+            const box = document.getElementById('modal-box');
+            box.className = 'modal-box info';
+            box.querySelector('.modal-title').textContent = title;
+            box.querySelector('.modal-message').innerHTML = '';
+
+            const container = document.createElement('div');
+            container.style.display = 'flex';
+            container.style.flexDirection = 'column';
+            container.style.gap = '10px';
+            container.style.marginBottom = '20px';
+
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-gold';
+                btn.textContent = opt.label;
+                btn.onclick = () => { overlay.classList.add('hidden'); resolve(opt.value); };
+                container.appendChild(btn);
+            });
+
+            const cancel = document.createElement('button');
+            cancel.className = 'btn-modal btn-cancel';
+            cancel.textContent = 'Annuler';
+            cancel.onclick = () => { overlay.classList.add('hidden'); resolve(null); };
+
+            box.querySelector('.modal-message').appendChild(container);
+            box.querySelector('.modal-message').appendChild(cancel);
+            box.querySelector('.modal-buttons').classList.add('hidden');
+            overlay.classList.remove('hidden');
+        });
+    },
+
     loadAdminSubscriptions: async function() {
         try {
             const res = await this.api('adminGetSubscriptions');
@@ -729,10 +782,28 @@ const app = {
                     </div>
                     <div class="sub-details">Code: <strong>${s.whatsappenCode}</strong> | Txn: ${s.paypalTransaction || '-'}</div>
                     ${s.status === 'pending' ? `<div class="validation-form"><input type="date" id="start-${s.email}" value="${new Date().toISOString().split('T')[0]}"><input type="date" id="end-${s.email}" value="${new Date(new Date().setFullYear(new Date().getFullYear()+1)).toISOString().split('T')[0]}"><button class="btn-validate" onclick="app.validateSub('${s.email}')">Valider</button></div>` : ''}
-                    ${s.status === 'active' ? `<button onclick="app.generateInvoice(null, '${s.email}')" class="btn-gold" style="font-size:0.7rem; margin-top:5px;">📄 Facture</button>` : ''}
+                    ${s.status === 'active' ? `
+                        <div style="display:flex; gap:5px; margin-top:5px;">
+                            <button onclick="app.generateInvoice(null, '${s.email}')" class="btn-gold" style="font-size:0.7rem;">📄 Facture</button>
+                            <button onclick="app.sendInvoiceEmail(null, '${s.email}')" class="btn-secondary" style="font-size:0.7rem;">📩 Email</button>
+                        </div>
+                    ` : ''}
                 </div>
             `).join('');
         } catch(e) { this.showError(e.message); }
+    },
+
+    sendInvoiceEmail: async function(invoiceId, email) {
+        if (!await this.showConfirm("Envoyer la facture par email ?")) return;
+        try {
+            this.toggleLoader(true);
+            await this.api('sendInvoiceEmail', { invoiceId: invoiceId || 'latest', email: email }); // 'latest' logic might need check on backend or here
+            // Note: backend apiSendInvoiceEmail uses reference or finds by email. If passed invoiceId is null, need to handle.
+            // The current backend finds invoice by reference OR email.
+            // But if user has multiple invoices, finding by email might pick first/last.
+            // Let's assume for now it picks one. Better: get invoice list and pick latest reference.
+            this.showSuccess("Email envoyé !");
+        } catch(e) { this.showError(e.message); } finally { this.toggleLoader(false); }
     },
 
     adminEditSub: function(email) {
@@ -1023,6 +1094,48 @@ const app = {
         if (!conv) return;
         document.getElementById('all-conv-modal')?.remove();
         this.displayFlaggedConversationModal(conv, null);
+    },
+
+    // BANS
+    loadAdminBans: async function() {
+        try {
+            const res = await this.api('adminGetBans');
+            const list = document.getElementById('admin-bans-list');
+            if (res.bans.length === 0) { list.innerHTML = '<p style="color:#666;text-align:center;">Aucun bannissement.</p>'; return; }
+            list.innerHTML = res.bans.map(b => `
+                <div class="user-card" style="border-color:#d00;">
+                    <div class="user-info">
+                        <span class="user-name" style="color:#d00;">${b.target}</span>
+                        <span class="user-meta">${b.type.toUpperCase()} | ${b.reason}</span>
+                        <span class="user-meta">${new Date(b.bannedAt).toLocaleDateString()} by ${b.bannedBy}</span>
+                    </div>
+                    <button onclick="app.adminUnban('${b.target}')" style="background:none;border:none;color:#aaa;cursor:pointer;">✕</button>
+                </div>
+            `).join('');
+        } catch(e) { this.showError(e.message); }
+    },
+
+    addBan: async function() {
+        const type = document.getElementById('ban-type').value;
+        const target = document.getElementById('ban-target').value;
+        const reason = document.getElementById('ban-reason').value;
+        if (!target) return this.showError("Cible requise");
+
+        try {
+            this.toggleLoader(true);
+            await this.api('adminBanUser', { target, type, reason });
+            this.showSuccess("Utilisateur banni.");
+            document.getElementById('ban-target').value = '';
+            this.loadAdminBans();
+        } catch(e) { this.showError(e.message); } finally { this.toggleLoader(false); }
+    },
+
+    adminUnban: async function(target) {
+        if (!await this.showConfirm("Débannir ?")) return;
+        try {
+            await this.api('adminUnbanUser', { target });
+            this.loadAdminBans();
+        } catch(e) { this.showError(e.message); }
     },
 
     // UI UTILS

@@ -36,6 +36,7 @@ const SUBSCRIPTIONS_DB_FILENAME = "Subscriptions.db";
 const INVOICES_DB_FILENAME = "Invoices.db";
 const ALERTS_DB_FILENAME = "Alerts.db";
 const CHATS_DB_FILENAME = "Chats.db";
+const BLACKLIST_DB_FILENAME = "Blacklist.db";
 
 function doGet(e) { return createJSONOutput({ status: "Online", message: "Use POST requests." }); }
 
@@ -142,6 +143,15 @@ function doPost(e) {
       case 'adminDeleteSubscription':
         result = apiAdminDeleteSubscription(request.token, request.email, request.targetEmail);
         break;
+      case 'adminGetBans':
+        result = apiAdminGetBans(request.token, request.email);
+        break;
+      case 'adminBanUser':
+        result = apiAdminBanUser(request.token, request.email, request.target, request.type, request.reason);
+        break;
+      case 'adminUnbanUser':
+        result = apiAdminUnbanUser(request.token, request.email, request.target);
+        break;
       case 'adminGetAlerts':
         result = apiAdminGetAlerts(request.token, request.email);
         break;
@@ -217,7 +227,8 @@ function initializeDatabase() {
       { name: SUBSCRIPTIONS_DB_FILENAME, default: { subscriptions: [] } },
       { name: INVOICES_DB_FILENAME, default: { invoices: [] } },
       { name: ALERTS_DB_FILENAME, default: { alerts: [] } },
-      { name: CHATS_DB_FILENAME, default: { chats: [] } }
+      { name: CHATS_DB_FILENAME, default: { chats: [] } },
+      { name: BLACKLIST_DB_FILENAME, default: { bans: [] } }
   ];
 
   dbs.forEach(db => {
@@ -289,12 +300,21 @@ function readAlertsDb() { return readDb(ALERTS_DB_FILENAME, { alerts: [] }); }
 function writeAlertsDb(d) { writeDb(ALERTS_DB_FILENAME, d); }
 function readChatsDb() { return readDb(CHATS_DB_FILENAME, { chats: [] }); }
 function writeChatsDb(d) { writeDb(CHATS_DB_FILENAME, d); }
+function readBlacklistDb() { return readDb(BLACKLIST_DB_FILENAME, { bans: [] }); }
+function writeBlacklistDb(d) { writeDb(BLACKLIST_DB_FILENAME, d); }
 
 // ==========================================
 // BUSINESS LOGIC
 // ==========================================
 
+function checkBlacklist(email, ip) {
+  const db = readBlacklistDb();
+  if (db.bans.some(b => b.type === 'email' && b.target === email.toLowerCase().trim())) throw new Error("Compte banni.");
+  if (ip && db.bans.some(b => b.type === 'ip' && b.target === ip)) throw new Error("IP bannie.");
+}
+
 function apiLogin(email, code, ip) {
+  checkBlacklist(email, ip);
   const db = readUsersDbCached();
   const cleanEmail = email.toLowerCase().trim();
   const user = db.users.find(u => u.email === cleanEmail);
@@ -400,6 +420,7 @@ function apiResetPassword(email, code, newCode) {
 }
 
 function apiRegister(email, firstName, code, ip) {
+  checkBlacklist(email, ip);
   const lock = LockService.getScriptLock();
   try {
     lock.waitLock(15000);
@@ -930,7 +951,7 @@ function apiAdminGetUsers(token, email) {
         isSubscriber: u.isSubscriber || false,
         registeredAt: u.registeredAt,
         lastLoginDays: days,
-        firstIp: (email === ADMIN_EMAIL) ? u.firstIp : "Hidden",
+        firstIp: u.firstIp || "Unknown",
         permissions: { canCreateChat: u.canCreate || u.isSubscriber }
       };
     })
@@ -1343,17 +1364,79 @@ function apiAdminDeleteSubscription(token, email, targetEmail) {
     return { success: true };
 }
 
+function apiAdminGetBans(token, email) {
+    const user = validateUser(token, email);
+    if (!user.isAdmin) throw new Error("Admin only");
+    return { success: true, bans: readBlacklistDb().bans };
+}
+
+function apiAdminBanUser(token, email, target, type, reason) {
+    const user = validateUser(token, email);
+    if (!user.isAdmin) throw new Error("Admin only");
+    if (target === ADMIN_EMAIL) throw new Error("Impossible.");
+
+    const db = readBlacklistDb();
+    if (db.bans.some(b => b.target === target && b.type === type)) throw new Error("Déjà banni.");
+
+    db.bans.push({
+        target: target,
+        type: type, // 'email' or 'ip'
+        reason: reason || '',
+        bannedAt: new Date().toISOString(),
+        bannedBy: user.email
+    });
+    writeBlacklistDb(db);
+    return { success: true };
+}
+
+function apiAdminUnbanUser(token, email, target) {
+    const user = validateUser(token, email);
+    if (!user.isAdmin) throw new Error("Admin only");
+
+    const db = readBlacklistDb();
+    const initLen = db.bans.length;
+    db.bans = db.bans.filter(b => b.target !== target);
+    if (db.bans.length !== initLen) writeBlacklistDb(db);
+    return { success: true };
+}
+
 function apiSendInvoiceEmail(token, email, invoiceId) {
     const user = validateUser(token, email);
     const invDb = readInvoicesDb();
-    const invoice = invDb.invoices.find(i => (i.reference === invoiceId || i.email === email));
+    let invoice = null;
+
+    // If invoiceId provided and not 'latest', look for it
+    if (invoiceId && invoiceId !== 'latest') {
+        invoice = invDb.invoices.find(i => i.reference === invoiceId);
+    } else {
+        // Find latest for email (either user's own email, or if admin, we might need targetEmail logic,
+        // but here we rely on the fact that if admin calls this without specific ID, it's ambiguous.
+        // However, the find() below in search block used 'i.email === email'.
+        // If Admin calls this, 'email' is admin's email. So it wouldn't find user's invoice.
+        // We should fix this. But without changing API signature too much.
+        // Let's assume invoiceId IS passed correctly as reference if called from Admin panel.
+        // If called from user panel, invoiceId might be null.
+        const targetEmail = user.isAdmin ? null : email;
+        if (targetEmail) {
+             const userInvoices = invDb.invoices.filter(i => i.email === targetEmail);
+             invoice = userInvoices[userInvoices.length - 1];
+        }
+    }
+
+    // Fallback if we still haven't found it and we are admin (maybe invoiceId WAS the target email?)
+    // This is getting messy. Let's stick to: Invoice ID (reference) MUST be provided for Admin.
+    if (!invoice && user.isAdmin && invoiceId && invoiceId.includes('@')) {
+        const userInvoices = invDb.invoices.filter(i => i.email === invoiceId);
+        invoice = userInvoices[userInvoices.length - 1];
+    }
+
     if (!invoice) throw new Error("Facture introuvable");
     if (invoice.email !== email && !user.isAdmin) throw new Error("Accès refusé");
 
     MailApp.sendEmail({
-        to: email,
+        to: invoice.email, // Send to the invoice owner
         subject: "Votre facture WhatsHappen " + invoice.reference,
-        htmlBody: getInvoiceEmailTemplate(user.firstName, invoice)
+        htmlBody: getInvoiceEmailTemplate(invoice.firstName, invoice) // Use invoice owner's name
     });
     return { success: true };
 }

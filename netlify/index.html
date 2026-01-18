@@ -177,6 +177,7 @@
             <button class="admin-tab-btn active" data-tab="users" onclick="app.switchAdminTab('users')">👥 Utilisateurs</button>
             <button class="admin-tab-btn" data-tab="subscriptions" onclick="app.switchAdminTab('subscriptions')">💳 Abos</button>
             <button class="admin-tab-btn" data-tab="alerts" onclick="app.switchAdminTab('alerts')">🚨 Alertes</button>
+            <button class="admin-tab-btn" data-tab="bans" onclick="app.switchAdminTab('bans')">🚫 Bans</button>
             <button class="admin-tab-btn" data-tab="settings" onclick="app.switchAdminTab('settings')">⚙️</button>
         </div>
 
@@ -190,6 +191,20 @@
 
         <div id="admin-alerts" class="admin-tab-content list-area hidden">
             <div id="admin-alerts-list"></div>
+        </div>
+
+        <div id="admin-bans" class="admin-tab-content list-area hidden">
+            <div style="padding:10px; background:#222; border-radius:8px; margin-bottom:15px;">
+                <h4 style="color:var(--gold); margin-bottom:10px;">Ajouter un bannissement</h4>
+                <select id="ban-type" class="modal-input" style="margin-bottom:5px;">
+                    <option value="email">Email</option>
+                    <option value="ip">IP</option>
+                </select>
+                <input type="text" id="ban-target" class="modal-input" placeholder="Cible (Email ou IP)" style="margin-bottom:5px;">
+                <input type="text" id="ban-reason" class="modal-input" placeholder="Raison (optionnel)" style="margin-bottom:10px;">
+                <button onclick="app.addBan()" class="btn-red">Bannir</button>
+            </div>
+            <div id="admin-bans-list"></div>
         </div>
 
         <div id="admin-settings" class="admin-tab-content hidden" style="padding-top:20px;">
