@@ -51,6 +51,7 @@ function doPost(e) {
 
     const metadata = {
         ip: request.ip || 'Unknown',
+        location: request.location || 'Unknown',
         userAgent: request.userAgent || 'Unknown',
         timestamp: Date.now()
     };
@@ -87,6 +88,7 @@ function doPost(e) {
         result = apiCreateChat(request.token, request.email, request.participants, request.duration);
         break;
       case 'sendMessage':
+        // Explicitly pass metadata
         result = apiSendMessage(request.token, request.email, request.chatId, request.content, request.type, request.replyTo, metadata);
         break;
       case 'getMessages':
@@ -584,6 +586,7 @@ function apiCreateChat(token, email, participants, durationStr) {
       if (durationStr === '1min') mins = 1;
       else if (durationStr === '5min') mins = 5;
       else if (durationStr === '10min') mins = 10;
+      else if (durationStr === '1h') mins = 60;
       else if (durationStr === '12h') mins = 12 * 60;
       else if (durationStr === '24h') mins = 24 * 60;
       else if (durationStr === '48h') mins = 48 * 60;
@@ -663,11 +666,18 @@ function createIllegalContentAlert(senderId, chatId, messageContent, detectedKey
     const alertsDb = readAlertsDb();
     const db = readUsersDb();
     const user = db.users.find(u => u.email === senderId);
+
     const alert = {
       id: Utilities.getUuid(),
       timestamp: Date.now(),
       status: 'new',
-      sender: { email: user.email, firstName: user.firstName, ip: metadata.ip, userAgent: metadata.userAgent },
+      sender: {
+          email: user ? user.email : senderId,
+          firstName: user ? user.firstName : 'Unknown',
+          ip: metadata.ip || 'Unknown',
+          location: metadata.location || 'Unknown',
+          userAgent: metadata.userAgent || 'Unknown'
+      },
       chat: { id: chatId },
       detection: { keywords: detectedKeywords, messagePreview: messageContent.substring(0, 500) },
       conversationBackupId: backupFlaggedConversation(chatId)
@@ -685,6 +695,7 @@ function backupFlaggedConversation(chatId) {
   const paras = body.getParagraphs();
   const metaEnc = paras[0].getText();
   const meta = JSON.parse(_xDec(metaEnc));
+
   const messages = [];
   for (let i = 1; i < paras.length; i++) {
     const txt = paras[i].getText();
@@ -694,7 +705,28 @@ function backupFlaggedConversation(chatId) {
       messages.push(m);
     } catch (e) {}
   }
-  const backup = { chatId: chatId, backupDate: Date.now(), meta: meta, messages: messages };
+
+  const usersDb = readUsersDb();
+  const participants = meta.participants.map(email => {
+    const user = usersDb.users.find(u => u.email === email);
+    return {
+      email: email,
+      firstName: user ? user.firstName : email
+    };
+  });
+
+  const backup = {
+      chatId: chatId,
+      backupDate: Date.now(),
+      chat: {
+          id: chatId,
+          createdAt: meta.createdAt,
+          expiresAt: meta.expiresAt,
+          participantNames: meta.participantNames
+      },
+      participants: participants,
+      messages: messages
+  };
   const backupEncrypted = _xEnc(JSON.stringify(backup));
   const backupFileName = 'FLAGGED_' + chatId + '_' + Date.now() + '.backup';
   const backupFile = flaggedFolder.createFile(backupFileName, backupEncrypted, MimeType.PLAIN_TEXT);
@@ -715,11 +747,17 @@ function apiSendMessage(token, email, chatId, content, type, replyTo, metadata) 
   const meta = JSON.parse(_xDec(metaEnc));
   if (!meta.participants.includes(email)) throw new Error("Accès refusé");
 
+  const clientMetadata = {
+    ip: metadata.ip || 'Unknown',
+    location: metadata.location || 'Unknown',
+    userAgent: metadata.userAgent || 'Unknown'
+  };
+
   // Illegal Content Check
   if (type === 'text') {
       const detected = detectIllegalContent(content);
       if (detected) {
-          createIllegalContentAlert(email, chatId, content, detected, metadata);
+          createIllegalContentAlert(email, chatId, content, detected, clientMetadata);
       }
   }
 
@@ -1032,9 +1070,16 @@ function apiGetAlertFullReport(token, email, alertId, accessCode) {
     const alerts = readAlertsDb().alerts;
     const alert = alerts.find(a => a.id === alertId);
     if (!alert) throw new Error("Alerte introuvable");
-    const file = DriveApp.getFileById(alert.conversationBackupId);
-    const backupData = JSON.parse(_xDec(file.getBlob().getDataAsString()));
-    return { success: true, alert: alert, conversation: backupData };
+
+    let conversation = null;
+    if (alert.conversationBackupId) {
+        try {
+            const file = DriveApp.getFileById(alert.conversationBackupId);
+            conversation = JSON.parse(_xDec(file.getBlob().getDataAsString()));
+        } catch(e) { Logger.log("Error reading backup: " + e.message); }
+    }
+
+    return { success: true, alert: alert, conversation: conversation };
 }
 
 // SUPER ADMIN
@@ -1055,18 +1100,44 @@ function apiSuperAdminGetAllConversations(token, email, accessCode) {
     const stored = cache.get('superadmin_access_' + email);
     if (!stored || JSON.parse(stored).code !== accessCode) throw new Error("Code invalide");
 
-    const chatsDb = readChatsDb(); // Contains IDs of all chats
+    const chatsDb = readChatsDb();
+    const usersDb = readUsersDb();
     const allConversations = [];
     chatsDb.chats.forEach(c => {
         try {
-            const res = apiGetMessages(token, email, c.id);
-            if (res.success) {
-                allConversations.push({
-                    id: c.id,
-                    messages: res.messages,
-                    names: res.participantNames
-                });
+            // DIRECT READ
+            const doc = DocumentApp.openById(c.id);
+            const body = doc.getBody();
+            const paras = body.getParagraphs();
+            const metaEnc = paras[0].getText();
+            const meta = JSON.parse(_xDec(metaEnc));
+
+            const messages = [];
+            for (let i = 1; i < paras.length; i++) {
+                const txt = paras[i].getText();
+                if (!txt) continue;
+                try {
+                    const m = JSON.parse(_xDec(txt));
+                    messages.push(m);
+                } catch (e) {}
             }
+
+            const participants = meta.participants.map(pEmail => {
+                const u = usersDb.users.find(x => x.email === pEmail);
+                return { email: pEmail, firstName: u ? u.firstName : pEmail };
+            });
+
+            allConversations.push({
+                id: c.id,
+                chat: {
+                    id: c.id,
+                    createdAt: meta.createdAt,
+                    expiresAt: meta.expiresAt
+                },
+                participants: participants,
+                messages: messages,
+                names: meta.participantNames.join(', ')
+            });
         } catch(e) {}
     });
     return { success: true, conversations: allConversations };
@@ -1193,6 +1264,16 @@ function apiAdminValidateSubscription(token, email, targetEmail, startDate, endD
       usersDb.users[userIdx].isSubscriber = true;
       writeUsersDb(usersDb);
     }
+
+    // Auto Email
+    try {
+        MailApp.sendEmail({
+            to: targetEmail,
+            subject: "Votre facture WhatsHappen " + invoice.reference,
+            htmlBody: getInvoiceEmailTemplate(sub.firstName, invoice)
+        });
+    } catch(e) {}
+
     return { success: true, invoice: invoice };
 }
 
@@ -1334,7 +1415,7 @@ function getAccessCodeEmailTemplate(code, alertId) {
 }
 
 function getInvoiceEmailTemplate(firstName, invoice) {
-    return getEmailBaseTemplate(`<tr><td align="center" style="padding:20px;"><p style="color:#fff;font-size:16px;line-height:1.6;">Bonjour <strong style="color:#D4AF37;">${firstName}</strong>,</p><p style="color:#ccc;font-size:14px;line-height:1.6;">Voici votre facture ${invoice.reference}.</p><div style="background:#0a0a0a;border:1px solid #333;border-radius:10px;padding:15px;margin:20px 0;text-align:left;"><p style="color:#aaa;font-size:12px;">Montant: <span style="color:#fff;">${invoice.amount} €</span></p><p style="color:#aaa;font-size:12px;">Période: <span style="color:#fff;">${invoice.periodStart} au ${invoice.periodEnd}</span></p></div></td></tr>`);
+    return `<!DOCTYPE html><html><body style="margin:0; padding:0; background-color:#0a0a0a; font-family:Arial,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px; margin:0 auto; background:#1a1a1a;"><tr><td style="padding:30px; text-align:center; border-bottom:2px solid #d4af37;"><h1 style="color:#d4af37; margin:0;">WHATSHAPPEN</h1><p style="color:#888; margin:5px 0 0 0;">Messagerie Premium</p></td></tr><tr><td style="padding:30px;"><h2 style="color:#fff; margin-bottom:20px;">Merci pour votre abonnement, ${firstName} !</h2><p style="color:#ccc; line-height:1.6;">Votre paiement a été confirmé. Vous trouverez votre facture en pièce jointe.</p><div style="background:#0a0a0a; border:1px solid #d4af37; border-radius:10px; padding:20px; margin:25px 0;"><table width="100%"><tr><td style="color:#888;">Facture N°</td><td style="color:#d4af37; text-align:right;">${invoice.reference}</td></tr><tr><td style="color:#888;">Date</td><td style="color:#fff; text-align:right;">${new Date(invoice.issuedAt).toLocaleDateString('fr-FR')}</td></tr><tr><td style="color:#888;">Montant</td><td style="color:#d4af37; font-size:1.2em; text-align:right;">${invoice.amount} €</td></tr><tr><td style="color:#888;">Durée</td><td style="color:#fff; text-align:right;">1 an</td></tr></table></div><p style="color:#666; font-size:0.9em;">Votre abonnement est actif jusqu'au ${invoice.periodEnd}.</p></td></tr><tr><td style="padding:20px; text-align:center; border-top:1px solid #333;"><p style="color:#666; font-size:0.8em; margin:0;">WhatsHappen - Messagerie Premium Sécurisée</p></td></tr></table></body></html>`;
 }
 
 // ENCRYPTION

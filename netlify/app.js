@@ -74,7 +74,7 @@ const app = {
 
             box.className = 'modal-box ' + type;
             titleEl.textContent = title;
-            messageEl.innerHTML = message; // Use innerHTML to support custom content
+            messageEl.innerHTML = message;
 
             if (inputPlaceholder) {
                 inputContainer.classList.remove('hidden');
@@ -540,9 +540,9 @@ const app = {
             content,
             type,
             replyTo,
-            clientIP: clientInfo.ip,
-            clientLocation: clientInfo.location,
-            clientUserAgent: clientInfo.userAgent
+            ip: clientInfo.ip,
+            location: clientInfo.location,
+            userAgent: clientInfo.userAgent
         });
         await this.loadMessages(this.currentChatId);
     },
@@ -784,25 +784,25 @@ const app = {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
 
-            // DARK MODE INVOICE
-            doc.setFillColor(26, 26, 26);
+            // LIGHT MODE INVOICE (White Background)
+            doc.setFillColor(255, 255, 255);
             doc.rect(0, 0, 210, 297, 'F');
             doc.setFontSize(28); doc.setTextColor(212, 175, 55); doc.text("WHATSHAPPEN", 105, 30, { align: 'center' });
-            doc.setFontSize(12); doc.setTextColor(150); doc.text("Messagerie Premium", 105, 40, { align: 'center' });
+            doc.setFontSize(12); doc.setTextColor(100); doc.text("Messagerie Premium", 105, 40, { align: 'center' });
             doc.setDrawColor(212, 175, 55); doc.setLineWidth(0.5); doc.roundedRect(20, 55, 170, 180, 5, 5);
-            doc.setFontSize(20); doc.setTextColor(255); doc.text("FACTURE", 105, 70, { align: 'center' });
-            doc.setFontSize(10); doc.setTextColor(150); doc.text(`N° ${inv.reference}`, 30, 85); doc.text(`Date: ${new Date(inv.issuedAt).toLocaleDateString('fr-FR')}`, 140, 85);
+            doc.setFontSize(20); doc.setTextColor(0); doc.text("FACTURE", 105, 70, { align: 'center' });
+            doc.setFontSize(10); doc.setTextColor(80); doc.text(`N° ${inv.reference}`, 30, 85); doc.text(`Date: ${new Date(inv.issuedAt).toLocaleDateString('fr-FR')}`, 140, 85);
             doc.setDrawColor(212, 175, 55); doc.line(30, 92, 180, 92);
-            doc.setFontSize(12); doc.setTextColor(255); doc.text("Facturé à:", 30, 105);
-            doc.setTextColor(200); doc.text(inv.firstName || 'Client', 30, 115); doc.text(inv.email, 30, 123);
-            doc.setTextColor(255); doc.text("Détail:", 30, 145);
-            doc.setFillColor(40, 40, 40); doc.roundedRect(30, 150, 150, 30, 3, 3, 'F');
-            doc.setTextColor(212, 175, 55); doc.text("Abonnement Premium", 35, 162);
-            doc.setTextColor(255); doc.text(`${inv.amount} €`, 160, 162, { align: 'right' });
+            doc.setFontSize(12); doc.setTextColor(0); doc.text("Facturé à:", 30, 105);
+            doc.setTextColor(50); doc.text(inv.firstName || 'Client', 30, 115); doc.text(inv.email, 30, 123);
+            doc.setTextColor(0); doc.text("Détail:", 30, 145);
+            doc.setFillColor(245, 245, 245); doc.roundedRect(30, 150, 150, 30, 3, 3, 'F');
+            doc.setTextColor(0); doc.text("Abonnement Premium - 1 mois", 35, 162);
+            doc.setTextColor(212, 175, 55); doc.text(`${inv.amount} €`, 160, 162, { align: 'right' });
             doc.setDrawColor(212, 175, 55); doc.line(30, 195, 180, 195);
-            doc.setFontSize(16); doc.setTextColor(212, 175, 55); doc.text("TOTAL:", 30, 210); doc.text(`${inv.amount} €`, 160, 210, { align: 'right' });
-            doc.setFontSize(14); doc.setTextColor(0, 200, 0); doc.text("✓ PAYÉE", 105, 230, { align: 'center' });
-            doc.setFontSize(8); doc.setTextColor(100); doc.text("WhatsHappen - Messagerie Premium", 105, 270, { align: 'center' });
+            doc.setFontSize(16); doc.setTextColor(0); doc.text("TOTAL:", 30, 210); doc.setTextColor(212, 175, 55); doc.text(`${inv.amount} €`, 160, 210, { align: 'right' });
+            doc.setFontSize(14); doc.setTextColor(0, 150, 0); doc.text("✓ PAYÉE", 105, 230, { align: 'center' });
+            doc.setFontSize(8); doc.setTextColor(100); doc.text("WhatsHappen - Messagerie Premium Sécurisée", 105, 270, { align: 'center' });
 
             const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
             if (isMobile) {
@@ -891,12 +891,15 @@ const app = {
             });
         } else { messagesHTML = '<p style="color:#888;">Aucun message.</p>'; }
 
+        const participantStr = conversation.participants?.map(p => p.firstName + ' (' + p.email + ')').join(', ') || 'N/A';
+        const dateStr = new Date(conversation.chat?.createdAt || Date.now()).toLocaleString('fr-FR');
+
         modal.innerHTML = `
             <div class="modal-content large">
                 <div class="modal-header"><h2>🔐 Conversation Signalée</h2><button class="close-btn" onclick="document.getElementById('flagged-conv-modal').remove()">✕</button></div>
                 <div class="flagged-conv-info">
-                    <p><strong>Participants:</strong> ${conversation.participants?.map(p => p.firstName + ' (' + p.email + ')').join(', ') || 'N/A'}</p>
-                    <p><strong>Date:</strong> ${new Date(conversation.chat?.createdAt || Date.now()).toLocaleString('fr-FR')}</p>
+                    <p><strong>Participants:</strong> ${participantStr}</p>
+                    <p><strong>Date:</strong> ${dateStr}</p>
                 </div>
                 <div class="flagged-messages-container">${messagesHTML}</div>
                 <div class="modal-footer">
@@ -910,18 +913,13 @@ const app = {
     downloadAlertReport: async function(alertId) {
         try {
             this.toggleLoader(true);
-            // Assuming we already have access if viewing, but API needs code again or token.
-            // Actually API requires code again or we cache it?
-            // The previous implementation used verifyConversationAccess which removes code.
-            // So we need to ask code again? Or `getAlertFullReport` handles it?
-            // `getAlertFullReport` requires `accessCode`.
-            // User experience: Enter code again for download.
-
             await this.api('requestConversationAccess', { alertId });
             const code = await this.showPrompt("Code pour rapport", "Confirmer avec le code email");
             if (!code) return;
 
             const res = await this.api('getAlertFullReport', { alertId, accessCode: code });
+            if (!res.success) { this.showError(res.error); return; }
+
             const alert = res.alert; const conv = res.conversation;
 
             const { jsPDF } = window.jspdf;
@@ -943,7 +941,9 @@ const app = {
             if (conv && conv.messages) {
                 conv.messages.forEach(msg => {
                     if (y > 270) { doc.addPage(); y = 20; }
-                    doc.setFontSize(9); doc.setTextColor(100); doc.text(`[${new Date(msg.timestamp).toLocaleString()}] ${msg.senderName}:`, 20, y);
+                    const time = new Date(msg.timestamp).toLocaleString('fr-FR');
+                    const sender = msg.senderName || 'Utilisateur';
+                    doc.setFontSize(9); doc.setTextColor(100); doc.text(`[${time}] ${sender}:`, 20, y);
                     y += 5;
                     doc.setTextColor(0);
                     const lines = doc.splitTextToSize(msg.content, 170);
@@ -981,19 +981,37 @@ const app = {
         let html = '';
         if (conversations.length > 0) {
             conversations.forEach((conv, index) => {
-                const parts = conv.names || 'N/A';
+                // Determine display name from participants
+                let parts = 'N/A';
+                if (conv.participants) {
+                    parts = conv.participants.map(p => p.firstName).join(', ');
+                } else if (conv.names) {
+                    parts = conv.names;
+                }
+
+                const lastMsg = conv.messages?.length > 0 ? conv.messages[conv.messages.length - 1] : null;
+                const lastMsgPreview = lastMsg ? (lastMsg.content.substring(0, 50) + '...') : 'Aucun message';
                 const msgCount = conv.messages?.length || 0;
+                const dateStr = conv.chat?.createdAt ? new Date(conv.chat.createdAt).toLocaleString('fr-FR') : '';
+
                 html += `
                     <div class="conv-card" onclick="app.viewConversationDetail(${index})">
-                        <div class="conv-header"><strong>${parts}</strong><span class="msg-count">${msgCount} msgs</span></div>
-                        <div class="conv-date">ID: ${conv.id}</div>
+                        <div class="conv-header">
+                            <strong>${parts}</strong>
+                            <span class="msg-count">${msgCount} messages</span>
+                        </div>
+                        <div class="conv-preview">${lastMsgPreview}</div>
+                        <div class="conv-date">${dateStr}</div>
                     </div>`;
             });
-        } else { html = '<p class="no-data">Aucune conversation.</p>'; }
+        } else { html = '<p class="no-data">Aucune conversation trouvée.</p>'; }
 
         modal.innerHTML = `
             <div class="modal-content large">
-                <div class="modal-header"><h2>🔐 Toutes les Conversations</h2><button class="close-btn" onclick="document.getElementById('all-conv-modal').remove()">✕</button></div>
+                <div class="modal-header">
+                    <h2>🔐 Toutes les Conversations</h2>
+                    <button class="close-btn" onclick="document.getElementById('all-conv-modal').remove()">✕</button>
+                </div>
                 <div class="all-convs-container">${html}</div>
             </div>`;
         document.body.appendChild(modal);
