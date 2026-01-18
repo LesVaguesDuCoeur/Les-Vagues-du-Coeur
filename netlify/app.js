@@ -784,7 +784,7 @@ const app = {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
 
-            // LIGHT MODE INVOICE (White Background)
+            // LIGHT MODE INVOICE (White Background - Normes FR)
             doc.setFillColor(255, 255, 255);
             doc.rect(0, 0, 210, 297, 'F');
             doc.setFontSize(28); doc.setTextColor(212, 175, 55); doc.text("WHATSHAPPEN", 105, 30, { align: 'center' });
@@ -798,11 +798,11 @@ const app = {
             doc.setTextColor(0); doc.text("Détail:", 30, 145);
             doc.setFillColor(245, 245, 245); doc.roundedRect(30, 150, 150, 30, 3, 3, 'F');
             doc.setTextColor(0); doc.text("Abonnement Premium - 1 mois", 35, 162);
-            doc.setTextColor(212, 175, 55); doc.text(`${inv.amount} €`, 160, 162, { align: 'right' });
+            doc.setTextColor(212, 175, 55); doc.text(`${inv.amount} EUR`, 160, 162, { align: 'right' });
             doc.setDrawColor(212, 175, 55); doc.line(30, 195, 180, 195);
-            doc.setFontSize(16); doc.setTextColor(0); doc.text("TOTAL:", 30, 210); doc.setTextColor(212, 175, 55); doc.text(`${inv.amount} €`, 160, 210, { align: 'right' });
-            doc.setFontSize(14); doc.setTextColor(0, 150, 0); doc.text("✓ PAYÉE", 105, 230, { align: 'center' });
-            doc.setFontSize(8); doc.setTextColor(100); doc.text("WhatsHappen - Messagerie Premium Sécurisée", 105, 270, { align: 'center' });
+            doc.setFontSize(16); doc.setTextColor(0); doc.text("TOTAL:", 30, 210); doc.setTextColor(212, 175, 55); doc.text(`${inv.amount} EUR`, 160, 210, { align: 'right' });
+            doc.setFontSize(14); doc.setTextColor(0, 150, 0); doc.text("PAYEE", 105, 230, { align: 'center' });
+            doc.setFontSize(8); doc.setTextColor(100); doc.text("WhatsHappen - Messagerie Premium Securisee", 105, 270, { align: 'center' });
 
             const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
             if (isMobile) {
