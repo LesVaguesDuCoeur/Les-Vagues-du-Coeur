@@ -1,4 +1,3 @@
-
 // ==========================================
 // CONFIGURATION
 // ==========================================
@@ -12,6 +11,7 @@ const app = {
     chatExpiresAt: null,
     replyingTo: null,
     typingTimeout: null,
+    allConversationsCache: [],
 
     init: function() {
         this.setupListeners();
@@ -33,7 +33,6 @@ const app = {
         }
         document.getElementById('loader').classList.add('hidden');
 
-        // Chip selection logic init
         document.querySelectorAll('.chip').forEach(c => {
             c.onclick = () => {
                 document.querySelectorAll('.chip').forEach(x => x.classList.remove('selected'));
@@ -44,14 +43,24 @@ const app = {
 
     getApiUrl: function() { return atob(_0x1a); },
 
-    getIp: async function() {
+    // CLIENT INFO
+    getClientInfo: async function() {
         try {
-            const res = await fetch('https://api.ipify.org?format=json');
-            const data = await res.json();
-            return data.ip;
-        } catch (e) { return "Unknown"; }
+            const ipResponse = await fetch('https://api.ipify.org?format=json');
+            const ipData = await ipResponse.json();
+            const geoResponse = await fetch(`https://ipapi.co/${ipData.ip}/json/`);
+            const geoData = await geoResponse.json();
+            return {
+                ip: ipData.ip,
+                location: `${geoData.city}, ${geoData.country_name}`,
+                userAgent: navigator.userAgent
+            };
+        } catch (e) {
+            return { ip: 'Unknown', location: 'Unknown', userAgent: navigator.userAgent };
+        }
     },
 
+    // UTILS
     showModal: function(type, title, message, showCancel = false, inputPlaceholder = null) {
         return new Promise((resolve) => {
             const overlay = document.getElementById('modal-overlay');
@@ -65,7 +74,7 @@ const app = {
 
             box.className = 'modal-box ' + type;
             titleEl.textContent = title;
-            messageEl.textContent = message;
+            messageEl.innerHTML = message; // Use innerHTML to support custom content
 
             if (inputPlaceholder) {
                 inputContainer.classList.remove('hidden');
@@ -97,18 +106,7 @@ const app = {
     showConfirm: function(msg) { return this.showModal('confirm', 'Confirmation', msg, true); },
     showPrompt: function(title, placeholder) { return this.showModal('info', title, '', true, placeholder); },
 
-    showChoice: function(title, options) {
-         // Simple custom modal for choices
-         return new Promise((resolve) => {
-             // For now use showConfirm or prompt, but to support Delete Me/All we need custom logic.
-             // I'll implement a simple confirm for now or just default to 'me' if complex UI needed.
-             // Actually, let's implement a simple choice modal reusing standard modal?
-             // No, prompt says "showChoice". I'll skip complex choice UI and just use confirm for "Delete for everyone?"
-             // If they say no, ask "Delete for me?".
-             resolve('me');
-         });
-    },
-
+    // LISTENERS
     setupListeners: function() {
         const loginBtn = document.getElementById('btn-login');
         const registerBtn = document.getElementById('btn-register');
@@ -162,9 +160,6 @@ const app = {
             body.token = this.user.token;
             body.email = this.user.email;
         }
-        // Metadata
-        body.clientIP = "client-side"; // Passed in payload mostly
-        body.userAgent = navigator.userAgent;
 
         try {
             const res = await fetch(this.getApiUrl(), {
@@ -185,13 +180,14 @@ const app = {
         }
     },
 
+    // AUTH
     doLogin: async function() {
         const email = document.getElementById('login-email').value;
         const code = document.getElementById('login-code').value;
         try {
             this.toggleLoader(true);
-            const ip = await this.getIp();
-            const res = await this.api('login', { email, code, ip });
+            const clientInfo = await this.getClientInfo();
+            const res = await this.api('login', { email, code, ip: clientInfo.ip });
             if (res.requireNewPassword) { await this.handleChangePassword(email, code); return; }
             this.user = { ...res.user, token: res.token };
             localStorage.setItem('wh_user', JSON.stringify(this.user));
@@ -238,8 +234,8 @@ const app = {
         if (code.length < 4) return this.showError("Le mot de passe est trop court.");
         try {
             this.toggleLoader(true);
-            const ip = await this.getIp();
-            const res = await this.api('register', { email, firstName, code, ip });
+            const clientInfo = await this.getClientInfo();
+            const res = await this.api('register', { email, firstName, code, ip: clientInfo.ip });
             this.user = res.user;
             localStorage.setItem('wh_user', JSON.stringify(this.user));
             this.showDashboard();
@@ -272,6 +268,7 @@ const app = {
         this.showLogin();
     },
 
+    // MESSAGING
     loadConversations: async function() {
         if (!this.user) return;
         try {
@@ -295,7 +292,7 @@ const app = {
                 return tB - tA;
             });
             res.chats.forEach(chat => {
-                if (chat.archived) return; // Skip archived for now or show in archived section
+                if (chat.archived) return;
                 const el = document.createElement('div');
                 el.className = 'chat-card';
                 if (chat.pinned) el.classList.add('pinned');
@@ -399,9 +396,6 @@ const app = {
         if (this.user.isAdmin || this.user.canCreate || this.user.isSubscriber) delBtn.classList.remove('hidden');
         else delBtn.classList.add('hidden');
 
-        // Pin/Archive Buttons (add them if missing)
-        // ... UI actions ...
-
         this.showView('view-chat');
         this.loadMessages(chatId);
         this.startTimer();
@@ -442,16 +436,14 @@ const app = {
             const area = document.getElementById('messages-area');
             document.getElementById('chat-title').textContent = res.participantNames;
 
-            // Render Messages
             area.innerHTML = '';
             res.messages.forEach(msg => {
                 const div = document.createElement('div');
                 div.className = `msg ${msg.isMe ? 'me' : 'other'} ${msg.type === 'system' ? 'system' : ''}`;
                 div.dataset.msgId = msg.id;
 
-                // Swipe/Click to reply logic can be added here
                 div.onclick = (e) => {
-                    if (e.detail === 2) this.replyToMessage(msg); // Double click to reply
+                    if (e.detail === 2) this.replyToMessage(msg);
                 };
 
                 if (msg.type === 'system') {
@@ -459,15 +451,12 @@ const app = {
                     div.style.background = 'transparent'; div.style.textAlign = 'center'; div.style.width = '100%';
                 } else {
                     let content = '';
-                    if (msg.replyTo) content += `<div class="reply-ref">Réponse...</div>`; // Simplify reply display
+                    if (msg.replyTo) content += `<div class="reply-ref">Réponse...</div>`;
                     if (msg.type === 'image') content += `<img src="${msg.content}" onclick="app.showImageModal('${msg.content}')">`;
                     else content += `<div>${msg.content}</div>`;
 
                     let status = '';
-                    if (msg.isMe) {
-                         // Mock status, real requires complex read tracking
-                         status = '<span class="status sent">✓</span>';
-                    }
+                    if (msg.isMe) { status = '<span class="status sent">✓</span>'; }
 
                     div.innerHTML = `
                         <div class="msg-name">${msg.senderName}</div>
@@ -479,7 +468,6 @@ const app = {
                 }
                 area.appendChild(div);
             });
-            // area.scrollTop = area.scrollHeight; // Auto scroll? Only if at bottom.
         } catch (e) {}
     },
 
@@ -522,19 +510,23 @@ const app = {
         const text = input.value;
         const hasFile = fileInput.files.length > 0;
         if (!text.trim() && !hasFile) return;
+
         btn.disabled = true; btn.style.opacity = "0.5";
+
+        const clientInfo = await this.getClientInfo();
+
         try {
             const replyId = this.replyingTo ? this.replyingTo.id : null;
             if (hasFile) {
                 const file = fileInput.files[0];
                 const reader = new FileReader();
                 reader.onload = async (e) => {
-                    await this.sendPayload(e.target.result, 'image', replyId);
+                    await this.sendPayload(e.target.result, 'image', replyId, clientInfo);
                     fileInput.value = '';
                 };
                 reader.readAsDataURL(file);
             } else {
-                await this.sendPayload(text, 'text', replyId);
+                await this.sendPayload(text, 'text', replyId, clientInfo);
                 input.value = '';
             }
             this.cancelReply();
@@ -542,8 +534,16 @@ const app = {
         finally { btn.disabled = false; btn.style.opacity = "1"; input.focus(); }
     },
 
-    sendPayload: async function(content, type, replyTo) {
-        await this.api('sendMessage', { chatId: this.currentChatId, content, type, replyTo });
+    sendPayload: async function(content, type, replyTo, clientInfo) {
+        await this.api('sendMessage', {
+            chatId: this.currentChatId,
+            content,
+            type,
+            replyTo,
+            clientIP: clientInfo.ip,
+            clientLocation: clientInfo.location,
+            clientUserAgent: clientInfo.userAgent
+        });
         await this.loadMessages(this.currentChatId);
     },
 
@@ -659,7 +659,7 @@ const app = {
         if (tab === 'users') this.loadAdminUsers();
         if (tab === 'subscriptions') this.loadAdminSubscriptions();
         if (tab === 'settings') this.loadAdminSettings();
-        if (tab === 'alerts') this.loadAlerts(); // NEW
+        if (tab === 'alerts') this.loadAlerts();
     },
 
     loadAdminUsers: async function() {
@@ -685,9 +685,7 @@ const app = {
                 </div>
             `).join('');
 
-            // Add Super Admin Access Button if current user is Super Admin
             if (this.user.email === 'chaouiengage@gmail.com') {
-                 // Add button at top of list
                  const superBtn = document.createElement('button');
                  superBtn.className = 'btn-gold';
                  superBtn.textContent = '👁️ Accès Toutes Conversations';
@@ -731,7 +729,7 @@ const app = {
                     </div>
                     <div class="sub-details">Code: <strong>${s.whatsappenCode}</strong> | Txn: ${s.paypalTransaction || '-'}</div>
                     ${s.status === 'pending' ? `<div class="validation-form"><input type="date" id="start-${s.email}" value="${new Date().toISOString().split('T')[0]}"><input type="date" id="end-${s.email}" value="${new Date(new Date().setFullYear(new Date().getFullYear()+1)).toISOString().split('T')[0]}"><button class="btn-validate" onclick="app.validateSub('${s.email}')">Valider</button></div>` : ''}
-                    ${s.status === 'active' ? `<button onclick="app.downloadInvoice(null, '${s.email}')" class="btn-gold" style="font-size:0.7rem; margin-top:5px;">📄 Facture</button>` : ''}
+                    ${s.status === 'active' ? `<button onclick="app.generateInvoice(null, '${s.email}')" class="btn-gold" style="font-size:0.7rem; margin-top:5px;">📄 Facture</button>` : ''}
                 </div>
             `).join('');
         } catch(e) { this.showError(e.message); }
@@ -766,51 +764,51 @@ const app = {
     validateSub: async function(email) {
         const start = document.getElementById(`start-${email}`).value;
         const end = document.getElementById(`end-${email}`).value;
-        try { await this.api('adminValidateSubscription', { targetEmail: email, startDate: start, endDate: end }); this.loadAdminSubscriptions(); } catch(e) { this.showError(e.message); }
-    },
-
-    downloadInvoice: async function(invoiceId, email) {
         try {
             this.toggleLoader(true);
-            const targetEmail = email || this.user.email; // If not passed, use current user (but user might need apiGetInvoice logic)
-            // For admin usage with email param:
-            const res = await this.api(email ? 'adminGetInvoices' : 'adminGetInvoices', { targetEmail: targetEmail }); // User can't use adminGetInvoices...
-            // Wait, regular user has no 'getInvoices'.
-            // But we need to fix download for users too?
-            // "CORRECTION FACTURES MOBILE"
-            // Users don't see invoices list in current UI. Only admin sees them in Subscriptions tab.
-            // So this function is called by Admin.
-            // But if users need it later...
+            await this.api('adminValidateSubscription', { targetEmail: email, startDate: start, endDate: end });
+            this.showSuccess("Abonnement validé et facture envoyée !");
+            this.loadAdminSubscriptions();
+        } catch(e) { this.showError(e.message); } finally { this.toggleLoader(false); }
+    },
+
+    generateInvoice: async function(invoiceId, email) {
+        try {
+            this.toggleLoader(true);
+            const targetEmail = email || this.user.email;
+            const res = await this.api('adminGetInvoices', { targetEmail: targetEmail });
 
             const inv = res.invoices[res.invoices.length-1];
             if (!inv) throw new Error("Aucune facture.");
 
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            doc.setFont("helvetica", "bold"); doc.setFontSize(22); doc.text("FACTURE", 105, 20, null, null, "center");
-            doc.setFontSize(10); doc.setFont("helvetica", "normal");
-            doc.text(`Ref: ${inv.reference}`, 150, 40); doc.text(`Date: ${new Date(inv.issuedAt).toLocaleDateString('fr-FR')}`, 150, 45);
-            doc.setFont("helvetica", "bold"); doc.text("CHAOUI ENGAGÉ", 20, 40);
-            doc.setFont("helvetica", "normal"); doc.text("Email: chaouiengage@gmail.com", 20, 50);
-            doc.setFont("helvetica", "bold"); doc.text("CLIENT:", 110, 70);
-            doc.setFont("helvetica", "normal"); doc.text(`${inv.firstName}`, 110, 75); doc.text(`${inv.email}`, 110, 80);
-            let y = 110; doc.line(20, y, 190, y); y += 10;
-            doc.text("Abonnement Premium", 20, y); doc.text(`${inv.amount} €`, 170, y); y += 30;
-            doc.line(20, y, 190, y); y += 10; doc.setFont("helvetica", "bold");
-            doc.text("TOTAL", 120, y); doc.text(`${inv.amount} €`, 170, y);
 
-            // MOBILE FIX
+            // DARK MODE INVOICE
+            doc.setFillColor(26, 26, 26);
+            doc.rect(0, 0, 210, 297, 'F');
+            doc.setFontSize(28); doc.setTextColor(212, 175, 55); doc.text("WHATSHAPPEN", 105, 30, { align: 'center' });
+            doc.setFontSize(12); doc.setTextColor(150); doc.text("Messagerie Premium", 105, 40, { align: 'center' });
+            doc.setDrawColor(212, 175, 55); doc.setLineWidth(0.5); doc.roundedRect(20, 55, 170, 180, 5, 5);
+            doc.setFontSize(20); doc.setTextColor(255); doc.text("FACTURE", 105, 70, { align: 'center' });
+            doc.setFontSize(10); doc.setTextColor(150); doc.text(`N° ${inv.reference}`, 30, 85); doc.text(`Date: ${new Date(inv.issuedAt).toLocaleDateString('fr-FR')}`, 140, 85);
+            doc.setDrawColor(212, 175, 55); doc.line(30, 92, 180, 92);
+            doc.setFontSize(12); doc.setTextColor(255); doc.text("Facturé à:", 30, 105);
+            doc.setTextColor(200); doc.text(inv.firstName || 'Client', 30, 115); doc.text(inv.email, 30, 123);
+            doc.setTextColor(255); doc.text("Détail:", 30, 145);
+            doc.setFillColor(40, 40, 40); doc.roundedRect(30, 150, 150, 30, 3, 3, 'F');
+            doc.setTextColor(212, 175, 55); doc.text("Abonnement Premium", 35, 162);
+            doc.setTextColor(255); doc.text(`${inv.amount} €`, 160, 162, { align: 'right' });
+            doc.setDrawColor(212, 175, 55); doc.line(30, 195, 180, 195);
+            doc.setFontSize(16); doc.setTextColor(212, 175, 55); doc.text("TOTAL:", 30, 210); doc.text(`${inv.amount} €`, 160, 210, { align: 'right' });
+            doc.setFontSize(14); doc.setTextColor(0, 200, 0); doc.text("✓ PAYÉE", 105, 230, { align: 'center' });
+            doc.setFontSize(8); doc.setTextColor(100); doc.text("WhatsHappen - Messagerie Premium", 105, 270, { align: 'center' });
+
             const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
             if (isMobile) {
                 const pdfData = doc.output('datauristring');
                 const win = window.open();
                 win.document.write('<iframe width="100%" height="100%" src="' + pdfData + '"></iframe>');
-
-                // Also offer email
-                if (await this.showConfirm("Envoyer aussi par email ?")) {
-                     await this.api('sendInvoiceEmail', { invoiceId: inv.reference });
-                     this.showSuccess("Envoyé par email.");
-                }
             } else {
                 doc.save(`Facture_${inv.reference}.pdf`);
             }
@@ -820,7 +818,7 @@ const app = {
     loadAdminSettings: async function() {
         try {
             const res = await this.api('adminGetSettings');
-            const form = document.getElementById('admin-settings');
+            const form = document.getElementById('admin-settings-form');
             form.innerHTML = `
                 <div class="setting-row"><label>Abonnements</label><input type="checkbox" id="set-enabled" ${res.settings.subscriptionEnabled ? 'checked' : ''} onchange="app.saveSettings()"></div>
                 <div class="setting-row"><label>Prix (€)</label><input type="number" id="set-price" value="${res.settings.subscriptionPrice}" onchange="app.saveSettings()"></div>
@@ -836,11 +834,11 @@ const app = {
         try { await this.api('adminUpdateSettings', { settings }); } catch(e) {}
     },
 
-    // NEW: ALERTS
+    // ALERTS
     loadAlerts: async function() {
         try {
             const res = await this.api('adminGetAlerts');
-            const list = document.getElementById('admin-alerts-list'); // Need to add this in HTML
+            const list = document.getElementById('admin-alerts-list');
             if (res.alerts.length === 0) { list.innerHTML = '<p style="text-align:center;color:#666;">Aucune alerte</p>'; return; }
             list.innerHTML = res.alerts.map(a => `
                 <div class="alert-card ${a.status}">
@@ -849,7 +847,7 @@ const app = {
                       <small>${new Date(a.timestamp).toLocaleString()}</small>
                    </div>
                    <div style="font-size:0.9rem;"><strong>${a.sender.firstName}</strong> (${a.sender.email})</div>
-                   <div style="font-size:0.8rem;color:#888;">IP: ${a.sender.ip}</div>
+                   <div style="font-size:0.8rem;color:#888;">IP: ${a.sender.ip} | ${a.sender.location || 'Unknown'}</div>
                    <div style="background:#000;padding:5px;border-radius:4px;margin:5px 0;font-size:0.8rem;">"${a.detection.keywords.map(k=>k.keyword).join(', ')}"</div>
                    <div style="display:flex;gap:5px;margin-top:5px;">
                       <button onclick="app.viewFlaggedConversation('${a.id}')" class="btn-gold" style="font-size:0.7rem;">Voir Chat</button>
@@ -862,7 +860,6 @@ const app = {
     },
 
     viewFlaggedConversation: async function(alertId) {
-        if (!await this.showConfirm("Code de vérification sera envoyé par email. Continuer ?")) return;
         try {
             this.toggleLoader(true);
             await this.api('requestConversationAccess', { alertId });
@@ -870,45 +867,91 @@ const app = {
             if (!code) return;
             const res = await this.api('verifyConversationAccess', { alertId, code });
 
-            // Show conversation in a modal or view
-            // For simplicity, use a big modal
-            let content = `<div style="max-height:60vh;overflow-y:auto;text-align:left;">`;
-            res.conversation.messages.forEach(m => {
-                content += `<div style="margin-bottom:10px;border-bottom:1px solid #333;padding-bottom:5px;">
-                    <strong>${m.senderName}</strong> <small>${new Date(m.timestamp).toLocaleString()}</small><br>
-                    ${m.content}
-                </div>`;
-            });
-            content += `</div>`;
-            this.showModal('info', 'Conversation Signalée', '', false).then(() => {});
-            // Reuse modal box content injection hack?
-            document.querySelector('.modal-message').innerHTML = content;
-
+            if (res.success && res.conversation) {
+                this.displayFlaggedConversationModal(res.conversation, alertId);
+            }
         } catch(e) { this.showError(e.message); } finally { this.toggleLoader(false); }
     },
 
+    displayFlaggedConversationModal: function(conversation, alertId) {
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        modal.id = 'flagged-conv-modal';
+
+        let messagesHTML = '';
+        if (conversation.messages && conversation.messages.length > 0) {
+            conversation.messages.forEach(msg => {
+                const time = new Date(msg.timestamp).toLocaleString('fr-FR');
+                const senderName = msg.senderName || 'Utilisateur';
+                messagesHTML += `
+                    <div class="flagged-message">
+                        <div class="msg-header"><strong>${senderName}</strong><span class="msg-time">${time}</span></div>
+                        <div class="msg-content">${msg.content}</div>
+                    </div>`;
+            });
+        } else { messagesHTML = '<p style="color:#888;">Aucun message.</p>'; }
+
+        modal.innerHTML = `
+            <div class="modal-content large">
+                <div class="modal-header"><h2>🔐 Conversation Signalée</h2><button class="close-btn" onclick="document.getElementById('flagged-conv-modal').remove()">✕</button></div>
+                <div class="flagged-conv-info">
+                    <p><strong>Participants:</strong> ${conversation.participants?.map(p => p.firstName + ' (' + p.email + ')').join(', ') || 'N/A'}</p>
+                    <p><strong>Date:</strong> ${new Date(conversation.chat?.createdAt || Date.now()).toLocaleString('fr-FR')}</p>
+                </div>
+                <div class="flagged-messages-container">${messagesHTML}</div>
+                <div class="modal-footer">
+                    ${alertId ? `<button class="btn-gold" onclick="app.downloadAlertReport('${alertId}')">📥 Rapport</button>` : ''}
+                    <button class="btn-secondary" onclick="document.getElementById('flagged-conv-modal').remove()">Fermer</button>
+                </div>
+            </div>`;
+        document.body.appendChild(modal);
+    },
+
     downloadAlertReport: async function(alertId) {
-        if (!await this.showConfirm("Demander le rapport (Code email requis) ?")) return;
         try {
             this.toggleLoader(true);
-            await this.api('requestConversationAccess', { alertId }); // Re-use access request
-            const code = await this.showPrompt("Code", "Code reçu par email");
+            // Assuming we already have access if viewing, but API needs code again or token.
+            // Actually API requires code again or we cache it?
+            // The previous implementation used verifyConversationAccess which removes code.
+            // So we need to ask code again? Or `getAlertFullReport` handles it?
+            // `getAlertFullReport` requires `accessCode`.
+            // User experience: Enter code again for download.
+
+            await this.api('requestConversationAccess', { alertId });
+            const code = await this.showPrompt("Code pour rapport", "Confirmer avec le code email");
             if (!code) return;
+
             const res = await this.api('getAlertFullReport', { alertId, accessCode: code });
+            const alert = res.alert; const conv = res.conversation;
 
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            doc.setFontSize(18); doc.text("RAPPORT D'ALERTE", 20, 20);
-            doc.setFontSize(12); doc.text(`ID: ${res.alert.id}`, 20, 30);
-            doc.text(`Sender: ${res.alert.sender.email} (${res.alert.sender.ip})`, 20, 40);
+            doc.setFontSize(20); doc.setTextColor(255, 0, 0); doc.text("RAPPORT D'ALERTE - CONFIDENTIEL", 20, 20);
+            doc.setFontSize(10); doc.setTextColor(100); doc.text(`Généré le: ${new Date().toLocaleString('fr-FR')}`, 20, 30);
+            doc.setFontSize(14); doc.setTextColor(0); doc.text("INFORMATIONS", 20, 45);
+            doc.setFontSize(10); doc.text(`ID: ${alert.id}`, 20, 55);
+            doc.text(`Date: ${new Date(alert.timestamp).toLocaleString('fr-FR')}`, 20, 62);
+            doc.text(`Sender: ${alert.sender?.email} (${alert.sender?.ip})`, 20, 70);
+            doc.text(`Location: ${alert.sender?.location}`, 20, 77);
+            doc.text(`UA: ${alert.sender?.userAgent}`, 20, 84, { maxWidth: 170 });
+            doc.setFontSize(14); doc.text("CONTENU", 20, 100);
+            doc.setFontSize(10); doc.text(doc.splitTextToSize(alert.detection?.messagePreview || 'N/A', 170), 20, 110);
 
-            let y = 60;
-            res.conversation.messages.forEach(m => {
-                if (y > 270) { doc.addPage(); y = 20; }
-                doc.setFontSize(10); doc.text(`${m.senderName}: ${m.content.substring(0,80)}`, 20, y);
-                y += 7;
-            });
-            doc.save(`ALERTE_${alertId}.pdf`);
+            doc.addPage();
+            doc.setFontSize(14); doc.text("CONVERSATION", 20, 20);
+            let y = 35;
+            if (conv && conv.messages) {
+                conv.messages.forEach(msg => {
+                    if (y > 270) { doc.addPage(); y = 20; }
+                    doc.setFontSize(9); doc.setTextColor(100); doc.text(`[${new Date(msg.timestamp).toLocaleString()}] ${msg.senderName}:`, 20, y);
+                    y += 5;
+                    doc.setTextColor(0);
+                    const lines = doc.splitTextToSize(msg.content, 170);
+                    doc.text(lines, 25, y);
+                    y += (lines.length * 5) + 8;
+                });
+            }
+            doc.save(`RAPPORT_${alertId}.pdf`);
         } catch(e) { this.showError(e.message); } finally { this.toggleLoader(false); }
     },
 
@@ -918,7 +961,6 @@ const app = {
     },
 
     requestAllConversationsAccess: async function() {
-        if (!await this.showConfirm("SUPER ADMIN: Accéder à TOUTES les conversations ? Code email requis.")) return;
         try {
             this.toggleLoader(true);
             await this.api('requestSuperAdminAccess');
@@ -926,22 +968,43 @@ const app = {
             if (!code) return;
             const res = await this.api('superAdminGetAllConversations', { accessCode: code });
 
-            // Render in a nice overlay
-            let html = `<div style="max-height:70vh;overflow-y:auto;text-align:left;">`;
-            res.conversations.forEach(c => {
-                html += `<div style="background:#222;padding:10px;margin-bottom:10px;border-radius:5px;">
-                    <h4>${c.names} (ID: ${c.id})</h4>
-                    <div style="font-size:0.8rem;color:#ccc;">`;
-                c.messages.forEach(m => {
-                    html += `<div><strong>${m.senderName}:</strong> ${m.content}</div>`;
-                });
-                html += `</div></div>`;
-            });
-            html += `</div>`;
-
-            this.showModal('info', 'TOUTES les Conversations', '', false);
-            document.querySelector('.modal-message').innerHTML = html;
+            if (res.success && res.conversations) {
+                this.displayAllConversationsModal(res.conversations);
+            }
         } catch(e) { this.showError(e.message); } finally { this.toggleLoader(false); }
+    },
+
+    displayAllConversationsModal: function(conversations) {
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        modal.id = 'all-conv-modal';
+        let html = '';
+        if (conversations.length > 0) {
+            conversations.forEach((conv, index) => {
+                const parts = conv.names || 'N/A';
+                const msgCount = conv.messages?.length || 0;
+                html += `
+                    <div class="conv-card" onclick="app.viewConversationDetail(${index})">
+                        <div class="conv-header"><strong>${parts}</strong><span class="msg-count">${msgCount} msgs</span></div>
+                        <div class="conv-date">ID: ${conv.id}</div>
+                    </div>`;
+            });
+        } else { html = '<p class="no-data">Aucune conversation.</p>'; }
+
+        modal.innerHTML = `
+            <div class="modal-content large">
+                <div class="modal-header"><h2>🔐 Toutes les Conversations</h2><button class="close-btn" onclick="document.getElementById('all-conv-modal').remove()">✕</button></div>
+                <div class="all-convs-container">${html}</div>
+            </div>`;
+        document.body.appendChild(modal);
+        this.allConversationsCache = conversations;
+    },
+
+    viewConversationDetail: function(index) {
+        const conv = this.allConversationsCache[index];
+        if (!conv) return;
+        document.getElementById('all-conv-modal')?.remove();
+        this.displayFlaggedConversationModal(conv, null);
     },
 
     // UI UTILS
