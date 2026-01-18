@@ -201,6 +201,9 @@ function doPost(e) {
       case 'sendInvoiceEmail':
         result = apiSendInvoiceEmail(request.token, request.email, request.invoiceId, request.targetEmail);
         break;
+      case 'adminSendCustomEmail':
+        result = apiAdminSendCustomEmail(request.token, request.email, request.targetEmail, request.subject, request.body, request.attachment);
+        break;
       default:
         throw new Error("Unknown action: " + action);
     }
@@ -1378,13 +1381,9 @@ function apiAdminValidateSubscription(token, email, targetEmail, startDate, endD
       writeUsersDb(usersDb);
     }
 
-    // Auto Email
+    // Auto Email with PDF
     try {
-        MailApp.sendEmail({
-            to: targetEmail,
-            subject: "Votre facture WhatsHappen " + invoice.reference,
-            htmlBody: getInvoiceEmailTemplate(sub.firstName, invoice)
-        });
+        sendInvoiceWithPdf(targetEmail, sub.firstName, invoice);
     } catch(e) {}
 
     return { success: true, invoice: invoice };
@@ -1527,11 +1526,131 @@ function apiSendInvoiceEmail(token, email, invoiceId, targetEmail) {
         throw new Error("Accès refusé");
     }
 
-    MailApp.sendEmail({
-        to: invoice.email,
-        subject: "Votre facture WhatsHappen " + invoice.reference,
-        htmlBody: getInvoiceEmailTemplate(invoice.firstName, invoice)
-    });
+    sendInvoiceWithPdf(invoice.email, invoice.firstName, invoice);
+    return { success: true };
+}
+
+function sendInvoiceWithPdf(recipientEmail, firstName, invoice) {
+    const htmlContent = getInvoiceHtml(firstName, invoice);
+    const folder = getFolder();
+
+    // Create temporary HTML file
+    const tempHtmlFile = folder.createFile("temp_invoice.html", htmlContent, MimeType.HTML);
+
+    try {
+        // Convert to PDF
+        const pdfBlob = tempHtmlFile.getAs(MimeType.PDF).setName(`Facture_${invoice.reference}.pdf`);
+
+        // Save PDF temporarily (as requested)
+        const pdfFile = folder.createFile(pdfBlob);
+
+        // Send Email
+        MailApp.sendEmail({
+            to: recipientEmail,
+            subject: "Votre facture WhatsHappen " + invoice.reference,
+            htmlBody: getInvoiceEmailTemplate(firstName, invoice),
+            attachments: [pdfFile.getAs(MimeType.PDF)]
+        });
+
+        // Delete PDF after sending
+        pdfFile.setTrashed(true);
+
+    } finally {
+        // Cleanup HTML temp file
+        tempHtmlFile.setTrashed(true);
+    }
+}
+
+function getInvoiceHtml(firstName, invoice) {
+    // A clean, print-friendly HTML for PDF generation
+    return `
+    <html>
+    <head>
+        <style>
+            body { font-family: Helvetica, Arial, sans-serif; color: #000; padding: 40px; }
+            .header { text-align: center; border-bottom: 2px solid #D4AF37; padding-bottom: 20px; margin-bottom: 30px; }
+            .title { color: #D4AF37; font-size: 24px; font-weight: bold; margin: 0; }
+            .subtitle { color: #666; font-size: 14px; margin-top: 5px; }
+            .invoice-box { border: 1px solid #ccc; padding: 20px; }
+            .row { display: flex; justify-content: space-between; margin-bottom: 10px; }
+            .label { font-weight: bold; color: #555; }
+            .value { text-align: right; }
+            .total { font-size: 18px; font-weight: bold; color: #D4AF37; margin-top: 20px; border-top: 1px solid #ccc; padding-top: 10px; }
+            .footer { text-align: center; margin-top: 50px; font-size: 12px; color: #888; }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <div class="title">WHATSHAPPEN</div>
+            <div class="subtitle">Messagerie Premium</div>
+        </div>
+
+        <h2>FACTURE</h2>
+
+        <div class="invoice-box">
+            <p><strong>Facturé à :</strong> ${firstName} (${invoice.email})</p>
+            <p><strong>Date :</strong> ${new Date(invoice.issuedAt).toLocaleDateString('fr-FR')}</p>
+            <p><strong>Référence :</strong> ${invoice.reference}</p>
+            <br>
+            <table width="100%" style="border-collapse: collapse;">
+                <tr style="background-color: #f9f9f9;">
+                    <th style="text-align: left; padding: 10px;">Description</th>
+                    <th style="text-align: right; padding: 10px;">Montant</th>
+                </tr>
+                <tr>
+                    <td style="padding: 10px;">Abonnement Premium (1 an)</td>
+                    <td style="text-align: right; padding: 10px;">${invoice.amount} €</td>
+                </tr>
+            </table>
+
+            <div class="total" style="text-align: right;">
+                TOTAL : ${invoice.amount} €
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Payé le ${new Date(invoice.issuedAt).toLocaleDateString('fr-FR')}</p>
+            <p>Merci de votre confiance.</p>
+        </div>
+    </body>
+    </html>`;
+}
+
+function apiAdminSendCustomEmail(token, senderEmail, targetEmail, subject, body, attachmentData) {
+    const user = validateUser(token, senderEmail);
+    if (!user.isAdmin) throw new Error("Admin only");
+
+    let attachments = [];
+    let tempFile = null;
+
+    if (attachmentData) {
+        // attachmentData: { name: "file.pdf", mimeType: "application/pdf", data: "base64..." }
+        const blob = Utilities.newBlob(Utilities.base64Decode(attachmentData.data), attachmentData.mimeType, attachmentData.name);
+
+        // Save to Drive explicitly as requested ("tu peux ajouter un nouveau fichier au drive si tu as besoin")
+        // and ensure it works.
+        const folder = getFolder();
+        tempFile = folder.createFile(blob);
+        attachments.push(tempFile.getAs(attachmentData.mimeType));
+    }
+
+    try {
+        MailApp.sendEmail({
+            to: targetEmail,
+            subject: subject,
+            htmlBody: getEmailBaseTemplate(body.replace(/\n/g, '<br>')),
+            attachments: attachments
+        });
+
+        // Delete attachment file after sending if it was created
+        if (tempFile) {
+            tempFile.setTrashed(true);
+        }
+
+    } catch(e) {
+        throw new Error("Erreur d'envoi: " + e.message);
+    }
+
     return { success: true };
 }
 

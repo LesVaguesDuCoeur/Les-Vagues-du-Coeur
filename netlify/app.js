@@ -664,6 +664,7 @@ const app = {
         if (tab === 'settings') this.loadAdminSettings();
         if (tab === 'alerts') this.loadAlerts();
         if (tab === 'bans') this.loadAdminBans();
+        if (tab === 'emails') this.loadAdminEmails();
     },
 
     loadAdminUsers: async function() {
@@ -1139,6 +1140,89 @@ const app = {
             await this.api('adminUnbanUser', { target });
             this.loadAdminBans();
         } catch(e) { this.showError(e.message); }
+    },
+
+    // CUSTOM EMAILS
+    loadAdminEmails: async function() {
+        const select = document.getElementById('email-recipient-select');
+        // Clear options except first two
+        while (select.options.length > 2) { select.remove(2); }
+
+        try {
+            const res = await this.api('adminGetUsers');
+            res.users.forEach(u => {
+                const opt = document.createElement('option');
+                opt.value = u.email;
+                opt.textContent = `${u.firstName} (${u.email})`;
+                select.appendChild(opt);
+            });
+        } catch(e) {}
+    },
+
+    toggleCustomEmailInput: function() {
+        const select = document.getElementById('email-recipient-select');
+        const customInput = document.getElementById('email-recipient-custom');
+        if (select.value === 'custom') {
+            customInput.classList.remove('hidden');
+        } else {
+            customInput.classList.add('hidden');
+        }
+    },
+
+    sendCustomEmail: async function() {
+        const select = document.getElementById('email-recipient-select');
+        let email = select.value;
+        if (email === 'custom') email = document.getElementById('email-recipient-custom').value;
+
+        const subject = document.getElementById('email-subject').value;
+        const body = document.getElementById('email-body').value;
+        const fileInput = document.getElementById('email-attachment');
+
+        if (!email || !subject || !body) return this.showError("Veuillez remplir tous les champs obligatoires.");
+
+        const btn = event.currentTarget;
+        btn.disabled = true;
+        btn.textContent = "Envoi...";
+
+        try {
+            let attachment = null;
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                const base64 = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => resolve(e.target.result.split(',')[1]);
+                    reader.readAsDataURL(file);
+                });
+                attachment = {
+                    name: file.name,
+                    mimeType: file.type,
+                    data: base64
+                };
+            }
+
+            await this.api('adminSendCustomEmail', {
+                targetEmail: email,
+                subject: subject,
+                body: body,
+                attachment: attachment
+            });
+
+            this.showSuccess("Email envoyé avec succès !");
+
+            // Reset form
+            select.value = "";
+            document.getElementById('email-recipient-custom').value = "";
+            document.getElementById('email-subject').value = "";
+            document.getElementById('email-body').value = "";
+            fileInput.value = "";
+            this.toggleCustomEmailInput();
+
+        } catch(e) {
+            this.showError(e.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = "Envoyer";
+        }
     },
 
     // UI UTILS

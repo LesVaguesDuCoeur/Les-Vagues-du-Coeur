@@ -178,6 +178,7 @@
             <button class="admin-tab-btn" data-tab="subscriptions" onclick="app.switchAdminTab('subscriptions')">💳 Abos</button>
             <button class="admin-tab-btn" data-tab="alerts" onclick="app.switchAdminTab('alerts')">🚨 Alertes</button>
             <button class="admin-tab-btn" data-tab="bans" onclick="app.switchAdminTab('bans')">🚫 Bans</button>
+            <button class="admin-tab-btn" data-tab="emails" onclick="app.switchAdminTab('emails')">📧 Emails</button>
             <button class="admin-tab-btn" data-tab="settings" onclick="app.switchAdminTab('settings')">⚙️</button>
         </div>
 
@@ -205,6 +206,31 @@
                 <button onclick="app.addBan()" class="btn-red">Bannir</button>
             </div>
             <div id="admin-bans-list"></div>
+        </div>
+
+        <div id="admin-emails" class="admin-tab-content hidden" style="padding-top:20px;">
+            <div style="padding:15px; background:#222; border-radius:8px;">
+                <h4 style="color:var(--gold); margin-bottom:15px;">Envoyer un email (Design Officiel)</h4>
+
+                <label style="color:#aaa; font-size:0.8rem;">Destinataire</label>
+                <select id="email-recipient-select" class="modal-input" onchange="app.toggleCustomEmailInput()" style="margin-bottom:5px;">
+                    <option value="">Sélectionner un utilisateur...</option>
+                    <!-- Populated by JS -->
+                    <option value="custom">Autre (Saisir manuellement)</option>
+                </select>
+                <input type="email" id="email-recipient-custom" class="modal-input hidden" placeholder="adresse@email.com" style="margin-bottom:10px;">
+
+                <label style="color:#aaa; font-size:0.8rem;">Sujet</label>
+                <input type="text" id="email-subject" class="modal-input" placeholder="Sujet de l'email" style="margin-bottom:10px;">
+
+                <label style="color:#aaa; font-size:0.8rem;">Message</label>
+                <textarea id="email-body" class="modal-input" style="height:100px; resize:vertical; margin-bottom:10px;" placeholder="Votre message..."></textarea>
+
+                <label style="color:#aaa; font-size:0.8rem;">Pièce jointe (Optionnel)</label>
+                <input type="file" id="email-attachment" class="modal-input" style="padding:5px;">
+
+                <button onclick="app.sendCustomEmail()" class="btn-gold full" style="margin-top:15px;">Envoyer</button>
+            </div>
         </div>
 
         <div id="admin-settings" class="admin-tab-content hidden" style="padding-top:20px;">
