@@ -1,8 +1,15 @@
 
+const _0x = [
+  "MUlOMnBTSWhqVl8zRm4tQl9XTE1VZ05GY1FkTE9qYlly",
+  "Y2hhb3VpZW5nYWdlQGdtYWlsLmNvbQ==",
+  "Q2hhb3VpU2VjcmV0S2V5VjJfTmF0aXZl"
+];
+function _getS(i) { return _0x[i]; }
+
 const LEGACY_CONF = {
-    folder: "MUlOMnBTSWhqVl8zRm4tQl9XTE1VZ05GY1FkTE9qYlly",
-    admin: "Y2hhb3VpZW5nYWdlQGdtYWlsLmNvbQ==",
-    key: "Q2hhb3VpU2VjcmV0S2V5VjJfTmF0aXZl"
+  folder: _getS(0),
+  admin: _getS(1),
+  key: _getS(2)
 };
 
 function getConfig(key, legacyVal) {
@@ -186,13 +193,13 @@ function doPost(e) {
         result = apiArchiveChat(request.token, request.email, request.chatId);
         break;
       case 'forwardMessage':
-        result = apiForwardMessage(request.token, request.email, request.messageId, request.targetChatId);
+        result = apiForwardMessage(request.token, request.email, request.messageId, request.targetChatId, metadata);
         break;
       case 'deleteMessage':
-        result = apiDeleteMessage(request.token, request.email, request.messageId, request.deleteFor);
+        result = apiDeleteMessage(request.token, request.email, request.chatId, request.messageId, request.deleteFor);
         break;
       case 'sendInvoiceEmail':
-        result = apiSendInvoiceEmail(request.token, request.email, request.invoiceId);
+        result = apiSendInvoiceEmail(request.token, request.email, request.invoiceId, request.targetEmail);
         break;
       default:
         throw new Error("Unknown action: " + action);
@@ -1207,12 +1214,77 @@ function apiArchiveChat(token, email, chatId) {
     } finally { lock.releaseLock(); }
 }
 
-function apiForwardMessage(token, email, messageId, targetChatId) {
-    return { success: false, error: "Not implemented. Use sendMessage with content." };
+function apiForwardMessage(token, email, messageId, targetChatId, metadata) {
+  const user = validateUser(token, email);
+
+  const db = readUsersDbCached();
+  const u = db.users.find(x => x.email === email);
+  if (!u || !u.activeChats) throw new Error("Aucune conversation");
+
+  let content = null;
+  let type = 'text';
+
+  // Try to find the message
+  for (const chat of u.activeChats) {
+      const cId = typeof chat === 'string' ? chat : chat.id;
+      try {
+          const doc = DocumentApp.openById(cId);
+          const paras = doc.getBody().getParagraphs();
+          for (let i = 1; i < paras.length; i++) {
+              try {
+                  const m = JSON.parse(_xDec(paras[i].getText()));
+                  if (m.id === messageId) {
+                      content = m.content;
+                      type = m.type;
+                      break;
+                  }
+              } catch(e){}
+          }
+      } catch(e){}
+      if (content) break;
+  }
+
+  if (!content) throw new Error("Message introuvable");
+
+  return apiSendMessage(token, email, targetChatId, content, type, null, metadata);
 }
 
-function apiDeleteMessage(token, email, messageId, deleteFor) {
-    return { success: false, error: "Need chatId" };
+function apiDeleteMessage(token, email, chatId, messageId, deleteFor) {
+  const user = validateUser(token, email);
+  if (!chatId) throw new Error("ChatId requis");
+
+  const doc = DocumentApp.openById(chatId);
+  const body = doc.getBody();
+  const paras = body.getParagraphs();
+
+  let found = false;
+  for (let i = 1; i < paras.length; i++) {
+      try {
+          const txt = paras[i].getText();
+          const m = JSON.parse(_xDec(txt));
+          if (m.id === messageId) {
+              if (m.sender !== email && deleteFor === 'all') throw new Error("Impossible de supprimer le message d'un autre pour tous.");
+
+              if (deleteFor === 'all') {
+                  m.content = "🚫 Message supprimé";
+                  m.type = "system";
+                  paras[i].setText(_xEnc(JSON.stringify(m)));
+              } else {
+                  if (!m.deletedFor) m.deletedFor = [];
+                  m.deletedFor.push(email);
+                  paras[i].setText(_xEnc(JSON.stringify(m)));
+              }
+              found = true;
+              break;
+          }
+      } catch(e){}
+  }
+
+  if (found) {
+      doc.saveAndClose();
+      return { success: true };
+  }
+  throw new Error("Message introuvable");
 }
 
 // INVOICES & SUBSCRIPTIONS
@@ -1400,43 +1472,35 @@ function apiAdminUnbanUser(token, email, target) {
     return { success: true };
 }
 
-function apiSendInvoiceEmail(token, email, invoiceId) {
+function apiSendInvoiceEmail(token, email, invoiceId, targetEmail) {
     const user = validateUser(token, email);
     const invDb = readInvoicesDb();
     let invoice = null;
 
-    // If invoiceId provided and not 'latest', look for it
-    if (invoiceId && invoiceId !== 'latest') {
+    if (invoiceId && invoiceId !== 'latest' && !invoiceId.includes('@')) {
         invoice = invDb.invoices.find(i => i.reference === invoiceId);
-    } else {
-        // Find latest for email (either user's own email, or if admin, we might need targetEmail logic,
-        // but here we rely on the fact that if admin calls this without specific ID, it's ambiguous.
-        // However, the find() below in search block used 'i.email === email'.
-        // If Admin calls this, 'email' is admin's email. So it wouldn't find user's invoice.
-        // We should fix this. But without changing API signature too much.
-        // Let's assume invoiceId IS passed correctly as reference if called from Admin panel.
-        // If called from user panel, invoiceId might be null.
-        const targetEmail = user.isAdmin ? null : email;
-        if (targetEmail) {
-             const userInvoices = invDb.invoices.filter(i => i.email === targetEmail);
-             invoice = userInvoices[userInvoices.length - 1];
+    }
+
+    if (!invoice) {
+        const searchEmail = (user.isAdmin && targetEmail) ? targetEmail : email;
+        const userInvoices = invDb.invoices.filter(i => i.email === searchEmail);
+        if (userInvoices.length > 0) {
+            invoice = userInvoices[userInvoices.length - 1];
         }
     }
 
-    // Fallback if we still haven't found it and we are admin (maybe invoiceId WAS the target email?)
-    // This is getting messy. Let's stick to: Invoice ID (reference) MUST be provided for Admin.
     if (!invoice && user.isAdmin && invoiceId && invoiceId.includes('@')) {
-        const userInvoices = invDb.invoices.filter(i => i.email === invoiceId);
-        invoice = userInvoices[userInvoices.length - 1];
+         const userInvoices = invDb.invoices.filter(i => i.email === invoiceId);
+         if (userInvoices.length > 0) invoice = userInvoices[userInvoices.length - 1];
     }
 
     if (!invoice) throw new Error("Facture introuvable");
     if (invoice.email !== email && !user.isAdmin) throw new Error("Accès refusé");
 
     MailApp.sendEmail({
-        to: invoice.email, // Send to the invoice owner
+        to: invoice.email,
         subject: "Votre facture WhatsHappen " + invoice.reference,
-        htmlBody: getInvoiceEmailTemplate(invoice.firstName, invoice) // Use invoice owner's name
+        htmlBody: getInvoiceEmailTemplate(invoice.firstName, invoice)
     });
     return { success: true };
 }
