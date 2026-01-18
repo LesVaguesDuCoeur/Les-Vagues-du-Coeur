@@ -1,4 +1,4 @@
-# PROMPT COMPLET POUR JULES - PROJET WHATSHAPPEN V4
+# PROMPT COMPLET POUR JULES - PROJET WHATSHAPPEN V5
 
 ---
 
@@ -14,6 +14,56 @@
 - ❌ **NE CASSE PAS** ce qui fonctionne déjà
 
 **SI TU CASSES QUELQUE CHOSE QUI MARCHAIT, TU RECOMMENCES À ZÉRO !**
+
+---
+
+## 🚨🚨🚨 ERREURS CRITIQUES À NE PAS RÉPÉTER 🚨🚨🚨
+
+### ERREUR 1 : Mauvais email admin
+```javascript
+// ❌ MAUVAIS - Tu as mis ça :
+const SUPER_ADMIN_EMAIL = "chaouiengage@icloud.com";
+
+// ✅ CORRECT - L'email admin est UNIQUEMENT gmail :
+// NE PAS utiliser de variable SUPER_ADMIN_EMAIL séparée
+// Utiliser ADMIN_EMAIL qui vient de LEGACY_CONF = chaouiengage@gmail.com
+```
+
+### ERREUR 2 : Templates d'email cassés
+```javascript
+// ❌ MAUVAIS - Tu as mis ça (juste du texte) :
+function getWelcomeEmailTemplate(firstName) { return "Bienvenue " + firstName; }
+
+// ✅ CORRECT - Template HTML complet avec Dark Mode (voir section emails)
+```
+
+### ERREUR 3 : Fonctions manquantes
+Tu as oublié d'implémenter ces fonctions critiques :
+- `updateLastSeen(email)` - Mise à jour dernière connexion
+- `notifyInactiveUser(email)` - Notification fantôme
+- `apiGetMessages(token, email, chatId)` - Récupération des messages
+- `apiAdminGetUsers`, `apiAdminUpdateUser`, etc.
+- `getFolderId()` - Manquante, cause crash
+
+### ERREUR 4 : Vérification admin incorrecte
+```javascript
+// ❌ MAUVAIS - Double vérification avec email différent :
+if (cleanEmail === ADMIN_EMAIL || cleanEmail === SUPER_ADMIN_EMAIL)
+
+// ✅ CORRECT - Une seule source de vérité :
+if (cleanEmail === ADMIN_EMAIL)
+// Où ADMIN_EMAIL = atob(LEGACY_CONF.admin) = "chaouiengage@gmail.com"
+```
+
+### ERREUR 5 : Fonction getFolderId manquante
+```javascript
+// ❌ Tu appelles getFolderId() mais elle n'existe pas !
+
+// ✅ CORRECT - Ajouter la fonction :
+function getFolderId() {
+  return FOLDER_ID; // Ou decodeLegacy(getConfig('FOLDER_ID', LEGACY_CONF.folder))
+}
+```
 
 ---
 
@@ -657,12 +707,12 @@ function apiDeleteAlert(adminEmail, alertId, deleteBackup = false) {
 
 ### SUPER ADMIN - ACCÈS À TOUTES LES CONVERSATIONS
 
-**Email super admin : chaouiengage@icloud.com**
+**Email admin UNIQUE : chaouiengage@gmail.com** (PAS icloud, uniquement gmail)
 
 ```javascript
-// Vérification super admin
+// Vérification admin - UNIQUEMENT chaouiengage@gmail.com
 function isSuperAdmin(email) {
-  return email.toLowerCase().trim() === 'chaouiengage@icloud.com';
+  return email.toLowerCase().trim() === 'chaouiengage@gmail.com';
 }
 
 // Action API pour accès à toutes les conversations
@@ -716,7 +766,7 @@ async requestAllConversationsAccess() {
 
   const confirm = await showConfirm(
     "⚠️ ATTENTION: Vous allez accéder à TOUTES les conversations.\n" +
-    "Un code de vérification sera envoyé à chaouiengage@icloud.com.\n" +
+    "Un code de vérification sera envoyé à chaouiengage@gmail.com.\n" +
     "Continuer ?"
   );
   if (!confirm) return;
@@ -1507,7 +1557,7 @@ async getLocationFromIP(ip) {
 - [ ] Suppression des alertes fonctionne
 
 ### 👁️ Accès Admin
-- [ ] Super admin (chaouiengage@icloud.com) peut accéder à tout
+- [ ] Super admin (chaouiengage@gmail.com) peut accéder à tout
 - [ ] Code email obligatoire pour accès conversations
 - [ ] Logs d'accès enregistrés
 
