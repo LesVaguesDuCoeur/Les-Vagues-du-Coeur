@@ -4,6 +4,54 @@ Ce document contient les corrections exactes à faire. **Ne touche à rien d'aut
 
 ---
 
+## TACHE 0 : CREER LE FICHIER RAPPORT
+
+**Jules, tu dois créer un fichier `RAPPORT_CODE.md` qui documente le code.**
+
+### Comment faire :
+
+1. **Créer le fichier** `RAPPORT_CODE.md` dans le projet
+
+2. **Pour chaque fichier (Code.gs, app.js, style.css, index.html)**, documenter :
+   - Le nom du fichier
+   - Pour chaque fonction/section importante : expliquer en 1-2 phrases ce qu'elle fait
+   - Exemple de format :
+
+```markdown
+# RAPPORT CODE - WHATSHAPPEN
+
+## Code.gs
+
+### Fonctions d'authentification
+- `doPost(e)` : Point d'entrée principal. Reçoit les requêtes HTTP POST et les route vers la bonne fonction API.
+- `validateUser(token, email)` : Vérifie que le token JWT est valide et correspond à l'email. Retourne l'utilisateur ou throw une erreur.
+- `apiLogin(email, password)` : Authentifie un utilisateur. Vérifie le hash du mot de passe et retourne un token JWT.
+
+### Fonctions de messagerie
+- `apiSendMessage(...)` : Envoie un message dans une conversation. Gère texte, images, audio.
+- `apiCreateChat(...)` : Crée une nouvelle conversation avec durée d'expiration.
+
+### Fonctions d'abonnement
+- `apiGetSubscriptionCode(...)` : Génère un code d'abonnement pour un utilisateur.
+- `apiSubmitSubscription(...)` : Soumet une transaction PayPal pour validation.
+
+## app.js
+
+### Initialisation
+- `init()` : Initialise l'application au chargement de la page.
+- `checkAuth()` : Vérifie si l'utilisateur est connecté via le token stocké.
+
+### Interface utilisateur
+- `showSection(name)` : Affiche une section et cache les autres.
+- `toggleLoader(show)` : Affiche ou cache le loader de chargement.
+
+(etc...)
+```
+
+3. **Ce rapport est à faire UNE SEULE FOIS.** Ensuite, pour les futures modifications, tu mettras à jour uniquement les lignes modifiées.
+
+---
+
 ## BUG 1 : FACTURE INTROUVABLE
 
 ### Problème
@@ -165,31 +213,223 @@ function sendInvoiceWithPdf(recipientEmail, firstName, invoice) {
 
 ---
 
-## AJOUT 1 : BLOQUER ABONNEMENT PAR EMAIL/IP
+## AJOUT 1 : DEUX BLACKLISTS SEPAREES
 
-Le système de ban existe déjà dans `Blacklist.db`. Il faut juste vérifier lors de la demande d'abonnement.
+Il faut **DEUX blacklists distinctes** :
+- `Blacklist.db` : Pour bloquer les utilisateurs (ban général)
+- `SubscriptionBlacklist.db` : Pour bloquer les abonnements uniquement
 
-### CORRECTION dans Code.gs - Fonction apiGetSubscriptionCode (ajouter au début)
+### ETAPE 1 : Créer les fonctions pour SubscriptionBlacklist.db
+
+**AJOUTER dans Code.gs :**
+
+```javascript
+// ========== SUBSCRIPTION BLACKLIST ==========
+
+function readSubscriptionBlacklistDb() {
+    const folder = getFolder();
+    const files = folder.getFilesByName('SubscriptionBlacklist.db');
+    if (files.hasNext()) {
+        const content = files.next().getBlob().getDataAsString();
+        return JSON.parse(decryptData(content));
+    }
+    return { bans: [] };
+}
+
+function writeSubscriptionBlacklistDb(data) {
+    const folder = getFolder();
+    const files = folder.getFilesByName('SubscriptionBlacklist.db');
+    const content = encryptData(JSON.stringify(data));
+    if (files.hasNext()) {
+        files.next().setContent(content);
+    } else {
+        folder.createFile('SubscriptionBlacklist.db', content, MimeType.PLAIN_TEXT);
+    }
+}
+
+// Admin : Ajouter un ban d'abonnement
+function apiAdminAddSubscriptionBan(token, email, type, target, reason) {
+    const user = validateUser(token, email);
+    if (!user.isAdmin) throw new Error("Admin only");
+
+    const blacklist = readSubscriptionBlacklistDb();
+
+    // Vérifier si déjà banni
+    if (blacklist.bans.some(b => b.type === type && b.target === target)) {
+        throw new Error("Déjà dans la blacklist abonnements.");
+    }
+
+    blacklist.bans.push({
+        type: type,  // 'email' ou 'ip'
+        target: target,
+        reason: reason || '',
+        addedBy: email,
+        addedAt: new Date().toISOString()
+    });
+
+    writeSubscriptionBlacklistDb(blacklist);
+    return { success: true };
+}
+
+// Admin : Retirer un ban d'abonnement
+function apiAdminRemoveSubscriptionBan(token, email, type, target) {
+    const user = validateUser(token, email);
+    if (!user.isAdmin) throw new Error("Admin only");
+
+    const blacklist = readSubscriptionBlacklistDb();
+    const idx = blacklist.bans.findIndex(b => b.type === type && b.target === target);
+
+    if (idx < 0) throw new Error("Non trouvé dans la blacklist.");
+
+    blacklist.bans.splice(idx, 1);
+    writeSubscriptionBlacklistDb(blacklist);
+    return { success: true };
+}
+
+// Admin : Lister les bans d'abonnement
+function apiAdminGetSubscriptionBlacklist(token, email) {
+    const user = validateUser(token, email);
+    if (!user.isAdmin) throw new Error("Admin only");
+
+    return { success: true, bans: readSubscriptionBlacklistDb().bans };
+}
+```
+
+### ETAPE 2 : Ajouter les cases dans doPost
+
+**AJOUTER dans doPost :**
+
+```javascript
+case 'adminAddSubscriptionBan':
+    result = apiAdminAddSubscriptionBan(request.token, request.email, request.type, request.target, request.reason);
+    break;
+case 'adminRemoveSubscriptionBan':
+    result = apiAdminRemoveSubscriptionBan(request.token, request.email, request.type, request.target);
+    break;
+case 'adminGetSubscriptionBlacklist':
+    result = apiAdminGetSubscriptionBlacklist(request.token, request.email);
+    break;
+```
+
+### ETAPE 3 : Vérifier la blacklist abonnement dans apiGetSubscriptionCode
+
+**MODIFIER dans Code.gs - Fonction apiGetSubscriptionCode (ajouter au début) :**
 
 ```javascript
 function apiGetSubscriptionCode(token, email) {
     const user = validateUser(token, email);
 
-    // AJOUTER : Vérifier si banni
-    const blacklist = readBlacklistDb();
+    // AJOUTER : Vérifier si banni des abonnements
+    const subBlacklist = readSubscriptionBlacklistDb();
     const userDb = readUsersDbCached();
     const currentUser = userDb.users.find(u => u.email === email);
     const userIp = currentUser ? currentUser.firstIp : null;
 
-    if (blacklist.bans.some(b => b.type === 'email' && b.target === email)) {
+    if (subBlacklist.bans.some(b => b.type === 'email' && b.target === email)) {
         throw new Error("Vous êtes bloqué pour les abonnements.");
     }
-    if (userIp && blacklist.bans.some(b => b.type === 'ip' && b.target === userIp)) {
+    if (userIp && subBlacklist.bans.some(b => b.type === 'ip' && b.target === userIp)) {
         throw new Error("Vous êtes bloqué pour les abonnements.");
     }
 
     // ... reste du code existant
 ```
+
+### ETAPE 4 : Interface admin pour gérer la blacklist abonnements (app.js)
+
+**AJOUTER dans app.js :**
+
+```javascript
+// Charger la blacklist abonnements
+loadSubscriptionBlacklist: async function() {
+    try {
+        this.toggleLoader(true);
+        const res = await this.api('adminGetSubscriptionBlacklist', {});
+        const container = document.getElementById('subscription-blacklist-list');
+        if (!container) return;
+
+        if (res.bans.length === 0) {
+            container.innerHTML = '<p style="color:#888;">Aucun ban d\'abonnement.</p>';
+            return;
+        }
+
+        container.innerHTML = res.bans.map(b => `
+            <div class="blacklist-item" style="display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid #333;">
+                <div>
+                    <span style="color:${b.type === 'email' ? '#4a9eff' : '#ff9800'};">[${b.type.toUpperCase()}]</span>
+                    <span style="color:#fff;">${b.target}</span>
+                    ${b.reason ? `<span style="color:#888;font-size:0.8rem;"> - ${b.reason}</span>` : ''}
+                </div>
+                <button class="btn-red" style="font-size:0.7rem;padding:5px 10px;" onclick="app.removeSubscriptionBan('${b.type}', '${b.target}')">Retirer</button>
+            </div>
+        `).join('');
+    } catch(e) { this.showError(e.message); } finally { this.toggleLoader(false); }
+},
+
+// Ajouter un ban d'abonnement
+addSubscriptionBan: async function() {
+    const type = document.getElementById('sub-ban-type').value;
+    const target = document.getElementById('sub-ban-target').value.trim();
+    const reason = document.getElementById('sub-ban-reason').value.trim();
+
+    if (!target) { this.showError("Cible requise"); return; }
+
+    try {
+        this.toggleLoader(true);
+        await this.api('adminAddSubscriptionBan', { type, target, reason });
+        this.showSuccess("Ban ajouté.");
+        document.getElementById('sub-ban-target').value = '';
+        document.getElementById('sub-ban-reason').value = '';
+        this.loadSubscriptionBlacklist();
+    } catch(e) { this.showError(e.message); } finally { this.toggleLoader(false); }
+},
+
+// Retirer un ban d'abonnement
+removeSubscriptionBan: async function(type, target) {
+    if (!confirm(`Retirer le ban sur ${target} ?`)) return;
+    try {
+        this.toggleLoader(true);
+        await this.api('adminRemoveSubscriptionBan', { type, target });
+        this.showSuccess("Ban retiré.");
+        this.loadSubscriptionBlacklist();
+    } catch(e) { this.showError(e.message); } finally { this.toggleLoader(false); }
+},
+```
+
+### ETAPE 5 : HTML pour la section blacklist abonnements (index.html)
+
+**AJOUTER dans la section admin de index.html :**
+
+```html
+<!-- Blacklist Abonnements -->
+<div class="admin-card">
+    <h3>Blacklist Abonnements</h3>
+    <p style="color:#888;font-size:0.8rem;">Bloquer des emails/IP pour les abonnements uniquement (séparé de la blacklist générale)</p>
+
+    <div style="display:flex;gap:10px;margin:15px 0;flex-wrap:wrap;">
+        <select id="sub-ban-type" style="padding:8px;background:#1a1a2e;color:#fff;border:1px solid #333;border-radius:5px;">
+            <option value="email">Email</option>
+            <option value="ip">IP</option>
+        </select>
+        <input type="text" id="sub-ban-target" placeholder="Email ou IP" style="flex:1;min-width:150px;padding:8px;background:#1a1a2e;color:#fff;border:1px solid #333;border-radius:5px;">
+        <input type="text" id="sub-ban-reason" placeholder="Raison (optionnel)" style="flex:1;min-width:150px;padding:8px;background:#1a1a2e;color:#fff;border:1px solid #333;border-radius:5px;">
+        <button class="btn-gold" onclick="app.addSubscriptionBan()">Bloquer</button>
+    </div>
+
+    <div id="subscription-blacklist-list"></div>
+</div>
+```
+
+---
+
+## RAPPEL : Blacklist.db vs SubscriptionBlacklist.db
+
+| Fichier | Usage |
+|---------|-------|
+| `Blacklist.db` | Ban général des utilisateurs (inscription, connexion, messages) |
+| `SubscriptionBlacklist.db` | Ban spécifique aux abonnements uniquement |
+
+Les deux sont **indépendants**. Un utilisateur peut être banni des abonnements sans être banni de l'application.
 
 ---
 
@@ -324,25 +564,38 @@ rejectSub: async function(email) {
 
 | Fichier | Fonction | Action |
 |---------|----------|--------|
+| NOUVEAU | RAPPORT_CODE.md | Créer le fichier de documentation du code |
 | Code.gs | apiSendInvoiceEmail | Corriger `senderEmail` → `email` |
 | Code.gs | apiAdminSendCustomEmail | Ajouter structure HTML au body |
 | Code.gs | getInvitationEmailTemplate | Changer URL vers `chaouiengage.netlify.app` |
 | Code.gs | sendInvoiceWithPdf | Remplacer par version Google Docs |
-| Code.gs | apiGetSubscriptionCode | Ajouter vérification blacklist |
+| Code.gs | NOUVEAU | Ajouter readSubscriptionBlacklistDb() |
+| Code.gs | NOUVEAU | Ajouter writeSubscriptionBlacklistDb() |
+| Code.gs | NOUVEAU | Ajouter apiAdminAddSubscriptionBan() |
+| Code.gs | NOUVEAU | Ajouter apiAdminRemoveSubscriptionBan() |
+| Code.gs | NOUVEAU | Ajouter apiAdminGetSubscriptionBlacklist() |
+| Code.gs | apiGetSubscriptionCode | Ajouter vérification SubscriptionBlacklist |
 | Code.gs | apiSubmitSubscription | Ajouter isSubscriber = true |
 | Code.gs | NOUVEAU | Ajouter apiAdminRejectSubscription |
-| Code.gs | doPost | Ajouter case 'adminRejectSubscription' |
+| Code.gs | doPost | Ajouter 4 nouveaux cases |
 | app.js | loadAdminSubscriptions | Ajouter bouton Refuser |
-| app.js | NOUVEAU | Ajouter fonction rejectSub |
+| app.js | NOUVEAU | Ajouter rejectSub() |
+| app.js | NOUVEAU | Ajouter loadSubscriptionBlacklist() |
+| app.js | NOUVEAU | Ajouter addSubscriptionBan() |
+| app.js | NOUVEAU | Ajouter removeSubscriptionBan() |
+| index.html | Section admin | Ajouter section Blacklist Abonnements |
 
 ---
 
 ## CHECKLIST
 
+- [ ] **RAPPORT** : Créer RAPPORT_CODE.md documentant chaque fonction
 - [ ] Facture s'envoie par email à la validation
 - [ ] Email custom affiche le message sous WHATSHAPPEN
 - [ ] Lien invitation pointe vers chaouiengage.netlify.app
-- [ ] Utilisateur banni ne peut pas demander d'abonnement
+- [ ] **Blacklist.db** fonctionne pour les bans généraux
+- [ ] **SubscriptionBlacklist.db** fonctionne pour les bans d'abonnement
+- [ ] Interface admin pour gérer la blacklist abonnements
 - [ ] Rôle subscriber donné à la soumission (pas seulement validation)
 - [ ] Admin peut refuser un abonnement
-- [ ] Fichiers inutiles supprimés
+- [ ] Fichiers inutiles supprimés (logo_b64, instruction, etc.)
