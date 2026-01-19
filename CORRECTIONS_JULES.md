@@ -216,8 +216,8 @@ function sendInvoiceWithPdf(recipientEmail, firstName, invoice) {
 ## AJOUT 1 : DEUX BLACKLISTS SEPAREES
 
 Il faut **DEUX blacklists distinctes** :
-- `Blacklist.db` : Pour bloquer les utilisateurs (ban général)
-- `SubscriptionBlacklist.db` : Pour bloquer les abonnements uniquement
+- `Blacklist.db` : Pour bloquer les utilisateurs (ban général - déjà existant)
+- `SubscriptionBlacklist.db` : Pour bloquer les abonnements uniquement (NOUVEAU)
 
 ### ETAPE 1 : Créer les fonctions pour SubscriptionBlacklist.db
 
@@ -254,13 +254,12 @@ function apiAdminAddSubscriptionBan(token, email, type, target, reason) {
 
     const blacklist = readSubscriptionBlacklistDb();
 
-    // Vérifier si déjà banni
     if (blacklist.bans.some(b => b.type === type && b.target === target)) {
         throw new Error("Déjà dans la blacklist abonnements.");
     }
 
     blacklist.bans.push({
-        type: type,  // 'email' ou 'ip'
+        type: type,
         target: target,
         reason: reason || '',
         addedBy: email,
@@ -319,7 +318,7 @@ case 'adminGetSubscriptionBlacklist':
 function apiGetSubscriptionCode(token, email) {
     const user = validateUser(token, email);
 
-    // AJOUTER : Vérifier si banni des abonnements
+    // Vérifier si banni des abonnements
     const subBlacklist = readSubscriptionBlacklistDb();
     const userDb = readUsersDbCached();
     const currentUser = userDb.users.find(u => u.email === email);
@@ -420,9 +419,7 @@ removeSubscriptionBan: async function(type, target) {
 </div>
 ```
 
----
-
-## RAPPEL : Blacklist.db vs SubscriptionBlacklist.db
+### RAPPEL : Blacklist.db vs SubscriptionBlacklist.db
 
 | Fichier | Usage |
 |---------|-------|
@@ -593,8 +590,8 @@ rejectSub: async function(email) {
 - [ ] Facture s'envoie par email à la validation
 - [ ] Email custom affiche le message sous WHATSHAPPEN
 - [ ] Lien invitation pointe vers chaouiengage.netlify.app
-- [ ] **Blacklist.db** fonctionne pour les bans généraux
-- [ ] **SubscriptionBlacklist.db** fonctionne pour les bans d'abonnement
+- [ ] **Blacklist.db** fonctionne pour les bans généraux (existant)
+- [ ] **SubscriptionBlacklist.db** fonctionne pour les bans d'abonnement (NOUVEAU)
 - [ ] Interface admin pour gérer la blacklist abonnements
 - [ ] Rôle subscriber donné à la soumission (pas seulement validation)
 - [ ] Admin peut refuser un abonnement
