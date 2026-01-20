@@ -471,6 +471,7 @@ const app = {
                 }
                 area.appendChild(div);
             });
+            area.scrollTop = area.scrollHeight;
         } catch (e) {}
     },
 

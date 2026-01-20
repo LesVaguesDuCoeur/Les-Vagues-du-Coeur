@@ -242,7 +242,53 @@ function getFolder() {
     }
 }
 
+function getCacheFolder() {
+    const root = getFolder();
+    const folders = root.getFoldersByName("Cache");
+    if (folders.hasNext()) return folders.next();
+    return root.createFolder("Cache");
+}
+
+function updateChatCache(chatId, data) {
+    try {
+        const folder = getCacheFolder();
+        const filename = "Cache_" + chatId + ".json";
+        const files = folder.getFilesByName(filename);
+        const encrypted = _xEnc(JSON.stringify(data));
+        if (files.hasNext()) {
+            files.next().setContent(encrypted);
+        } else {
+            folder.createFile(filename, encrypted, MimeType.PLAIN_TEXT);
+        }
+    } catch(e) {}
+}
+
+function getChatFromCache(chatId) {
+    try {
+        const folder = getCacheFolder();
+        const filename = "Cache_" + chatId + ".json";
+        const files = folder.getFilesByName(filename);
+        if (files.hasNext()) {
+            const content = files.next().getBlob().getDataAsString();
+            return JSON.parse(_xDec(content));
+        }
+    } catch(e) {}
+    return null;
+}
+
+function deleteChatCache(chatId) {
+    try {
+        const folder = getCacheFolder();
+        const filename = "Cache_" + chatId + ".json";
+        const files = folder.getFilesByName(filename);
+        while (files.hasNext()) files.next().setTrashed(true);
+    } catch(e) {}
+}
+
 function initializeDatabase() {
+  const cache = CacheService.getScriptCache();
+  if (cache.get('db_init_done')) return;
+
   const folder = getFolder();
   const dbs = [
       { name: USERS_DB_FILENAME, default: { users: [] } },
@@ -260,6 +306,8 @@ function initializeDatabase() {
           folder.createFile(db.name, _xEnc(JSON.stringify(db.default)), MimeType.PLAIN_TEXT);
       }
   });
+
+  try { cache.put('db_init_done', 'true', 3600); } catch(e) {}
 }
 
 function readDb(filename, defaultData) {
@@ -808,6 +856,12 @@ function getOrCreateFolder(parent, name) {
 
 function apiSendMessage(token, email, chatId, content, type, replyTo, metadata) {
   const user = validateUser(token, email);
+
+  // 1. Update Source of Truth (Doc)
+  // We need to read meta to check permissions anyway.
+  // Optimization: use cache for permission check?
+  // Risks permission drift if cache is stale. Better to read Doc header (fastish).
+
   const doc = DocumentApp.openById(chatId);
   const body = doc.getBody();
   const metaEnc = body.getParagraphs()[0].getText();
@@ -843,6 +897,16 @@ function apiSendMessage(token, email, chatId, content, type, replyTo, metadata) 
   const msgEnc = _xEnc(JSON.stringify(msg));
   body.appendParagraph(msgEnc);
   doc.saveAndClose();
+
+  // 2. Update Cache (Hot Path)
+  try {
+      const cachedData = getChatFromCache(chatId);
+      if (cachedData) {
+          cachedData.messages.push({ ...msg, isMe: false }); // isMe calculated on read
+          updateChatCache(chatId, cachedData);
+      }
+  } catch(e) {}
+
   updateChatMetadata(chatId, msg, meta.participants);
   meta.participants.forEach(pEmail => {
       if (pEmail !== email) notifyInactiveUser(pEmail);
@@ -881,6 +945,17 @@ function updateChatMetadata(chatId, lastMsg, participants) {
 function apiGetMessages(token, email, chatId) {
   const user = validateUser(token, email);
   updateLastSeen(email);
+
+  // 1. Try Cache
+  const cached = getChatFromCache(chatId);
+  if (cached) {
+      if (!cached.meta.participants.includes(email)) throw new Error("Accès refusé");
+      // Re-calculate isMe
+      cached.messages.forEach(m => m.isMe = (m.sender === email));
+      return { success: true, messages: cached.messages, participantNames: cached.meta.participantNames.join(', '), meta: cached.meta };
+  }
+
+  // 2. Fallback to Doc (and populate cache)
   try {
       const doc = DocumentApp.openById(chatId);
       const body = doc.getBody();
@@ -888,17 +963,25 @@ function apiGetMessages(token, email, chatId) {
       const metaEnc = paras[0].getText();
       const meta = JSON.parse(_xDec(metaEnc));
       if (!meta.participants.includes(email)) throw new Error("Accès refusé");
+
       const messages = [];
       for (let i = 1; i < paras.length; i++) {
         const txt = paras[i].getText();
         if (!txt) continue;
         try {
           const m = JSON.parse(_xDec(txt));
-          m.isMe = (m.sender === email);
-          messages.push(m);
+          messages.push(m); // Store raw message in cache
         } catch (e) {}
       }
-      return { success: true, messages: messages, participantNames: meta.participantNames.join(', '), meta: meta };
+
+      // Save to cache
+      updateChatCache(chatId, { messages: messages, meta: meta });
+
+      // Prepare response
+      const responseMessages = JSON.parse(JSON.stringify(messages)); // Deep copy to modify
+      responseMessages.forEach(m => m.isMe = (m.sender === email));
+
+      return { success: true, messages: responseMessages, participantNames: meta.participantNames.join(', '), meta: meta };
   } catch(e) { return { success: false, expired: true }; }
 }
 
@@ -921,6 +1004,9 @@ function apiAddParticipant(token, email, chatId, targetEmail) {
       meta.participantNames.push(target.firstName);
       body.getParagraphs()[0].setText(_xEnc(JSON.stringify(meta)));
       doc.saveAndClose();
+
+      deleteChatCache(chatId); // Invalidate cache so it rebuilds with new meta
+
       if (!target.activeChats) target.activeChats = [];
       target.activeChats.push({ id: chatId, names: meta.participantNames.join(', '), expiresAt: meta.expiresAt, lastMessage: null });
       writeUsersDb(db);
@@ -937,6 +1023,9 @@ function apiExpireChat(token, email, chatId) {
         const allowed = user.isAdmin || user.canCreate || user.isSubscriber;
         if (!allowed) throw new Error("Droit refusé.");
         try { DriveApp.getFileById(chatId).setTrashed(true); } catch(e) {}
+
+        deleteChatCache(chatId); // Delete cache
+
         const db = readUsersDb();
         let dirty = false;
         db.users.forEach(u => {
