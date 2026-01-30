@@ -395,6 +395,68 @@ const baseRecipes = [
       "Sers"
     ]
   },
+  // COLLATIONS
+  {
+    "id": "yaourt-amandes",
+    "nom": "Yaourt amandes",
+    "categorie": "collation",
+    "temps_preparation": "2 min",
+    "temps_cuisson": "0 min",
+    "ingredients": [
+      {"nom": "Yaourt nature 0%", "quantite": "125g"},
+      {"nom": "Amandes", "quantite": "5-6 unités"}
+    ],
+    "instructions": [
+      "Verse le yaourt dans un bol",
+      "Ajoute les amandes",
+      "Déguste frais"
+    ]
+  },
+  {
+    "id": "compote-pomme",
+    "nom": "Compote pomme",
+    "categorie": "collation",
+    "temps_preparation": "0 min",
+    "temps_cuisson": "0 min",
+    "ingredients": [
+      {"nom": "Compote pomme sans sucre", "quantite": "100g"}
+    ],
+    "instructions": [
+      "Ouvre le pot de compote",
+      "Verse dans un bol ou mange directement",
+      "Peut être tiédi au micro-ondes 20 sec"
+    ]
+  },
+  {
+    "id": "fromage-blanc",
+    "nom": "Fromage blanc",
+    "categorie": "collation",
+    "temps_preparation": "1 min",
+    "temps_cuisson": "0 min",
+    "ingredients": [
+      {"nom": "Fromage blanc 0%", "quantite": "125g"}
+    ],
+    "instructions": [
+      "Verse le fromage blanc dans un bol",
+      "Peut ajouter un peu de cannelle (optionnel)",
+      "Déguste frais"
+    ]
+  },
+  {
+    "id": "banane-snack",
+    "nom": "Banane",
+    "categorie": "collation",
+    "temps_preparation": "1 min",
+    "temps_cuisson": "0 min",
+    "ingredients": [
+      {"nom": "Banane mûre", "quantite": "1 entière"}
+    ],
+    "instructions": [
+      "Choisis une banane bien mûre (avec quelques taches)",
+      "Épluche et mange",
+      "Les bananes mûres sont plus faciles à digérer"
+    ]
+  },
   // LÉGUMES
   {
     "id": "legumes-rotis-airfryer",
@@ -528,6 +590,35 @@ const baseRecipes = [
       "Ajoute la mozzarella coupée en dés, mélange (elle fond légèrement)",
       "Sale"
     ]
+  },
+  {
+    "id": "saumon-riz-courgettes",
+    "nom": "Saumon riz courgettes",
+    "categorie": "plat_complet",
+    "temps_preparation": "10 min",
+    "temps_cuisson": "20 min",
+    "ingredients": [
+      {"nom": "Pavé de saumon", "quantite": "130g"},
+      {"nom": "Riz basmati", "quantite": "80g cuit"},
+      {"nom": "Courgettes", "quantite": "150g"},
+      {"nom": "Huile d'olive", "quantite": "1 c. à café"},
+      {"nom": "Sel", "quantite": "1 pincée"},
+      {"nom": "Herbes de Provence", "quantite": "1 pincée"}
+    ],
+    "instructions": [
+      "Rince le riz et cuis-le selon les instructions du paquet",
+      "Coupe les courgettes en rondelles ou demi-lunes",
+      "Badigeonne le saumon d'huile d'olive et assaisonne",
+      "Place le saumon dans l'air fryer à 180°C pendant 8-10 min",
+      "Pendant ce temps, fais cuire les courgettes à l'air fryer à 180°C pendant 12-15 min",
+      "Assemble le tout dans une assiette : riz en base, saumon dessus, courgettes autour",
+      "Ajoute un filet d'huile d'olive cru"
+    ],
+    "reglages_airfryer": {
+      "mode": "Air Fry",
+      "temperature": "180°C",
+      "temps": "Saumon: 8-10 min, Courgettes: 12-15 min"
+    }
   }
 ];
 

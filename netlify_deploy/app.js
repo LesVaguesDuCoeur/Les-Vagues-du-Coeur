@@ -235,8 +235,26 @@ const app = {
 
     findRecipeId: function(name) {
         if (!name) return null;
-        // Simple search by name match
-        const r = this.state.recipes.find(r => r.nom === name);
+        const nameLower = name.toLowerCase();
+
+        // Recherche exacte d'abord
+        let r = this.state.recipes.find(r => r.nom.toLowerCase() === nameLower);
+        if (r) return r.id;
+
+        // Recherche partielle ensuite
+        r = this.state.recipes.find(r =>
+            r.nom.toLowerCase().includes(nameLower) ||
+            nameLower.includes(r.nom.toLowerCase())
+        );
+        if (r) return r.id;
+
+        // Recherche par mots-clés
+        const keywords = nameLower.split(' ');
+        r = this.state.recipes.find(recipe => {
+            const recipeLower = recipe.nom.toLowerCase();
+            return keywords.every(kw => recipeLower.includes(kw));
+        });
+
         return r ? r.id : null;
     },
 
