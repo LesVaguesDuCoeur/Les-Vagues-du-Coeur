@@ -60,6 +60,17 @@
                 <h2 class="text-xl font-bold">Menu de la Semaine</h2>
                 <button onclick="app.resetMenu()" class="text-xs text-red-500 hover:underline">Réinitialiser</button>
             </div>
+            <div class="flex items-center gap-2 mb-4">
+                <button onclick="app.toggleRamadanMode()"
+                        id="ramadan-toggle"
+                        class="px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors hover:bg-gray-50">
+                    <i data-lucide="moon" class="w-4 h-4 inline mr-1"></i>
+                    Mode Ramadan
+                </button>
+                <button onclick="app.generateRandomWeek()" class="text-xs bg-purple-100 text-purple-700 px-3 py-1.5 rounded-lg hover:bg-purple-200 flex items-center gap-1">
+                    <i data-lucide="shuffle" class="w-3 h-3"></i> Aléatoire
+                </button>
+            </div>
             <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm text-left">
@@ -71,6 +82,7 @@
                                 <th class="px-4 py-3 font-medium min-w-[120px]">Midi</th>
                                 <th class="px-4 py-3 font-medium min-w-[100px]">Goûter</th>
                                 <th class="px-4 py-3 font-medium min-w-[120px]">Soir</th>
+                                <th class="px-2 py-3 font-medium text-center w-20">Kcal</th>
                             </tr>
                         </thead>
                         <tbody id="menu-grid-body" class="divide-y divide-gray-100">
@@ -107,9 +119,14 @@
         <div id="view-shopping" class="view-section hidden">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-xl font-bold">Liste de Courses</h2>
-                <button onclick="app.copyShoppingList()" class="text-primary bg-primary/10 px-3 py-1 rounded-lg text-sm font-medium flex items-center gap-1">
-                    <i data-lucide="copy" class="w-4 h-4"></i> Copier
-                </button>
+                <div class="flex gap-2">
+                    <button onclick="app.copyShoppingList()" class="text-gray-600 bg-gray-100 px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1">
+                        <i data-lucide="copy" class="w-4 h-4"></i> Copier
+                    </button>
+                    <button onclick="app.exportToReminders()" class="text-primary bg-primary/10 px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1">
+                        <i data-lucide="bell" class="w-4 h-4"></i> Rappels
+                    </button>
+                </div>
             </div>
             <div id="shopping-list-container" class="space-y-6 pb-24">
                 <!-- JS Generated -->

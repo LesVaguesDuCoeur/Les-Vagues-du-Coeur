@@ -212,6 +212,118 @@ const manualRecipes = [
   {id: "col6", nom: "Fromage blanc cannelle", categorie: "collation", ingredients: [{nom: "FB 0%", qt: "125g"}, {nom: "Cannelle", qt: "1p"}], instructions: ["Mélanger"], temps_cuisson: "0 min"}
 ];
 
+// RECETTES SPÉCIALES JEÛNE / RAMADAN
+const jeuneRecipes = [
+    {
+        id: "suhoor-overnight-dattes",
+        nom: "Suhoor Overnight Oats Dattes",
+        categorie: "suhoor",
+        kcal: 450,
+        temps_preparation: "5 min (veille)",
+        temps_cuisson: "0 min",
+        ingredients: [
+            {nom: "Flocons avoine", quantite: "50g"},
+            {nom: "Lait d'amande", quantite: "200ml"},
+            {nom: "Dattes", quantite: "3 unites"},
+            {nom: "Amandes", quantite: "10 unites"},
+            {nom: "Miel", quantite: "1 c. cafe"}
+        ],
+        instructions: [
+            "Melanger flocons + lait dans un pot",
+            "Couper les dattes en morceaux, ajouter",
+            "Couvrir et refrigerer toute la nuit",
+            "Le matin (suhoor), ajouter amandes et miel",
+            "Manger lentement pour tenir la journee"
+        ]
+    },
+    {
+        id: "suhoor-oeufs-complet",
+        nom: "Suhoor Oeufs Pain Banane",
+        categorie: "suhoor",
+        kcal: 500,
+        temps_preparation: "5 min",
+        temps_cuisson: "5 min",
+        ingredients: [
+            {nom: "Oeufs", quantite: "3 unites"},
+            {nom: "Pain complet", quantite: "2 tranches"},
+            {nom: "Banane", quantite: "1 entiere"},
+            {nom: "Fromage blanc", quantite: "100g"},
+            {nom: "Eau", quantite: "500ml"}
+        ],
+        instructions: [
+            "Cuire les oeufs a la poele (pas trop cuits)",
+            "Griller le pain legerement",
+            "Manger la banane entiere",
+            "Terminer par le fromage blanc",
+            "IMPORTANT: Boire beaucoup d'eau avant la fin du suhoor"
+        ]
+    },
+    {
+        id: "iftar-soupe-legumes",
+        nom: "Iftar Soupe + Dattes",
+        categorie: "iftar",
+        kcal: 200,
+        temps_preparation: "10 min",
+        temps_cuisson: "20 min",
+        ingredients: [
+            {nom: "Dattes", quantite: "3 unites"},
+            {nom: "Eau", quantite: "1 grand verre"},
+            {nom: "Courgettes", quantite: "100g"},
+            {nom: "Carottes", quantite: "100g"},
+            {nom: "Pomme de terre", quantite: "1 petite"},
+            {nom: "Sel", quantite: "1 pincee"}
+        ],
+        instructions: [
+            "RUPTURE: 3 dattes + grand verre d'eau",
+            "Attendre 15-20 min avant de manger plus",
+            "Preparer la soupe: couper legumes en des",
+            "Cuire dans l'eau 20 min, mixer",
+            "Manger la soupe doucement"
+        ]
+    },
+    {
+        id: "iftar-plat-principal",
+        nom: "Iftar Poulet Riz Legumes",
+        categorie: "iftar_plat",
+        kcal: 550,
+        temps_preparation: "10 min",
+        temps_cuisson: "25 min",
+        ingredients: [
+            {nom: "Poulet", quantite: "150g"},
+            {nom: "Riz basmati", quantite: "100g"},
+            {nom: "Courgettes", quantite: "150g"},
+            {nom: "Carottes", quantite: "100g"},
+            {nom: "Huile olive", quantite: "1 c. soupe"}
+        ],
+        instructions: [
+            "A manger 30-45 min apres la soupe/dattes",
+            "Cuire le riz selon instructions",
+            "Griller le poulet a l'air fryer 180°C 15 min",
+            "Cuire legumes air fryer 180°C 12 min",
+            "Assembler, ne pas trop manger d'un coup"
+        ]
+    },
+    {
+        id: "collation-nuit-jeune",
+        nom: "Collation Nuit Yaourt Fruits",
+        categorie: "collation_nuit",
+        kcal: 200,
+        temps_preparation: "2 min",
+        ingredients: [
+            {nom: "Yaourt 0%", quantite: "150g"},
+            {nom: "Banane", quantite: "1/2"},
+            {nom: "Amandes", quantite: "5 unites"},
+            {nom: "Miel", quantite: "1 c. cafe (optionnel)"}
+        ],
+        instructions: [
+            "Melanger yaourt + banane ecrasee",
+            "Ajouter amandes",
+            "Manger 2-3h avant le suhoor",
+            "Boire de l'eau apres"
+        ]
+    }
+];
+
 function generateCombinations() {
   const generated = [];
 
@@ -278,7 +390,7 @@ function generateCombinations() {
     });
   });
 
-  return [...manualRecipes, ...generated];
+  return [...manualRecipes, ...jeuneRecipes, ...generated];
 }
 
 // 4. ALIMENTS INTERDITS (Nouvelle Structure)

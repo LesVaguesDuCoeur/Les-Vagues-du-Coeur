@@ -62,6 +62,15 @@ body {
   background-color: #D1FAE5;
 }
 
+/* Quick Menu Popup */
+.quick-menu-popup {
+  animation: popupFadeIn 0.2s ease-out forwards;
+}
+@keyframes popupFadeIn {
+  from { opacity: 0; transform: translate(-50%, 10px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
 /* Modal Transitions */
 .modal-overlay {
   transition: opacity 0.3s ease;
@@ -131,4 +140,15 @@ body {
 .toast.show {
   opacity: 1;
   transform: translateY(0);
+}
+
+/* Print Styles */
+@media print {
+  body { background: white; color: black; }
+  nav, .menu-nav, #sync-btn, .quick-menu-popup, .toast, #ramadan-toggle, button { display: none !important; }
+  .view-section { display: block !important; }
+  #view-home, #view-recipes, #view-shopping, #view-forbidden { display: none !important; }
+  #view-menu { display: block !important; }
+  th, td { border: 1px solid #ccc; padding: 5px; }
+  .meal-slot { height: auto; min-height: 0; }
 }
