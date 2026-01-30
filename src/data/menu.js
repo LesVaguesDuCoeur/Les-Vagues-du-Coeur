@@ -123,11 +123,11 @@ export const INITIAL_MENU = {
   jeudi: {
     breakfast: {
         id: uuidv4(),
-        title: "Overnight Oats",
+        title: "Porridge d'avoine & Banane",
         type: 'breakfast',
         calories: 300,
         ingredients: [{name: "Avoine", quantity: "40g"}, {name: "Yaourt", quantity: "100g"}, {name: "Banane", quantity: "1/2"}],
-        instructions: ["Préparer la veille."]
+        instructions: ["Cuire les flocons d'avoine avec un peu d'eau ou lait, mélanger avec le yaourt et la banane."]
     },
     snack1: { id: uuidv4(), title: "Compote", type: 'snack', ingredients: [{name: "Compote", quantity: "100g"}], instructions: [] },
     lunch: {
