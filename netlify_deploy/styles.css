@@ -111,6 +111,11 @@ body {
   z-index: 50;
   pointer-events: none;
 }
+
+/* Instructions Step Fix */
+.instruction-step p {
+  padding-left: 40px;
+}
 .toast {
   background: rgba(31, 41, 55, 0.9);
   color: white;
