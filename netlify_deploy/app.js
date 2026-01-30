@@ -49,8 +49,12 @@ const app = {
             this.state.favorites = JSON.parse(storedFavs);
         }
 
-        // Load Menu (Current Week Logic)
+        // Load Menu (Current Week Logic) - Try Cloud if local is empty/stale logic could be added here
+        // For now, load local or default
         this.loadWeekMenu();
+
+        // Initial sync check (optional, background)
+        // this.syncWithGoogle('load');
     },
 
     getWeekKey: function() {
@@ -77,7 +81,7 @@ const app = {
     setupEventListeners: function() {
         // Sync Button
         const syncBtn = document.getElementById('sync-btn');
-        if (syncBtn) syncBtn.addEventListener('click', () => this.syncWithGoogle());
+        if (syncBtn) syncBtn.addEventListener('click', () => this.syncWithGoogle('save'));
 
         // Recipe Search
         const searchInput = document.getElementById('recipe-search');
@@ -430,7 +434,7 @@ const app = {
                     ${recipe.ingredients.map(ing => `
                         <li class="flex items-center justify-between border-b border-gray-50 pb-2 last:border-0">
                             <span class="text-gray-700">${ing.nom}</span>
-                            <span class="font-medium text-gray-900 bg-gray-100 px-2 py-0.5 rounded text-sm">${ing.quantite}</span>
+                            <span class="font-medium text-gray-900 bg-gray-100 px-2 py-0.5 rounded text-sm">${ing.quantite || ing.qt || ''}</span>
                         </li>`).join('')}
                 </ul>
                 <h3 class="font-bold text-lg mb-3 flex items-center gap-2"><i data-lucide="list-checks" class="w-5 h-5 text-primary"></i> Préparation</h3>
@@ -501,7 +505,7 @@ const app = {
 
                         // Basic quantity parsing (very naive)
                         rawList[keyName].count++;
-                        rawList[keyName].unit = ing.quantite;
+                        rawList[keyName].unit = ing.qt || ing.quantite;
                         rawList[keyName].category = cat;
                     });
                 }
@@ -669,7 +673,7 @@ const app = {
     saveMenu: function() {
         const key = this.getWeekKey();
         localStorage.setItem(key, JSON.stringify(this.state.menu));
-        this.syncWithGoogle();
+        this.syncWithGoogle('save');
     },
 
     resetMenu: function() {
@@ -694,7 +698,7 @@ const app = {
         }, 3000);
     },
 
-    syncWithGoogle: function() {
+    syncWithGoogle: function(action = 'save') {
         const btn = document.getElementById('sync-btn');
         if (!btn) return;
         const originalIcon = btn.innerHTML;
@@ -702,9 +706,10 @@ const app = {
         btn.disabled = true;
 
         const payload = {
-            timestamp: new Date().toISOString(),
+            action: action,
             weekKey: this.getWeekKey(),
-            menu: this.state.menu
+            menu: this.state.menu,
+            favorites: this.state.favorites
         };
 
         fetch(this.API_URL, {

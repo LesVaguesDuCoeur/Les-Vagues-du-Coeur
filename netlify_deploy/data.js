@@ -7,50 +7,50 @@ const defaultMenu = {
     petit_dejeuner: {nom: "Flocons avoine banane poêlée", ingredients: [{nom: "Flocons avoine", qt: "40g"}, {nom: "Lait amande", qt: "200ml"}, {nom: "Banane", qt: "1"}]},
     collation_matin: {nom: "Yaourt amandes", ingredients: [{nom: "Yaourt 0%", qt: "125g"}, {nom: "Amandes", qt: "6"}]},
     dejeuner: {nom: "Saumon riz courgettes", ingredients: [{nom: "Saumon", qt: "130g"}, {nom: "Riz basmati", qt: "80g"}, {nom: "Courgettes", qt: "150g"}]},
-    collation_apres_midi: {nom: "Compote pomme", ingredients: [{nom: "Compote sans sucre", qt: "100g"}]},
+    collation_aprem: {nom: "Compote pomme", ingredients: [{nom: "Compote sans sucre", qt: "100g"}]},
     diner: {nom: "Poulet pâtes mozzarella épinards", ingredients: [{nom: "Poulet", qt: "130g"}, {nom: "Pâtes", qt: "80g"}, {nom: "Mozzarella", qt: "30g"}, {nom: "Épinards", qt: "100g"}]}
   },
   mardi: {
-    petit_dejeuner: {nom: "Œufs pain compote", ingredients: [{nom: "Œufs", qt: "2"}, {nom: "Pain complet", qt: "2 tr."}, {nom: "Compote", qt: "100g"}]},
+    petit_dejeuner: {nom: "Oeufs pain compote", ingredients: [{nom: "Oeufs", qt: "2"}, {nom: "Pain complet", qt: "2 tr."}, {nom: "Compote", qt: "100g"}]},
     collation_matin: {nom: "Banane", ingredients: [{nom: "Banane mûre", qt: "1"}]},
     dejeuner: {nom: "Dinde quinoa carottes", ingredients: [{nom: "Dinde", qt: "130g"}, {nom: "Quinoa", qt: "80g"}, {nom: "Carottes", qt: "150g"}]},
-    collation_apres_midi: {nom: "Fromage blanc", ingredients: [{nom: "Fromage blanc 0%", qt: "125g"}]},
+    collation_aprem: {nom: "Fromage blanc", ingredients: [{nom: "Fromage blanc 0%", qt: "125g"}]},
     diner: {nom: "Saumon patate douce haricots", ingredients: [{nom: "Saumon", qt: "120g"}, {nom: "Patate douce", qt: "150g"}, {nom: "Haricots verts", qt: "150g"}]}
   },
   mercredi: {
-    petit_dejeuner: {nom: "Porridge banane cannelle", ingredients: [{nom: "Flocons avoine", qt: "40g"}, {nom: "Lait amande", qt: "200ml"}, {nom: "Banane", qt: "1/2"}, {nom: "Cannelle", qt: "1 pincée"}]},
+    petit_dejeuner: {nom: "Porridge banane cannelle", ingredients: [{nom: "Flocons avoine", qt: "40g"}, {nom: "Lait amande", qt: "200ml"}, {nom: "Banane", qt: "1/2"}, {nom: "Cannelle", qt: "1 pincee"}]},
     collation_matin: {nom: "Yaourt nature", ingredients: [{nom: "Yaourt 0%", qt: "125g"}]},
-    dejeuner: {nom: "Poulet riz légumes", ingredients: [{nom: "Poulet", qt: "130g"}, {nom: "Riz basmati", qt: "80g"}, {nom: "Courgettes-carottes", qt: "200g"}]},
-    collation_apres_midi: {nom: "Compote pomme", ingredients: [{nom: "Compote", qt: "100g"}]},
-    diner: {nom: "Omelette mozzarella pommes de terre", ingredients: [{nom: "Œufs", qt: "2"}, {nom: "Mozzarella", qt: "30g"}, {nom: "Épinards", qt: "50g"}, {nom: "Pommes de terre", qt: "150g"}]}
+    dejeuner: {nom: "Poulet riz legumes", ingredients: [{nom: "Poulet", qt: "130g"}, {nom: "Riz basmati", qt: "80g"}, {nom: "Courgettes-carottes", qt: "200g"}]},
+    collation_aprem: {nom: "Compote pomme", ingredients: [{nom: "Compote", qt: "100g"}]},
+    diner: {nom: "Omelette mozzarella pommes de terre", ingredients: [{nom: "Oeufs", qt: "2"}, {nom: "Mozzarella", qt: "30g"}, {nom: "Epinards", qt: "50g"}, {nom: "Pommes de terre", qt: "150g"}]}
   },
   jeudi: {
     petit_dejeuner: {nom: "Overnight oats banane", ingredients: [{nom: "Flocons avoine", qt: "40g"}, {nom: "Yaourt 0%", qt: "100g"}, {nom: "Lait amande", qt: "50ml"}, {nom: "Banane", qt: "1/2"}]},
     collation_matin: {nom: "Compote pomme", ingredients: [{nom: "Compote", qt: "100g"}]},
     dejeuner: {nom: "Saumon lentilles carottes", ingredients: [{nom: "Saumon", qt: "130g"}, {nom: "Lentilles corail", qt: "80g"}, {nom: "Carottes", qt: "150g"}]},
-    collation_apres_midi: {nom: "Fromage blanc", ingredients: [{nom: "Fromage blanc 0%", qt: "125g"}]},
-    diner: {nom: "Dinde pâtes brocoli", ingredients: [{nom: "Dinde", qt: "120g"}, {nom: "Pâtes", qt: "80g"}, {nom: "Brocoli", qt: "150g"}]}
+    collation_aprem: {nom: "Fromage blanc", ingredients: [{nom: "Fromage blanc 0%", qt: "125g"}]},
+    diner: {nom: "Dinde pates brocoli", ingredients: [{nom: "Dinde", qt: "120g"}, {nom: "Pates", qt: "80g"}, {nom: "Brocoli", qt: "150g"}]}
   },
   vendredi: {
-    petit_dejeuner: {nom: "Œufs pain banane poêlée", ingredients: [{nom: "Œufs", qt: "2"}, {nom: "Pain grillé", qt: "2 tr."}, {nom: "Banane", qt: "1/2"}]},
+    petit_dejeuner: {nom: "Oeufs pain banane poelee", ingredients: [{nom: "Oeufs", qt: "2"}, {nom: "Pain grille", qt: "2 tr."}, {nom: "Banane", qt: "1/2"}]},
     collation_matin: {nom: "Yaourt amandes", ingredients: [{nom: "Yaourt 0%", qt: "125g"}, {nom: "Amandes", qt: "5"}]},
     dejeuner: {nom: "Poulet pommes de terre courgettes", ingredients: [{nom: "Poulet", qt: "130g"}, {nom: "Pommes de terre", qt: "150g"}, {nom: "Courgettes", qt: "150g"}]},
-    collation_apres_midi: {nom: "Banane", ingredients: [{nom: "Banane mûre", qt: "1"}]},
-    diner: {nom: "Saumon riz épinards mozzarella", ingredients: [{nom: "Saumon", qt: "120g"}, {nom: "Riz basmati", qt: "80g"}, {nom: "Épinards", qt: "100g"}, {nom: "Mozzarella", qt: "30g"}]}
+    collation_aprem: {nom: "Banane", ingredients: [{nom: "Banane mure", qt: "1"}]},
+    diner: {nom: "Saumon riz epinards mozzarella", ingredients: [{nom: "Saumon", qt: "120g"}, {nom: "Riz basmati", qt: "80g"}, {nom: "Epinards", qt: "100g"}, {nom: "Mozzarella", qt: "30g"}]}
   },
   samedi: {
     petit_dejeuner: {nom: "Flocons avoine compote", ingredients: [{nom: "Flocons avoine", qt: "40g"}, {nom: "Lait amande", qt: "200ml"}, {nom: "Compote pomme", qt: "100g"}]},
     collation_matin: {nom: "Fromage blanc", ingredients: [{nom: "Fromage blanc 0%", qt: "125g"}]},
     dejeuner: {nom: "Dinde patate douce haricots", ingredients: [{nom: "Dinde", qt: "130g"}, {nom: "Patate douce", qt: "150g"}, {nom: "Haricots verts", qt: "150g"}]},
-    collation_apres_midi: {nom: "Compote", ingredients: [{nom: "Compote", qt: "100g"}]},
+    collation_aprem: {nom: "Compote", ingredients: [{nom: "Compote", qt: "100g"}]},
     diner: {nom: "Poulet quinoa brocoli carottes", ingredients: [{nom: "Poulet", qt: "120g"}, {nom: "Quinoa", qt: "80g"}, {nom: "Brocoli-carottes", qt: "200g"}]}
   },
   dimanche: {
-    petit_dejeuner: {nom: "Œufs brouillés pain banane", ingredients: [{nom: "Œufs brouillés", qt: "2"}, {nom: "Pain grillé", qt: "2 tr."}, {nom: "Banane poêlée", qt: "1/2"}]},
+    petit_dejeuner: {nom: "Oeufs brouilles pain banane", ingredients: [{nom: "Oeufs brouilles", qt: "2"}, {nom: "Pain grille", qt: "2 tr."}, {nom: "Banane poelee", qt: "1/2"}]},
     collation_matin: {nom: "Yaourt nature", ingredients: [{nom: "Yaourt 0%", qt: "125g"}]},
-    dejeuner: {nom: "Saumon pâtes courgettes mozzarella", ingredients: [{nom: "Saumon", qt: "130g"}, {nom: "Pâtes", qt: "80g"}, {nom: "Courgettes", qt: "150g"}, {nom: "Mozzarella", qt: "30g"}]},
-    collation_apres_midi: {nom: "Compote pomme", ingredients: [{nom: "Compote", qt: "100g"}]},
-    diner: {nom: "Poulet effiloché pommes de terre légumes", ingredients: [{nom: "Poulet effiloché", qt: "120g"}, {nom: "Pommes de terre", qt: "150g"}, {nom: "Légumes", qt: "200g"}]}
+    dejeuner: {nom: "Saumon pates courgettes mozzarella", ingredients: [{nom: "Saumon", qt: "130g"}, {nom: "Pates", qt: "80g"}, {nom: "Courgettes", qt: "150g"}, {nom: "Mozzarella", qt: "30g"}]},
+    collation_aprem: {nom: "Compote pomme", ingredients: [{nom: "Compote", qt: "100g"}]},
+    diner: {nom: "Poulet effiloche pommes de terre legumes", ingredients: [{nom: "Poulet effiloche", qt: "120g"}, {nom: "Pommes de terre", qt: "150g"}, {nom: "Legumes", qt: "200g"}]}
   }
 };
 
@@ -161,11 +161,11 @@ const ingredientsBase = {
     { nom: "Dinde", id: "dinde", quantite: "130g", icon: "bird" },
     { nom: "Oeufs x2", id: "oeufs", quantite: "2 unités", icon: "egg" },
     { nom: "Cabillaud", id: "cabillaud", quantite: "130g", icon: "fish" },
-    { nom: "Poulet effiloché", id: "poulet_effiloche", quantite: "120g", icon: "drumstick" }
+    { nom: "Poulet effiloche", id: "poulet_effiloche", quantite: "120g", icon: "drumstick" }
   ],
   feculents: [
     { nom: "Riz basmati", id: "riz", quantite: "80g cuit", icon: "bowl" },
-    { nom: "Pâtes semi-complètes", id: "pates", quantite: "80g cuit", icon: "utensils" },
+    { nom: "Pates semi-completes", id: "pates", quantite: "80g cuit", icon: "utensils" },
     { nom: "Quinoa", id: "quinoa", quantite: "80g cuit", icon: "circle" },
     { nom: "Patate douce", id: "patate_douce", quantite: "150g", icon: "potato" },
     { nom: "Pommes de terre", id: "pomme_terre", quantite: "150g", icon: "potato" },
@@ -177,8 +177,8 @@ const ingredientsBase = {
     { nom: "Carottes", id: "carottes", quantite: "150g", icon: "carrot" },
     { nom: "Haricots verts", id: "haricots_verts", quantite: "150g", icon: "bean" },
     { nom: "Brocoli", id: "brocoli", quantite: "150g", icon: "tree-pine" },
-    { nom: "Épinards", id: "epinards", quantite: "100g", icon: "leaf" },
-    { nom: "Mix légumes", id: "mix", quantite: "200g", icon: "salad" },
+    { nom: "Epinards", id: "epinards", quantite: "100g", icon: "leaf" },
+    { nom: "Mix legumes", id: "mix", quantite: "200g", icon: "salad" },
     { nom: "Aubergine", id: "aubergine", quantite: "150g", icon: "eggplant" },
     { nom: "Fenouil", id: "fenouil", quantite: "150g", icon: "leaf" },
     { nom: "Courge", id: "courge", quantite: "150g", icon: "circle" },
