@@ -349,8 +349,13 @@ const app = {
             row.className = 'border-b border-gray-50 last:border-0 hover:bg-gray-50/50';
 
             row.innerHTML = `
-                <td class="px-4 py-3 bg-gray-50/30">
-                    <div class="font-medium text-gray-900 capitalize">${day}</div>
+                <td class="px-4 py-3 bg-gray-50/30 group/day relative">
+                    <div class="font-medium text-gray-900 capitalize flex items-center justify-between">
+                        ${day}
+                        <button onclick="app.clearDay('${day}')" class="opacity-0 group-hover/day:opacity-100 text-red-400 hover:text-red-600 transition-opacity p-1" title="Vider le jour">
+                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
                     <div class="text-xs text-gray-400">${dateStr}</div>
                 </td>
             `;
@@ -464,6 +469,15 @@ const app = {
                 (r.tags && r.tags.some(t => t.toLowerCase().includes(q)))
             );
         }
+
+        // Sort: Favorites first
+        filtered.sort((a, b) => {
+            const aFav = this.state.favorites.includes(a.id);
+            const bFav = this.state.favorites.includes(b.id);
+            if (aFav && !bFav) return -1;
+            if (!aFav && bFav) return 1;
+            return 0;
+        });
 
         // Pagination limit for performance (rendering 500+ items is slow)
         const displayLimit = 50;
@@ -816,6 +830,57 @@ const app = {
         this.showToast('Menu aléatoire généré !');
     },
 
+    renderForbidden: function(searchQuery = '') {
+        const container = document.getElementById('forbidden-list');
+        if (!container) return;
+        container.innerHTML = '';
+
+        const forbiddenData = this.state.forbidden;
+        if (!forbiddenData) return;
+
+        const q = searchQuery.toLowerCase();
+
+        Object.values(forbiddenData).forEach(group => {
+            // Filter logic
+            const matchesGroup = group.titre.toLowerCase().includes(q);
+            const matchingAliments = group.aliments.filter(a => a.toLowerCase().includes(q));
+
+            // If search exists, logic to show or hide
+            if (searchQuery && !matchesGroup && matchingAliments.length === 0) return;
+
+            let itemsDisplay = group.aliments;
+            if (searchQuery && !matchesGroup) {
+                itemsDisplay = matchingAliments;
+            }
+
+            container.innerHTML += `
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+                    <h3 class="font-bold text-gray-800 mb-2 flex items-center gap-2">
+                        <i data-lucide="ban" class="text-red-500 w-5 h-5"></i>
+                        ${group.titre}
+                    </h3>
+                    <p class="text-sm text-gray-500 mb-4 italic">${group.raison}</p>
+
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        ${itemsDisplay.map(a => `<span class="inline-block bg-red-50 text-red-700 px-2 py-1 rounded-md text-sm border border-red-100">${a}</span>`).join('')}
+                    </div>
+
+                    <div class="bg-green-50 rounded-lg p-3 border border-green-100">
+                        <div class="text-xs font-bold text-green-800 uppercase mb-2 flex items-center gap-1">
+                            <i data-lucide="check-circle" class="w-3 h-3"></i> Alternatives
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            ${group.alternatives.map(alt => `
+                                <span class="text-xs text-green-700 bg-white px-2 py-1 rounded border border-green-100 shadow-sm">${alt}</span>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        lucide.createIcons();
+    },
+
     renderShoppingList: function() {
         const container = document.getElementById('shopping-list-container');
         if(!container) return;
@@ -1033,7 +1098,7 @@ const app = {
             this.state.selectedMealType = null;
             this.navigateTo('menu');
         } else {
-            alert("Passez par le menu pour modifier une case.");
+            this.showToast("Passez par le menu pour modifier une case.", true);
         }
     },
 
@@ -1043,11 +1108,36 @@ const app = {
         this.syncWithGoogle('save');
     },
 
+    clearDay: function(day) {
+        if(confirm(`Vider tout le menu de ${day} ?`)) {
+            this.MEAL_TYPES.forEach(type => {
+                this.state.menu[day][type] = { nom: null };
+            });
+            this.saveMenu();
+            this.renderWeeklyMenu();
+            this.showToast(`Menu de ${day} vidé`);
+        }
+    },
+
+    clearWeek: function() {
+        if(confirm('Vider TOUTE la semaine ? (Irréversible)')) {
+            this.DAYS.forEach(day => {
+                this.MEAL_TYPES.forEach(type => {
+                    this.state.menu[day][type] = { nom: null };
+                });
+            });
+            this.saveMenu();
+            this.renderWeeklyMenu();
+            this.showToast('Semaine vidée');
+        }
+    },
+
     resetMenu: function() {
-        if(confirm('Réinitialiser cette semaine ?')) {
+        if(confirm('Réinitialiser cette semaine (Remettre le menu par défaut) ?')) {
             this.state.menu = JSON.parse(JSON.stringify(window.GastroData.menu));
             this.saveMenu();
             this.renderWeeklyMenu();
+            this.showToast('Menu réinitialisé');
         }
     },
 

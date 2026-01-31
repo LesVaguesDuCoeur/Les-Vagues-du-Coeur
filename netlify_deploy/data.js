@@ -27,7 +27,7 @@ const defaultMenu = {
   jeudi: {
     petit_dejeuner: {nom: "Overnight oats banane", ingredients: [{nom: "Flocons avoine", qt: "40g"}, {nom: "Yaourt 0%", qt: "100g"}, {nom: "Lait amande", qt: "50ml"}, {nom: "Banane", qt: "1/2"}]},
     collation_matin: {nom: "Compote pomme", ingredients: [{nom: "Compote", qt: "100g"}]},
-    dejeuner: {nom: "Saumon lentilles carottes", ingredients: [{nom: "Saumon", qt: "130g"}, {nom: "Lentilles corail", qt: "80g"}, {nom: "Carottes", qt: "150g"}]},
+    dejeuner: {nom: "Saumon riz carottes", ingredients: [{nom: "Saumon", qt: "130g"}, {nom: "Riz basmati", qt: "80g"}, {nom: "Carottes", qt: "150g"}]},
     collation_aprem: {nom: "Fromage blanc", ingredients: [{nom: "Fromage blanc 0%", qt: "125g"}]},
     diner: {nom: "Dinde pates brocoli", ingredients: [{nom: "Dinde", qt: "120g"}, {nom: "Pates", qt: "80g"}, {nom: "Brocoli", qt: "150g"}]}
   },
@@ -169,7 +169,6 @@ const ingredientsBase = {
     { nom: "Quinoa", id: "quinoa", quantite: "80g cuit", icon: "circle" },
     { nom: "Patate douce", id: "patate_douce", quantite: "150g", icon: "potato" },
     { nom: "Pommes de terre", id: "pomme_terre", quantite: "150g", icon: "potato" },
-    { nom: "Lentilles corail", id: "lentilles", quantite: "80g cuit", icon: "circle-dot" },
     { nom: "Semoule", id: "semoule", quantite: "80g cuit", icon: "grain" }
   ],
   legumes: [
@@ -529,23 +528,6 @@ const ramadanRecipes = [
     // RECETTES INDIENNES
     // ==========================================
     {
-        id: "dal-lentilles-doux",
-        nom: "Dal Lentilles Corail",
-        categorie: "plat_complet",
-        tags: ["#indien", "#vegetarien", "#dal"],
-        kcal: 380,
-        ingredients: [
-            {nom: "Lentilles corail", quantite: "100g"},
-            {nom: "Lait de coco", quantite: "100ml"},
-            {nom: "Curcuma/Cumin", quantite: "1 c. cafe"}
-        ],
-        instructions: [
-            "Cuire lentilles dans l'eau avec epices 20 min",
-            "Ajouter lait de coco a la fin",
-            "Servir avec riz"
-        ]
-    },
-    {
         id: "poulet-tikka-doux",
         nom: "Poulet Tikka Doux",
         categorie: "plat_complet",
@@ -592,23 +574,6 @@ const ramadanRecipes = [
             {nom: "Cumin", quantite: "1 pincee"}
         ],
         instructions: ["Melanger tout, servir frais"]
-    },
-    {
-        id: "khichdi-riz-lentilles",
-        nom: "Khichdi Comfort Food",
-        categorie: "plat_complet",
-        tags: ["#indien", "#comfort", "#vegetarien"],
-        kcal: 350,
-        ingredients: [
-            {nom: "Riz", quantite: "80g"},
-            {nom: "Lentilles corail", quantite: "50g"},
-            {nom: "Curcuma", quantite: "1/2 c. cafe"}
-        ],
-        instructions: [
-            "Cuire riz et lentilles ensemble dans l'eau",
-            "Ajouter curcuma et sel",
-            "Cuire jusqu'a consistance bouillie epaisse"
-        ]
     },
 
     // ==========================================
@@ -657,19 +622,6 @@ const ramadanRecipes = [
             "Cuire au four 180C 15 min (pas de friture)",
             "Tremper miel, sesame"
         ]
-    },
-    {
-        id: "mercimek-corbasi",
-        nom: "Mercimek Corbasi (Turc)",
-        categorie: "iftar",
-        tags: ["#turc", "#soupe", "#lentilles"],
-        kcal: 280,
-        ingredients: [
-            {nom: "Lentilles corail", quantite: "150g"},
-            {nom: "Carotte/Patate", quantite: "1 de chaque"},
-            {nom: "Cumin", quantite: "1 c. cafe"}
-        ],
-        instructions: ["Cuire tout dans l'eau, mixer, servir"]
     },
     {
         id: "pilav-turc",
