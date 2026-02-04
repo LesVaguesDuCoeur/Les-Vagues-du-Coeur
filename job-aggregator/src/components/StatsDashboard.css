@@ -1,0 +1,80 @@
+.stats-dashboard {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.stat-card h4 {
+  margin: 0 0 12px 0;
+  color: #64748b;
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #2563eb;
+}
+
+.stat-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.stat-label {
+  color: #475569;
+}
+
+.stat-count {
+  font-weight: 600;
+  color: #1e293b;
+  background: #f1f5f9;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+}
+
+/* Dark Mode */
+:global(.dark) .stat-card {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+:global(.dark) .stat-card h4 {
+  color: #94a3b8;
+}
+
+:global(.dark) .stat-value {
+  color: #60a5fa;
+}
+
+:global(.dark) .stat-label {
+  color: #cbd5e1;
+}
+
+:global(.dark) .stat-count {
+  color: #f1f5f9;
+  background: #334155;
+}
