@@ -103,7 +103,7 @@ function App() {
         onTabChange={setActiveTab}
       />
 
-      <div className="main-layout">
+      <div className="main-content">
         <aside className="sidebar-area">
           <FilterSidebar
             filters={filters}

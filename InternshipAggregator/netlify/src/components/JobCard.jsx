@@ -69,9 +69,14 @@ Lien : ${job.url}
       </div>
 
       <div className="job-tags">
-        {job.tags && job.tags.map((tag, idx) => (
-          <span key={idx} className="tag">{tag}</span>
-        ))}
+        {job.tags && job.tags.map((tag, idx) => {
+          let extraClass = '';
+          if (tag === 'Big4') extraClass = 'tag-big4';
+          if (tag === 'CAC40') extraClass = 'tag-cac40';
+          if (tag === 'Fonction publique') extraClass = 'tag-public';
+
+          return <span key={idx} className={`tag ${extraClass}`}>{tag}</span>;
+        })}
          <span className="tag level">{job.studyLevel}</span>
       </div>
 

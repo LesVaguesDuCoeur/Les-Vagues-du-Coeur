@@ -1,32 +1,37 @@
 .header {
-  height: 64px;
+  height: 80px;
   background: white;
-  border-bottom: 1px solid #e0e0e0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 24px;
+  padding: 0 var(--spacing-lg);
   position: sticky;
   top: 0;
   z-index: 100;
+  box-shadow: var(--shadow-sm);
+  transition: background-color 0.2s;
 }
 
 .header-logo {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--spacing-sm);
 }
 
 .header-logo h1 {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #1e293b;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #2563eb; /* Primary Blue */
   margin: 0;
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .header-nav {
   display: flex;
-  gap: 8px;
+  gap: var(--spacing-md);
   height: 100%;
 }
 
@@ -34,21 +39,20 @@
   background: none;
   border: none;
   cursor: pointer;
-  padding: 0 16px;
+  padding: 0 var(--spacing-xs);
   height: 100%;
   font-size: 0.95rem;
   color: #64748b;
-  font-weight: 500;
+  font-weight: 600;
   display: flex;
   align-items: center;
   gap: 8px;
-  border-bottom: 2px solid transparent;
+  border-bottom: 3px solid transparent;
   transition: all 0.2s;
 }
 
 .nav-item:hover {
   color: #334155;
-  background-color: #f8fafc;
 }
 
 .nav-item.active {
@@ -63,11 +67,11 @@
 
 .theme-toggle {
   background: none;
-  border: none;
+  border: 1px solid #e2e8f0;
   cursor: pointer;
   color: #64748b;
   padding: 8px;
-  border-radius: 50%;
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -75,18 +79,21 @@
 }
 
 .theme-toggle:hover {
-  background-color: #f1f5f9;
+  background-color: #f8fafc;
   color: #334155;
+  border-color: #cbd5e1;
 }
 
 /* Dark Mode */
 :global(.dark) .header {
   background: #1e293b;
-  border-bottom-color: #334155;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
 
 :global(.dark) .header-logo h1 {
-  color: #f1f5f9;
+  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 :global(.dark) .nav-item {
@@ -94,7 +101,6 @@
 }
 
 :global(.dark) .nav-item:hover {
-  background-color: #334155;
   color: #e2e8f0;
 }
 
@@ -105,6 +111,7 @@
 
 :global(.dark) .theme-toggle {
   color: #94a3b8;
+  border-color: #334155;
 }
 
 :global(.dark) .theme-toggle:hover {
