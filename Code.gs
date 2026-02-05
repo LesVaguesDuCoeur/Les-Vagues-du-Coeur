@@ -59,10 +59,10 @@ function loadAllData() {
   }
 
   return {
-    recipes: recipes,
-    menu: otherData.menu,
-    favorites: otherData.favorites,
-    ramadanMode: otherData.ramadanMode
+    recipes: Array.isArray(recipes) ? recipes : [],
+    menu: otherData.menu || null,
+    favorites: Array.isArray(otherData.favorites) ? otherData.favorites : [],
+    ramadanMode: !!otherData.ramadanMode
   };
 }
 

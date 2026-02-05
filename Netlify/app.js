@@ -55,8 +55,11 @@ init: function() {
 loadData: function() {
     // Initial static load for Forbidden/Base
     if (window.GastroData) {
-        this.state.forbidden = window.GastroData.forbidden;
+        this.state.forbidden = window.GastroData.forbidden || {};
     }
+
+    // Ensure safe default state
+    this.ensureState();
 
     // Fetch from Drive
     fetch(this.API_URL)
@@ -64,9 +67,9 @@ loadData: function() {
     .then(data => {
         if (data && data.menu) {
              this.state.menu = data.menu;
-             this.state.recipes = data.recipes || [];
-             this.state.favorites = data.favorites || [];
-             this.state.ramadanMode = data.ramadanMode || false;
+             this.state.recipes = Array.isArray(data.recipes) ? data.recipes : [];
+             this.state.favorites = Array.isArray(data.favorites) ? data.favorites : [];
+             this.state.ramadanMode = !!data.ramadanMode;
              this.showToast('Données chargées depuis le Cloud ☁️');
         } else {
              // New user or empty drive
@@ -79,6 +82,7 @@ loadData: function() {
         this.loadLocalOrDefault();
     })
     .finally(() => {
+        this.ensureState();
         this.updateRamadanState();
         this.navigateTo('home');
     });
@@ -87,7 +91,14 @@ loadData: function() {
 loadLocalOrDefault: function() {
     // Fallback to LocalStorage
     const storedFavs = localStorage.getItem('gastro-favorites');
-    if (storedFavs) this.state.favorites = JSON.parse(storedFavs);
+    if (storedFavs) {
+        try {
+            const parsed = JSON.parse(storedFavs);
+            this.state.favorites = Array.isArray(parsed) ? parsed : [];
+        } catch(e) {
+            this.state.favorites = [];
+        }
+    }
 
     const ramadanMode = localStorage.getItem('gastro-ramadan-mode');
     if (ramadanMode === 'true') this.state.ramadanMode = true;
@@ -96,9 +107,15 @@ loadLocalOrDefault: function() {
     this.loadWeekMenu();
 
     // Recipes logic (if empty, we are truly empty as per requirement, or use provided default if any)
-    if (window.GastroData && window.GastroData.recipes.length > 0) {
+    if (window.GastroData && Array.isArray(window.GastroData.recipes) && window.GastroData.recipes.length > 0) {
         this.state.recipes = window.GastroData.recipes;
     }
+},
+
+ensureState: function() {
+    if (!Array.isArray(this.state.favorites)) this.state.favorites = [];
+    if (!Array.isArray(this.state.recipes)) this.state.recipes = [];
+    if (!this.state.menu) this.state.menu = {};
 },
 
 toggleRamadanMode: function() {
@@ -467,33 +484,37 @@ renderRecipeCatalog: function(searchQuery = '', filterCategory = 'all', tagFilte
     if (!grid) return;
     grid.innerHTML = '';
 
-    let filtered = this.state.recipes;
+    // Safety
+    const safeFavorites = Array.isArray(this.state.favorites) ? this.state.favorites : [];
+
+    // Filter out malformed recipes
+    let filtered = (this.state.recipes || []).filter(r => r && r.id && r.nom);
 
     if (filterCategory === 'favoris') {
-        filtered = filtered.filter(r => this.state.favorites.includes(r.id));
+        filtered = filtered.filter(r => safeFavorites.includes(r.id));
     } else if (filterCategory !== 'all') {
         filtered = filtered.filter(r => r.categorie === filterCategory);
     }
 
     if (tagFilter) {
         filtered = filtered.filter(r =>
-            r.tags && r.tags.some(t => t.toLowerCase().includes(tagFilter))
+            Array.isArray(r.tags) && r.tags.some(t => t && typeof t === 'string' && t.toLowerCase().includes(tagFilter))
         );
     }
 
     if (searchQuery && !searchQuery.startsWith('#')) {
         const q = searchQuery.toLowerCase();
         filtered = filtered.filter(r =>
-            r.nom.toLowerCase().includes(q) ||
-            r.ingredients.some(i => i.nom.toLowerCase().includes(q)) ||
-            (r.tags && r.tags.some(t => t.toLowerCase().includes(q)))
+            (r.nom && r.nom.toLowerCase().includes(q)) ||
+            (Array.isArray(r.ingredients) && r.ingredients.some(i => i.nom && i.nom.toLowerCase().includes(q))) ||
+            (Array.isArray(r.tags) && r.tags.some(t => t && typeof t === 'string' && t.toLowerCase().includes(q)))
         );
     }
 
     // Sort: Favorites first
     filtered.sort((a, b) => {
-        const aFav = this.state.favorites.includes(a.id);
-        const bFav = this.state.favorites.includes(b.id);
+        const aFav = safeFavorites.includes(a.id);
+        const bFav = safeFavorites.includes(b.id);
         if (aFav && !bFav) return -1;
         if (!aFav && bFav) return 1;
         return 0;
@@ -511,20 +532,23 @@ renderRecipeCatalog: function(searchQuery = '', filterCategory = 'all', tagFilte
     }
 
     filtered.forEach(recipe => {
-        const isFav = this.state.favorites.includes(recipe.id);
-        const card = document.createElement('div');
+        const isFav = safeFavorites.includes(recipe.id);
         card.className = 'bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 card-hover cursor-pointer group relative';
 
         let bgClass = 'bg-gradient-to-br from-green-400 to-emerald-600';
         let icon = 'utensils';
-        if (recipe.categorie === 'proteine' || recipe.categorie.includes('iftar')) { bgClass = 'bg-gradient-to-br from-orange-400 to-red-500'; icon = 'beef'; }
-        if (recipe.categorie === 'feculent') { bgClass = 'bg-gradient-to-br from-yellow-400 to-orange-500'; icon = 'wheat'; }
-        if (recipe.categorie.includes('petit') || recipe.categorie.includes('suhoor')) { bgClass = 'bg-gradient-to-br from-blue-400 to-indigo-500'; icon = 'sun'; }
-        if (recipe.categorie.includes('collation')) { bgClass = 'bg-gradient-to-br from-purple-400 to-pink-500'; icon = 'apple'; }
+        // Safe access to categorie
+        const cat = recipe.categorie || 'plat_complet';
+        if (cat === 'proteine' || cat.includes('iftar')) { bgClass = 'bg-gradient-to-br from-orange-400 to-red-500'; icon = 'beef'; }
+        if (cat === 'feculent') { bgClass = 'bg-gradient-to-br from-yellow-400 to-orange-500'; icon = 'wheat'; }
+        if (cat.includes('petit') || cat.includes('suhoor')) { bgClass = 'bg-gradient-to-br from-blue-400 to-indigo-500'; icon = 'sun'; }
+        if (cat.includes('collation')) { bgClass = 'bg-gradient-to-br from-purple-400 to-pink-500'; icon = 'apple'; }
 
-        const tagsHtml = recipe.tags ? recipe.tags.slice(0, 3).map(t =>
+        const tagsHtml = Array.isArray(recipe.tags) ? recipe.tags.slice(0, 3).map(t =>
             `<span class="text-[9px] bg-white/20 text-white px-1.5 py-0.5 rounded">${t}</span>`
         ).join('') : '';
+
+        const ingredients = Array.isArray(recipe.ingredients) ? recipe.ingredients : [];
 
         card.innerHTML = `
             <div class="absolute top-2 right-2 z-10">
@@ -542,12 +566,12 @@ renderRecipeCatalog: function(searchQuery = '', filterCategory = 'all', tagFilte
             </div>
             <div class="p-4">
                 <div class="flex justify-between items-start mb-2">
-                    <span class="text-xs font-bold text-primary uppercase tracking-wider">${recipe.categorie.replace('_', ' ')}</span>
+                    <span class="text-xs font-bold text-primary uppercase tracking-wider">${cat.replace('_', ' ')}</span>
                 </div>
                 <h3 class="font-bold text-gray-800 mb-2 leading-tight group-hover:text-primary transition-colors">${recipe.nom}</h3>
                 <div class="flex flex-wrap gap-1 mt-2">
-                    ${recipe.ingredients.slice(0, 3).map(i => `<span class="text-[10px] bg-gray-100 text-gray-600 px-2 py-1 rounded-full">${i.nom}</span>`).join('')}
-                    ${recipe.ingredients.length > 3 ? `<span class="text-[10px] bg-gray-100 text-gray-600 px-2 py-1 rounded-full">+${recipe.ingredients.length - 3}</span>` : ''}
+                    ${ingredients.slice(0, 3).map(i => `<span class="text-[10px] bg-gray-100 text-gray-600 px-2 py-1 rounded-full">${i.nom || 'Ingr'}</span>`).join('')}
+                    ${ingredients.length > 3 ? `<span class="text-[10px] bg-gray-100 text-gray-600 px-2 py-1 rounded-full">+${ingredients.length - 3}</span>` : ''}
                 </div>
             </div>
         `;
