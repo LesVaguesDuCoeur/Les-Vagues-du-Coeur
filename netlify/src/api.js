@@ -1,4 +1,5 @@
 // Remplacez cette URL par l'URL de votre déploiement Web App Google Apps Script
+// Exemple : https://script.google.com/macros/s/AKfycbx.../exec
 export const API_URL = "https://script.google.com/macros/s/AKfycbx_PLACEHOLDER_YOUR_ID_HERE/exec";
 
 export const api = {
@@ -22,6 +23,10 @@ export const api = {
 
   async toggleFavorite(id) {
     return this.sendAction("toggle_favorite", { id });
+  },
+
+  async toggleIngredientFavorite(ingredient) {
+    return this.sendAction("toggle_ingredient_favorite", { ingredient });
   },
 
   async sendAction(action, payload) {
