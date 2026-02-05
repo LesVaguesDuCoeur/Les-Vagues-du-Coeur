@@ -1217,8 +1217,19 @@ importRecipesFromFile: function(event) {
             if (!Array.isArray(newRecipes)) throw new Error("Format invalide (doit être un tableau)");
 
             let count = 0;
+            let skipped = 0;
+
             newRecipes.forEach(r => {
-                if (!r.id || !r.nom) return;
+                // Flexible validation (accept 'nom' OR 'title' OR 'name')
+                const name = r.nom || r.title || r.name;
+                if (!r.id || !name) {
+                    skipped++;
+                    return;
+                }
+
+                // Normalize to 'nom'
+                if (!r.nom) r.nom = name;
+
                 const idx = this.state.recipes.findIndex(ex => ex.id === r.id);
                 if (idx >= 0) {
                     this.state.recipes[idx] = r;
@@ -1228,9 +1239,17 @@ importRecipesFromFile: function(event) {
                 count++;
             });
 
-            this.showToast(`${count} recettes importées !`);
-            this.saveMenu();
-            if (this.state.currentView === 'recipes') this.renderRecipeCatalog();
+            if (count > 0) {
+                this.showToast(`${count} recettes importées !`);
+                this.saveMenu();
+                if (this.state.currentView === 'recipes') this.renderRecipeCatalog();
+            } else {
+                if (skipped > 0) {
+                    alert(`Aucune recette importée. ${skipped} éléments ignorés (format invalide, manque 'id' ou 'nom').`);
+                } else {
+                    this.showToast("Le fichier est vide ou ne contient aucune recette.");
+                }
+            }
 
         } catch (err) {
             alert("Erreur lors de l'import : " + err.message);
