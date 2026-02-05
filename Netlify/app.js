@@ -9,10 +9,124 @@ selectedDay: null,
 selectedMealType: null,
 currentWeekOffset: 0,
 favorites: [],
-ramadanMode: false
+ramadanMode: false,
+pendingBans: false // To track if we need to refresh after modal close
 },
 
 // Constants
+PROMPT_TEMPLATE: `============================================
+PROMPT POUR GÉNÉRER DES RECETTES COMPATIBLES
+============================================
+
+Copie ce prompt et envoie-le à une IA (Gemini, ChatGPT, Claude, etc.)
+puis en dessous ajoute ta demande spécifique.
+
+============================================
+DÉBUT DU PROMPT
+============================================
+
+Tu es un générateur de recettes pour une application de planification de repas.
+Le contexte : alimentation adaptée à la GASTRITE + PERTE DE POIDS + HALAL.
+
+Tu dois me générer des recettes au format JSON strict suivant.
+Le résultat doit être un fichier texte contenant UNIQUEMENT un tableau JSON valide (pas de texte avant ou après).
+
+FORMAT OBLIGATOIRE pour chaque recette :
+{
+  "id": "identifiant-unique-en-minuscules-avec-tirets",
+  "nom": "Nom de la Recette",
+  "categorie": "UNE SEULE parmi: petit_dejeuner | collation | plat_complet | suhoor | iftar | iftar_plat | collation_nuit | feculent | legume",
+  "tags": ["#tag1", "#tag2", "#tag3"],
+  "kcal": nombre_entier,
+  "temps_preparation": "X min",
+  "temps_cuisson": "X min",
+  "portions": nombre_entier,
+  "ingredients": [
+    {"nom": "Nom Ingrédient", "quantite": "quantité avec unité"}
+  ],
+  "instructions": [
+    "Étape 1 détaillée",
+    "Étape 2 détaillée",
+    "Étape 3 détaillée"
+  ],
+  "reglages_airfryer": {"mode": "Air Fry", "temperature": "180°C", "temps": "15 min"},
+  "conseils_gastrite": "Conseil optionnel pour la gastrite"
+}
+
+RÈGLES IMPORTANTES :
+1. Chaque recette DOIT avoir un "id" unique (minuscules, tirets, pas d'espaces)
+2. Les catégories autorisées sont UNIQUEMENT : petit_dejeuner, collation, plat_complet, suhoor, iftar, iftar_plat, collation_nuit, feculent, legume
+3. Les tags doivent commencer par # (exemples : #arabe, #indien, #libanais, #turc, #vegetarien, #ramadan, #soupe, #rapide, #healthy, #proteine, #gourmand, #maghreb, #italien, #asiatique)
+4. Les kcal doivent être réalistes (petit-déj: 250-400, collation: 50-200, plat complet: 350-600)
+5. Les quantités doivent être précises (grammes, ml, unités, c. soupe, c. café, pincée)
+6. Les instructions doivent être claires et détaillées étape par étape
+7. Si la recette peut se faire à l'air fryer (Ninja Foodi FLEX), ajoute le champ "reglages_airfryer"
+8. Le champ "conseils_gastrite" est optionnel mais recommandé
+
+ALIMENTS INTERDITS (ne JAMAIS inclure) :
+- Tomates, agrumes, citron en grande quantité, vinaigre
+- Piment, poivre fort, harissa, curry fort
+- Ail cru, oignon cru (cuits c'est OK avec modération)
+- Fritures, charcuterie, fromages gras
+- Café, thé fort, sodas, alcool
+- Chocolat, bonbons industriels
+- Plats trop épicés
+{{CUSTOM_BANS}}
+
+ALIMENTS AUTORISÉS ET RECOMMANDÉS :
+- Protéines : poulet, dinde, saumon, cabillaud, oeufs, viande hachée maigre (halal)
+- Féculents : riz basmati, pâtes semi-complètes, quinoa, patate douce, pommes de terre, semoule, boulgour
+- Légumes (CUITS de préférence) : courgettes, carottes, haricots verts, brocoli, épinards, aubergine, fenouil, courge, potiron, champignons, poireaux
+- Produits laitiers : yaourt 0%, fromage blanc 0%, mozzarella (modération 30g)
+- Fruits : banane mûre, pomme cuite, compote sans sucre, dattes
+- Épices douces OK : paprika doux, curcuma, cannelle, herbes de Provence, cumin (modération)
+- Huile d'olive : max 1-2 c. soupe/jour
+- Miel : en petite quantité
+
+Le résultat doit être un tableau JSON valide commençant par [ et finissant par ]
+Exemple :
+[
+  {
+    "id": "exemple-recette",
+    "nom": "Exemple Recette",
+    ...
+  },
+  {
+    "id": "autre-recette",
+    ...
+  }
+]
+
+============================================
+FIN DU PROMPT
+============================================
+
+EN DESSOUS DU PROMPT, AJOUTE TA DEMANDE. EXEMPLES :
+
+Exemple 1 :
+"Génère-moi 20 recettes indiennes sans épinards ni brocoli"
+
+Exemple 2 :
+"Génère-moi 15 recettes de petit-déjeuner variés pour le ramadan"
+
+Exemple 3 :
+"Génère-moi 10 recettes turques avec du poulet, compatibles gastrite"
+
+Exemple 4 :
+"Génère-moi 30 recettes de plats complets variés avec du saumon et de la dinde"
+
+Exemple 5 :
+"Génère-moi 10 collations healthy sans produits laitiers"
+
+============================================
+COMMENT UTILISER LE FICHIER GÉNÉRÉ :
+1. Copie la réponse de l'IA (le JSON)
+2. Colle-la dans un fichier texte (.txt)
+3. Va sur le site GastroPlan
+4. Clique sur "Importer des recettes"
+5. Sélectionne ton fichier
+6. Les recettes s'ajoutent automatiquement et se sauvegardent sur le Drive
+============================================`,
 API_URL: 'https://script.google.com/macros/s/AKfycbyErNnaIpoo_fdnxZpz7ol3NHgutd9DmvsNddiddqGkF7-pV-XjkiDMvRyUsXhiWQ1_/exec',
 DAYS: ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'],
 MEAL_TYPES: ['petit_dejeuner', 'collation_matin', 'dejeuner', 'collation_apres_midi', 'diner'],
@@ -646,6 +760,15 @@ openRecipeDetail: function(recipeId) {
         return result;
     };
 
+    // Helper to check banned status
+    const isBanned = (ingName) => {
+        const lower = ingName.toLowerCase();
+        for (const grp of Object.values(this.state.forbidden)) {
+            if (grp.aliments.some(a => a.toLowerCase() === lower)) return true;
+        }
+        return false;
+    };
+
     // Air Fryer Display Logic
     let afHtml = '';
     if (recipe.reglages_airfryer) {
@@ -710,12 +833,20 @@ openRecipeDetail: function(recipeId) {
             ${gastriteHtml}
 
             <h3 class="font-bold text-lg mb-3 flex items-center gap-2"><i data-lucide="shopping-basket" class="w-5 h-5 text-primary"></i> Ingrédients</h3>
-            <div class="grid grid-cols-2 gap-2 mb-6">
-                ${recipe.ingredients.map((ing, idx) => `
-                    <div class="flex items-center justify-between p-2 rounded-lg ${colors[idx % colors.length]}">
-                        <span class="font-medium text-gray-800 text-sm">${ing.nom}</span>
-                        <span class="text-gray-600 text-xs">${ing.quantite || ing.qt || ''}</span>
-                    </div>`).join('')}
+            <div class="grid grid-cols-2 gap-2 mb-6" id="recipe-ingredients-list">
+                ${recipe.ingredients.map((ing, idx) => {
+                    const banned = isBanned(ing.nom);
+                    return `
+                    <div class="flex items-center justify-between p-2 rounded-lg transition-colors ${banned ? 'bg-red-100 border border-red-200' : colors[idx % colors.length]}">
+                        <div class="flex flex-col">
+                            <span class="font-medium text-sm ${banned ? 'text-red-700 line-through' : 'text-gray-800'}">${ing.nom}</span>
+                            <span class="text-xs ${banned ? 'text-red-500' : 'text-gray-600'}">${ing.quantite || ing.qt || ''}</span>
+                        </div>
+                        <button onclick="app.toggleBanIngredient('${ing.nom.replace(/'/g, "\\'")}')" class="p-1 rounded-full hover:bg-white/50 transition-colors ${banned ? 'text-red-600' : 'text-gray-500'}" title="${banned ? 'Débannir' : 'Bannir (Supprime les recettes)'}">
+                            <i data-lucide="${banned ? 'undo-2' : 'ban'}" class="w-4 h-4"></i>
+                        </button>
+                    </div>`;
+                }).join('')}
             </div>
 
             <h3 class="font-bold text-lg mb-3 flex items-center gap-2"><i data-lucide="list-checks" class="w-5 h-5 text-primary"></i> Préparation</h3>
@@ -735,6 +866,107 @@ openRecipeDetail: function(recipeId) {
 closeModal: function() {
     document.getElementById('modal-recipe').classList.add('modal-hidden');
     this.state.selectedRecipe = null;
+
+    if (this.state.pendingBans) {
+        this.processPendingBans();
+        this.state.pendingBans = false;
+    }
+},
+
+toggleBanIngredient: function(name) {
+    let category = 'custom_ban';
+    let added = false;
+
+    // Check if custom category exists
+    if (!this.state.forbidden[category]) {
+        this.state.forbidden[category] = {
+            titre: "Mes Interdits",
+            aliments: [],
+            raison: "Ingrédients bannis manuellement",
+            alternatives: []
+        };
+    }
+
+    // Check if exists in any category to remove
+    let found = false;
+    Object.entries(this.state.forbidden).forEach(([key, grp]) => {
+        if (grp.aliments.includes(name)) {
+            grp.aliments = grp.aliments.filter(a => a !== name);
+            found = true;
+        }
+    });
+
+    if (!found) {
+        // Add to custom
+        this.state.forbidden[category].aliments.push(name);
+        added = true;
+    }
+
+    // Mark pending bans for processing on close
+    this.state.pendingBans = true;
+
+    // Re-render modal content immediately to show state
+    if (this.state.selectedRecipe) {
+        this.openRecipeDetail(this.state.selectedRecipe.id);
+    }
+
+    this.showToast(added ? `${name} banni` : `${name} débanni`);
+},
+
+processPendingBans: function() {
+    this.showToast('Mise à jour des recettes...', false);
+
+    // Collect all banned items
+    const allBanned = [];
+    Object.values(this.state.forbidden).forEach(grp => {
+        allBanned.push(...grp.aliments.map(a => a.toLowerCase()));
+    });
+
+    const initialCount = this.state.recipes.length;
+
+    // Filter recipes
+    this.state.recipes = this.state.recipes.filter(r => {
+        if (!r.ingredients) return true;
+        const hasBanned = r.ingredients.some(i => allBanned.includes(i.nom.toLowerCase()));
+        return !hasBanned;
+    });
+
+    const removed = initialCount - this.state.recipes.length;
+
+    this.saveMenu(); // Syncs everything including forbidden list and updated recipes
+
+    if (this.state.currentView === 'recipes') this.renderRecipeCatalog();
+    if (this.state.currentView === 'forbidden') this.renderForbidden();
+
+    if (removed > 0) {
+        this.showToast(`${removed} recettes supprimées (Ingrédients interdits)`);
+    } else {
+        this.showToast('Liste des interdits mise à jour');
+    }
+},
+
+copyPrompt: function() {
+    let promptText = this.PROMPT_TEMPLATE;
+
+    // Collect custom bans
+    let customBansList = [];
+    if (this.state.forbidden) {
+        Object.values(this.state.forbidden).forEach(grp => {
+            customBansList.push(...grp.aliments);
+        });
+    }
+
+    const injection = customBansList.length > 0
+        ? "- " + customBansList.join("\n- ")
+        : "";
+
+    promptText = promptText.replace('{{CUSTOM_BANS}}', injection);
+
+    navigator.clipboard.writeText(promptText).then(() => {
+        this.showToast('Prompt copié avec vos interdits !');
+    }).catch(() => {
+        this.showToast('Erreur copie');
+    });
 },
 
 toggleFavorite: function(id) {

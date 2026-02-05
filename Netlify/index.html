@@ -114,6 +114,9 @@
                         <input type="text" id="recipe-search" placeholder="Chercher une recette, un ingrédient..."
                             class="w-full pl-10 pr-4 py-2 rounded-full border border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary outline-none shadow-sm">
                     </div>
+                    <button onclick="app.copyPrompt()" class="flex items-center px-3 py-2 bg-indigo-500 text-white rounded-full hover:bg-indigo-600 transition-colors shadow-sm" title="Copier Prompt IA">
+                        <i data-lucide="bot" class="w-5 h-5"></i>
+                    </button>
                     <label class="flex items-center px-3 py-2 bg-primary text-white rounded-full cursor-pointer hover:bg-primary-dark transition-colors shadow-sm" title="Importer des recettes">
                         <i data-lucide="upload" class="w-5 h-5"></i>
                         <input type="file" id="import-file" accept=".txt,.json" class="hidden" onchange="app.importRecipesFromFile(event)">
