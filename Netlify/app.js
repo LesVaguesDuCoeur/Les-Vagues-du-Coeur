@@ -533,6 +533,7 @@ renderRecipeCatalog: function(searchQuery = '', filterCategory = 'all', tagFilte
 
     filtered.forEach(recipe => {
         const isFav = safeFavorites.includes(recipe.id);
+        const card = document.createElement('div');
         card.className = 'bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100 card-hover cursor-pointer group relative';
 
         let bgClass = 'bg-gradient-to-br from-green-400 to-emerald-600';
