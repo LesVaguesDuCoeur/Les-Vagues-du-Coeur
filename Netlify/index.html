@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Les Vagues du Cœur - GastroPlan</title>
+    <meta name="description" content="Planification de repas adaptée gastrite, perte de poids, halal">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <link rel="manifest" href="manifest.json">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#10B981',
+                        'primary-dark': '#059669',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="styles.css">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-gray-50 text-gray-800 pb-20 md:pb-0">
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-30">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <div class="bg-primary/10 p-2 rounded-full">
+                    <i data-lucide="heart-pulse" class="text-primary w-6 h-6"></i>
+                </div>
+                <h1 class="text-lg font-bold text-gray-800 leading-tight">
+                    Les Vagues du Cœur
+                    <span class="block text-xs text-gray-500 font-normal">Alimentation Gastrite & Perte de poids</span>
+                </h1>
+            </div>
+            <div class="flex items-center gap-2">
+                <span id="sync-status" class="text-xs text-gray-400 hidden"></span>
+                <button id="sync-btn" class="text-gray-400 hover:text-primary transition-colors" title="Synchroniser">
+                    <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto p-4 min-h-screen">
+
+        <!-- VIEW: HOME -->
+        <div id="view-home" class="view-section">
+        </div>
+
+        <!-- VIEW: MENU -->
+        <div id="view-menu" class="view-section hidden">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">Menu de la Semaine</h2>
+                <div class="flex gap-3">
+                    <button id="ical-btn" onclick="app.exportToICal()" class="text-xs text-blue-500 hover:underline">Exporter iCal</button>
+                    <button onclick="app.printWeek()" class="text-xs text-gray-500 hover:underline">Imprimer</button>
+                    <button onclick="app.clearWeek()" class="text-xs text-orange-500 hover:underline">Vider</button>
+                    <button onclick="app.resetMenu()" class="text-xs text-red-500 hover:underline">Réinitialiser</button>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 mb-2">
+                <button onclick="app.toggleRamadanMode()"
+                        id="ramadan-toggle"
+                        class="px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors hover:bg-gray-50">
+                    <i data-lucide="moon" class="w-4 h-4 inline mr-1"></i>
+                    Mode Ramadan
+                </button>
+                <button onclick="app.generateRandomWeek()" class="text-xs bg-purple-100 text-purple-700 px-3 py-1.5 rounded-lg hover:bg-purple-200 flex items-center gap-1">
+                    <i data-lucide="shuffle" class="w-3 h-3"></i> Aléatoire
+                </button>
+            </div>
+            <div class="flex justify-between mb-4 menu-nav">
+            </div>
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-gray-50 text-gray-600 border-b">
+                            <tr id="menu-thead">
+                                <th class="px-4 py-3 font-medium">Jours</th>
+                                <th class="px-4 py-3 font-medium min-w-[120px]">Matin</th>
+                                <th class="px-4 py-3 font-medium min-w-[100px]">Collation</th>
+                                <th class="px-4 py-3 font-medium min-w-[120px]">Midi</th>
+                                <th class="px-4 py-3 font-medium min-w-[100px]">Goûter</th>
+                                <th class="px-4 py-3 font-medium min-w-[120px]">Soir</th>
+                                <th class="px-2 py-3 font-medium text-center w-20">Kcal</th>
+                            </tr>
+                        </thead>
+                        <tbody id="menu-grid-body" class="divide-y divide-gray-100">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: RECIPES -->
+        <div id="view-recipes" class="view-section hidden">
+            <div class="sticky top-[60px] bg-gray-50 pt-2 pb-4 z-20">
+                <div class="flex gap-2 mb-3">
+                    <div class="relative flex-1">
+                        <i data-lucide="search" class="absolute left-3 top-3 text-gray-400 w-5 h-5"></i>
+                        <input type="text" id="recipe-search" placeholder="Chercher une recette, un ingrédient..."
+                            class="w-full pl-10 pr-4 py-2 rounded-full border border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary outline-none shadow-sm">
+                    </div>
+                    <label class="flex items-center px-3 py-2 bg-primary text-white rounded-full cursor-pointer hover:bg-primary-dark transition-colors shadow-sm" title="Importer des recettes">
+                        <i data-lucide="upload" class="w-5 h-5"></i>
+                        <input type="file" id="import-file" accept=".txt,.json" class="hidden" onchange="app.importRecipesFromFile(event)">
+                    </label>
+                    <button onclick="app.showDeleteByIngredient()" class="flex items-center px-3 py-2 bg-red-100 text-red-600 rounded-full hover:bg-red-200 transition-colors shadow-sm" title="Supprimer par ingrédient">
+                        <i data-lucide="trash-2" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                <div class="flex gap-2 overflow-x-auto pb-1 hide-scrollbar" id="recipe-filters">
+                    <button class="filter-chip active px-4 py-1.5 rounded-full bg-primary text-white text-sm font-medium whitespace-nowrap" data-filter="all">Tout</button>
+                    <button class="filter-chip px-4 py-1.5 rounded-full bg-white border border-gray-200 text-gray-600 text-sm font-medium whitespace-nowrap" data-filter="plat_complet">Plats Complets</button>
+                    <button class="filter-chip px-4 py-1.5 rounded-full bg-white border border-gray-200 text-gray-600 text-sm font-medium whitespace-nowrap" data-filter="petit_dejeuner">Petit-Déj</button>
+                    <button class="filter-chip px-4 py-1.5 rounded-full bg-white border border-gray-200 text-gray-600 text-sm font-medium whitespace-nowrap" data-filter="collation">Collations</button>
+                    <button class="filter-chip px-4 py-1.5 rounded-full bg-white border border-gray-200 text-gray-600 text-sm font-medium whitespace-nowrap" data-filter="favoris">&#10084; Favoris</button>
+                </div>
+                <div class="flex gap-2 mt-2 overflow-x-auto pb-1 hide-scrollbar" id="tag-filters">
+                    <button onclick="app.filterByTag('#ramadan')" class="px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-medium whitespace-nowrap">#ramadan</button>
+                    <button onclick="app.filterByTag('#arabe')" class="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-medium whitespace-nowrap">#arabe</button>
+                    <button onclick="app.filterByTag('#libanais')" class="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-medium whitespace-nowrap">#libanais</button>
+                    <button onclick="app.filterByTag('#indien')" class="px-3 py-1 rounded-full bg-orange-100 text-orange-700 text-xs font-medium whitespace-nowrap">#indien</button>
+                    <button onclick="app.filterByTag('#turc')" class="px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-medium whitespace-nowrap">#turc</button>
+                    <button onclick="app.filterByTag('#vegetarien')" class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-medium whitespace-nowrap">#vegetarien</button>
+                    <button onclick="app.filterByTag('#soupe')" class="px-3 py-1 rounded-full bg-cyan-100 text-cyan-700 text-xs font-medium whitespace-nowrap">#soupe</button>
+                    <button onclick="app.filterByTag('#maghreb')" class="px-3 py-1 rounded-full bg-yellow-100 text-yellow-700 text-xs font-medium whitespace-nowrap">#maghreb</button>
+                </div>
+            </div>
+
+            <div id="recipes-count" class="text-sm text-gray-400 mb-3"></div>
+            <div id="recipes-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4 pb-24">
+            </div>
+        </div>
+
+        <!-- VIEW: COURSES -->
+        <div id="view-shopping" class="view-section hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold">Liste de Courses</h2>
+                <div class="flex gap-2">
+                    <button onclick="app.copyShoppingList()" class="text-gray-600 bg-gray-100 px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1">
+                        <i data-lucide="copy" class="w-4 h-4"></i> Copier
+                    </button>
+                    <button onclick="app.exportToReminders()" class="text-primary bg-primary/10 px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1">
+                        <i data-lucide="bell" class="w-4 h-4"></i> Rappels
+                    </button>
+                </div>
+            </div>
+            <div id="shopping-list-container" class="space-y-6 pb-24">
+            </div>
+        </div>
+
+        <!-- VIEW: FORBIDDEN -->
+        <div id="view-forbidden" class="view-section hidden">
+            <div class="sticky top-[60px] bg-gray-50 pt-2 pb-4 z-20">
+                <div class="relative">
+                    <i data-lucide="search" class="absolute left-3 top-3 text-gray-400 w-5 h-5"></i>
+                    <input type="text" id="forbidden-search" placeholder="Rechercher un aliment..."
+                        class="w-full pl-10 pr-4 py-2 rounded-full border border-gray-200 focus:border-red-400 focus:ring-1 focus:ring-red-400 outline-none shadow-sm">
+                </div>
+            </div>
+            <div class="bg-red-50 border border-red-100 rounded-xl p-4 mb-6">
+                <div class="flex items-start gap-3">
+                    <i data-lucide="alert-triangle" class="text-red-500 w-6 h-6 mt-0.5"></i>
+                    <div>
+                        <h3 class="font-bold text-red-700">Attention Gastrite</h3>
+                        <p class="text-sm text-red-600 mt-1">Ces aliments irritent la muqueuse gastrique. A eviter.</p>
+                    </div>
+                </div>
+            </div>
+            <div id="forbidden-list" class="space-y-4 pb-24">
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal: Recipe Detail -->
+    <div id="modal-recipe" class="fixed inset-0 z-50 flex items-end md:items-center justify-center modal-hidden">
+        <div class="modal-overlay absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="app.closeModal()"></div>
+        <div class="modal-content bg-white w-full md:w-[600px] md:rounded-2xl rounded-t-2xl shadow-2xl max-h-[90vh] overflow-y-auto relative">
+            <button onclick="app.closeModal()" class="absolute top-4 right-4 bg-gray-100 p-2 rounded-full hover:bg-gray-200 z-10">
+                <i data-lucide="x" class="w-5 h-5 text-gray-600"></i>
+            </button>
+            <div id="modal-body">
+            </div>
+            <div class="sticky bottom-0 bg-white border-t p-4 flex gap-3">
+                <button onclick="app.addToMenuFromModal()" class="flex-1 bg-primary hover:bg-primary-dark text-white font-medium py-3 rounded-xl shadow-lg shadow-primary/30 flex items-center justify-center gap-2">
+                    <i data-lucide="calendar-plus" class="w-5 h-5"></i>
+                    Ajouter au Menu
+                </button>
+                <button onclick="app.deleteCurrentRecipe()" class="bg-red-100 hover:bg-red-200 text-red-600 font-medium py-3 px-4 rounded-xl flex items-center justify-center gap-2">
+                    <i data-lucide="trash-2" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Delete by Ingredient -->
+    <div id="modal-delete-ingredient" class="fixed inset-0 z-50 flex items-center justify-center modal-hidden">
+        <div class="modal-overlay absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="app.closeDeleteModal()"></div>
+        <div class="modal-content bg-white w-[90%] md:w-[400px] rounded-2xl shadow-2xl p-6 relative">
+            <button onclick="app.closeDeleteModal()" class="absolute top-4 right-4 bg-gray-100 p-2 rounded-full hover:bg-gray-200">
+                <i data-lucide="x" class="w-5 h-5 text-gray-600"></i>
+            </button>
+            <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                <i data-lucide="trash-2" class="w-5 h-5 text-red-500"></i>
+                Supprimer par ingredient
+            </h3>
+            <p class="text-sm text-gray-500 mb-4">Toutes les recettes contenant cet ingredient seront supprimees.</p>
+            <input type="text" id="delete-ingredient-input" placeholder="Ex: petit pois, lentilles..."
+                class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-red-400 focus:ring-1 focus:ring-red-400 outline-none mb-4">
+            <div id="delete-preview" class="text-sm text-gray-500 mb-4"></div>
+            <button onclick="app.confirmDeleteByIngredient()" class="w-full bg-red-500 hover:bg-red-600 text-white font-medium py-3 rounded-xl">
+                Supprimer les recettes
+            </button>
+        </div>
+    </div>
+
+    <!-- Navigation Bottom -->
+    <nav class="fixed bottom-0 w-full bg-white border-t border-gray-200 md:w-[400px] md:left-1/2 md:-translate-x-1/2 md:bottom-4 md:rounded-full md:shadow-xl md:border z-40">
+        <div class="grid grid-cols-5 h-16">
+            <button class="nav-item active flex flex-col items-center justify-center w-full h-full text-gray-400 hover:text-primary transition-colors" onclick="app.navigateTo('home')">
+                <i data-lucide="home" class="w-5 h-5 mb-1"></i>
+                <span class="text-[10px] font-medium">Accueil</span>
+            </button>
+            <button class="nav-item flex flex-col items-center justify-center w-full h-full text-gray-400 hover:text-primary transition-colors" onclick="app.navigateTo('menu')">
+                <i data-lucide="calendar" class="w-5 h-5 mb-1"></i>
+                <span class="text-[10px] font-medium">Menu</span>
+            </button>
+            <button class="nav-item flex flex-col items-center justify-center w-full h-full text-gray-400 hover:text-primary transition-colors" onclick="app.navigateTo('recipes')">
+                <i data-lucide="chef-hat" class="w-5 h-5 mb-1"></i>
+                <span class="text-[10px] font-medium">Recettes</span>
+            </button>
+            <button class="nav-item flex flex-col items-center justify-center w-full h-full text-gray-400 hover:text-primary transition-colors" onclick="app.navigateTo('shopping')">
+                <i data-lucide="shopping-cart" class="w-5 h-5 mb-1"></i>
+                <span class="text-[10px] font-medium">Courses</span>
+            </button>
+            <button class="nav-item flex flex-col items-center justify-center w-full h-full text-gray-400 hover:text-primary transition-colors" onclick="app.navigateTo('forbidden')">
+                <i data-lucide="ban" class="w-5 h-5 mb-1"></i>
+                <span class="text-[10px] font-medium">Interdits</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

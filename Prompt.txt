@@ -1,0 +1,112 @@
+============================================
+PROMPT POUR GÉNÉRER DES RECETTES COMPATIBLES
+============================================
+
+Copie ce prompt et envoie-le à une IA (Gemini, ChatGPT, Claude, etc.)
+puis en dessous ajoute ta demande spécifique.
+
+============================================
+DÉBUT DU PROMPT
+============================================
+
+Tu es un générateur de recettes pour une application de planification de repas.
+Le contexte : alimentation adaptée à la GASTRITE + PERTE DE POIDS + HALAL.
+
+Tu dois me générer des recettes au format JSON strict suivant.
+Le résultat doit être un fichier texte contenant UNIQUEMENT un tableau JSON valide (pas de texte avant ou après).
+
+FORMAT OBLIGATOIRE pour chaque recette :
+{
+  "id": "identifiant-unique-en-minuscules-avec-tirets",
+  "nom": "Nom de la Recette",
+  "categorie": "UNE SEULE parmi: petit_dejeuner | collation | plat_complet | suhoor | iftar | iftar_plat | collation_nuit | feculent | legume",
+  "tags": ["#tag1", "#tag2", "#tag3"],
+  "kcal": nombre_entier,
+  "temps_preparation": "X min",
+  "temps_cuisson": "X min",
+  "portions": nombre_entier,
+  "ingredients": [
+    {"nom": "Nom Ingrédient", "quantite": "quantité avec unité"}
+  ],
+  "instructions": [
+    "Étape 1 détaillée",
+    "Étape 2 détaillée",
+    "Étape 3 détaillée"
+  ],
+  "reglages_airfryer": {"mode": "Air Fry", "temperature": "180°C", "temps": "15 min"},
+  "conseils_gastrite": "Conseil optionnel pour la gastrite"
+}
+
+RÈGLES IMPORTANTES :
+1. Chaque recette DOIT avoir un "id" unique (minuscules, tirets, pas d'espaces)
+2. Les catégories autorisées sont UNIQUEMENT : petit_dejeuner, collation, plat_complet, suhoor, iftar, iftar_plat, collation_nuit, feculent, legume
+3. Les tags doivent commencer par # (exemples : #arabe, #indien, #libanais, #turc, #vegetarien, #ramadan, #soupe, #rapide, #healthy, #proteine, #gourmand, #maghreb, #italien, #asiatique)
+4. Les kcal doivent être réalistes (petit-déj: 250-400, collation: 50-200, plat complet: 350-600)
+5. Les quantités doivent être précises (grammes, ml, unités, c. soupe, c. café, pincée)
+6. Les instructions doivent être claires et détaillées étape par étape
+7. Si la recette peut se faire à l'air fryer (Ninja Foodi FLEX), ajoute le champ "reglages_airfryer"
+8. Le champ "conseils_gastrite" est optionnel mais recommandé
+
+ALIMENTS INTERDITS (ne JAMAIS inclure) :
+- Tomates, agrumes, citron en grande quantité, vinaigre
+- Piment, poivre fort, harissa, curry fort
+- Ail cru, oignon cru (cuits c'est OK avec modération)
+- Fritures, charcuterie, fromages gras
+- Café, thé fort, sodas, alcool
+- Chocolat, bonbons industriels
+- Plats trop épicés
+
+ALIMENTS AUTORISÉS ET RECOMMANDÉS :
+- Protéines : poulet, dinde, saumon, cabillaud, oeufs, viande hachée maigre (halal)
+- Féculents : riz basmati, pâtes semi-complètes, quinoa, patate douce, pommes de terre, semoule, boulgour
+- Légumes (CUITS de préférence) : courgettes, carottes, haricots verts, brocoli, épinards, aubergine, fenouil, courge, potiron, champignons, poireaux
+- Produits laitiers : yaourt 0%, fromage blanc 0%, mozzarella (modération 30g)
+- Fruits : banane mûre, pomme cuite, compote sans sucre, dattes
+- Épices douces OK : paprika doux, curcuma, cannelle, herbes de Provence, cumin (modération)
+- Huile d'olive : max 1-2 c. soupe/jour
+- Miel : en petite quantité
+
+Le résultat doit être un tableau JSON valide commençant par [ et finissant par ]
+Exemple :
+[
+  {
+    "id": "exemple-recette",
+    "nom": "Exemple Recette",
+    ...
+  },
+  {
+    "id": "autre-recette",
+    ...
+  }
+]
+
+============================================
+FIN DU PROMPT
+============================================
+
+EN DESSOUS DU PROMPT, AJOUTE TA DEMANDE. EXEMPLES :
+
+Exemple 1 :
+"Génère-moi 20 recettes indiennes sans épinards ni brocoli"
+
+Exemple 2 :
+"Génère-moi 15 recettes de petit-déjeuner variés pour le ramadan"
+
+Exemple 3 :
+"Génère-moi 10 recettes turques avec du poulet, compatibles gastrite"
+
+Exemple 4 :
+"Génère-moi 30 recettes de plats complets variés avec du saumon et de la dinde"
+
+Exemple 5 :
+"Génère-moi 10 collations healthy sans produits laitiers"
+
+============================================
+COMMENT UTILISER LE FICHIER GÉNÉRÉ :
+1. Copie la réponse de l'IA (le JSON)
+2. Colle-la dans un fichier texte (.txt)
+3. Va sur le site GastroPlan
+4. Clique sur "Importer des recettes"
+5. Sélectionne ton fichier
+6. Les recettes s'ajoutent automatiquement et se sauvegardent sur le Drive
+============================================
