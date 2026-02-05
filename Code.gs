@@ -1,96 +1,58 @@
 const FOLDER_ID = "1_2Skc1s702g70PK9yrAWdBAsCUXAAHg0";
-const RECIPES_FILE = "GastroPlan_Recettes.json";
-const DATA_FILE = "GastroPlan_Data.json";
+const FILES = {
+  RECIPES: "GastroPlan_Recettes.json",
+  MENUS: "GastroPlan_Menus.json",
+  FAVORITES: "GastroPlan_Favoris.json",
+  SETTINGS: "GastroPlan_Settings.json",
+  FORBIDDEN: "GastroPlan_Interdits.json"
+};
 
 function doGet(e) {
-  const data = loadAllData();
-  return ContentService.createTextOutput(JSON.stringify(data))
-    .setMimeType(ContentService.MimeType.JSON);
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const data = loadAllData();
+    return ContentService.createTextOutput(JSON.stringify(data))
+      .setMimeType(ContentService.MimeType.JSON);
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 function doPost(e) {
   const lock = LockService.getScriptLock();
   try {
-    // Wait for up to 30 seconds for other processes to finish.
     lock.waitLock(30000);
 
     if (!e.postData || !e.postData.contents) {
-      return createError("No data provided");
+      return createOutput({ success: false, error: "No data" });
     }
 
     const request = JSON.parse(e.postData.contents);
     const action = request.action;
 
     if (action === 'save') {
+      // General save (Menu, Favorites, Settings)
       saveData(request);
-      return createSuccess({ message: "Saved successfully" });
+      return createOutput({ success: true, message: "Sauvegarde effectuée" });
     }
 
-    return createError("Unknown action");
+    if (action === 'import_recipes') {
+      const result = importRecipes(request.recipes);
+      return createOutput(result);
+    }
+
+    if (action === 'delete_recipes') {
+      const result = deleteRecipes(request.recipeIds);
+      return createOutput(result);
+    }
+
+    return createOutput({ success: false, error: "Action inconnue" });
 
   } catch (error) {
-    return createError(error.toString());
+    return createOutput({ success: false, error: error.toString() });
   } finally {
     lock.releaseLock();
-  }
-}
-
-function loadAllData() {
-  const folder = getFolder();
-
-  // Load Recipes
-  let recipes = [];
-  const recipeFiles = folder.getFilesByName(RECIPES_FILE);
-  if (recipeFiles.hasNext()) {
-    try {
-      const content = recipeFiles.next().getBlob().getDataAsString();
-      recipes = JSON.parse(content);
-    } catch (e) { recipes = []; }
-  }
-
-  // Load Other Data (Menu, Favorites, Settings)
-  let otherData = { menu: null, favorites: [], ramadanMode: false };
-  const dataFiles = folder.getFilesByName(DATA_FILE);
-  if (dataFiles.hasNext()) {
-    try {
-      const content = dataFiles.next().getBlob().getDataAsString();
-      otherData = JSON.parse(content);
-    } catch (e) { }
-  }
-
-  return {
-    recipes: Array.isArray(recipes) ? recipes : [],
-    menu: otherData.menu || null,
-    favorites: Array.isArray(otherData.favorites) ? otherData.favorites : [],
-    ramadanMode: !!otherData.ramadanMode
-  };
-}
-
-function saveData(payload) {
-  const folder = getFolder();
-
-  // Save Recipes if provided (it might be large, so only if sent)
-  if (payload.recipes) {
-    const files = folder.getFilesByName(RECIPES_FILE);
-    if (files.hasNext()) {
-      files.next().setContent(JSON.stringify(payload.recipes));
-    } else {
-      folder.createFile(RECIPES_FILE, JSON.stringify(payload.recipes), MimeType.PLAIN_TEXT);
-    }
-  }
-
-  // Save Other Data
-  const otherData = {
-    menu: payload.menu,
-    favorites: payload.favorites,
-    ramadanMode: payload.ramadanMode
-  };
-
-  const files = folder.getFilesByName(DATA_FILE);
-  if (files.hasNext()) {
-    files.next().setContent(JSON.stringify(otherData));
-  } else {
-    folder.createFile(DATA_FILE, JSON.stringify(otherData), MimeType.PLAIN_TEXT);
   }
 }
 
@@ -98,12 +60,99 @@ function getFolder() {
   return DriveApp.getFolderById(FOLDER_ID);
 }
 
-function createSuccess(data) {
-  return ContentService.createTextOutput(JSON.stringify({ success: true, ...data }))
-    .setMimeType(ContentService.MimeType.JSON);
+function getFileContent(filename, defaultVal) {
+  const folder = getFolder();
+  const files = folder.getFilesByName(filename);
+  if (files.hasNext()) {
+    try {
+      return JSON.parse(files.next().getBlob().getDataAsString());
+    } catch (e) { return defaultVal; }
+  }
+  return defaultVal;
 }
 
-function createError(message) {
-  return ContentService.createTextOutput(JSON.stringify({ success: false, error: message }))
+function writeFileContent(filename, data) {
+  const folder = getFolder();
+  const files = folder.getFilesByName(filename);
+  const content = JSON.stringify(data);
+  if (files.hasNext()) {
+    files.next().setContent(content);
+  } else {
+    folder.createFile(filename, content, MimeType.PLAIN_TEXT);
+  }
+}
+
+function loadAllData() {
+  return {
+    recipes: getFileContent(FILES.RECIPES, []),
+    menus: getFileContent(FILES.MENUS, {}),
+    favorites: getFileContent(FILES.FAVORITES, []),
+    settings: getFileContent(FILES.SETTINGS, {}),
+    forbidden: getFileContent(FILES.FORBIDDEN, null) // null means use default client-side
+  };
+}
+
+function saveData(payload) {
+  if (payload.menu) {
+    let menus = getFileContent(FILES.MENUS, {});
+    if (payload.weekKey && payload.menu) {
+      menus[payload.weekKey] = payload.menu;
+      writeFileContent(FILES.MENUS, menus);
+    }
+  }
+
+  if (payload.recipes) {
+    writeFileContent(FILES.RECIPES, payload.recipes);
+  }
+
+  if (payload.favorites) {
+    writeFileContent(FILES.FAVORITES, payload.favorites);
+  }
+
+  if (payload.ramadanMode !== undefined) {
+    let settings = getFileContent(FILES.SETTINGS, {});
+    settings.ramadanMode = payload.ramadanMode;
+    writeFileContent(FILES.SETTINGS, settings);
+  }
+}
+
+function importRecipes(newRecipes) {
+  if (!Array.isArray(newRecipes)) return { success: false, error: "Format invalide" };
+
+  let currentRecipes = getFileContent(FILES.RECIPES, []);
+  let addedCount = 0;
+
+  newRecipes.forEach(newR => {
+    // Check duplication by ID
+    const exists = currentRecipes.find(r => r.id === newR.id);
+    if (!exists) {
+      currentRecipes.push(newR);
+      addedCount++;
+    } else {
+      // Update existing
+      Object.assign(exists, newR);
+    }
+  });
+
+  writeFileContent(FILES.RECIPES, currentRecipes);
+  return { success: true, message: addedCount + " recettes importées", recipes: currentRecipes };
+}
+
+function deleteRecipes(idsToDelete) {
+  if (!Array.isArray(idsToDelete)) return { success: false, error: "IDs invalides" };
+
+  let currentRecipes = getFileContent(FILES.RECIPES, []);
+  const initialCount = currentRecipes.length;
+  currentRecipes = currentRecipes.filter(r => !idsToDelete.includes(r.id));
+
+  if (currentRecipes.length !== initialCount) {
+    writeFileContent(FILES.RECIPES, currentRecipes);
+  }
+
+  return { success: true, message: "Recettes supprimées", recipes: currentRecipes };
+}
+
+function createOutput(data) {
+  return ContentService.createTextOutput(JSON.stringify(data))
     .setMimeType(ContentService.MimeType.JSON);
 }
