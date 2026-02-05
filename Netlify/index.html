@@ -166,10 +166,15 @@
         <!-- VIEW: FORBIDDEN -->
         <div id="view-forbidden" class="view-section hidden">
             <div class="sticky top-[60px] bg-gray-50 pt-2 pb-4 z-20">
-                <div class="relative">
-                    <i data-lucide="search" class="absolute left-3 top-3 text-gray-400 w-5 h-5"></i>
-                    <input type="text" id="forbidden-search" placeholder="Rechercher un aliment..."
-                        class="w-full pl-10 pr-4 py-2 rounded-full border border-gray-200 focus:border-red-400 focus:ring-1 focus:ring-red-400 outline-none shadow-sm">
+                <div class="flex gap-2 mb-3">
+                    <div class="relative flex-1">
+                        <i data-lucide="search" class="absolute left-3 top-3 text-gray-400 w-5 h-5"></i>
+                        <input type="text" id="forbidden-search" placeholder="Rechercher un aliment..."
+                            class="w-full pl-10 pr-4 py-2 rounded-full border border-gray-200 focus:border-red-400 focus:ring-1 focus:ring-red-400 outline-none shadow-sm">
+                    </div>
+                    <button onclick="app.showAddForbiddenModal()" class="flex items-center px-3 py-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-sm" title="Ajouter un interdit">
+                        <i data-lucide="plus" class="w-5 h-5"></i>
+                    </button>
                 </div>
             </div>
             <div class="bg-red-50 border border-red-100 rounded-xl p-4 mb-6">
@@ -226,6 +231,43 @@
             <button onclick="app.confirmDeleteByIngredient()" class="w-full bg-red-500 hover:bg-red-600 text-white font-medium py-3 rounded-xl">
                 Supprimer les recettes
             </button>
+        </div>
+    </div>
+
+    <!-- Modal: Add Forbidden Item -->
+    <div id="modal-add-forbidden" class="fixed inset-0 z-50 flex items-center justify-center modal-hidden">
+        <div class="modal-overlay absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="app.closeAddForbiddenModal()"></div>
+        <div class="modal-content bg-white w-[90%] md:w-[400px] rounded-2xl shadow-2xl p-6 relative">
+            <button onclick="app.closeAddForbiddenModal()" class="absolute top-4 right-4 bg-gray-100 p-2 rounded-full hover:bg-gray-200">
+                <i data-lucide="x" class="w-5 h-5 text-gray-600"></i>
+            </button>
+            <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                <i data-lucide="ban" class="w-5 h-5 text-red-500"></i>
+                Ajouter un aliment interdit
+            </h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nom de l'aliment</label>
+                    <input type="text" id="forbidden-name-input" placeholder="Ex: Piment fort"
+                        class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-red-400 focus:ring-1 focus:ring-red-400 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Catégorie</label>
+                    <select id="forbidden-category-select" class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-red-400 focus:ring-1 focus:ring-red-400 outline-none bg-white">
+                        <option value="personnalise">Personnalisé</option>
+                        <option value="acides">Acides</option>
+                        <option value="epices">Épices</option>
+                        <option value="gras">Gras</option>
+                        <option value="irritants">Irritants</option>
+                        <option value="crus">Crudités</option>
+                        <option value="sucres">Sucres</option>
+                        <option value="conserves">Conserves</option>
+                    </select>
+                </div>
+                <button onclick="app.confirmAddForbidden()" class="w-full bg-red-500 hover:bg-red-600 text-white font-medium py-3 rounded-xl">
+                    Ajouter
+                </button>
+            </div>
         </div>
     </div>
 

@@ -114,6 +114,10 @@ function saveData(payload) {
     settings.ramadanMode = payload.ramadanMode;
     writeFileContent(FILES.SETTINGS, settings);
   }
+
+  if (payload.forbidden) {
+    writeFileContent(FILES.FORBIDDEN, payload.forbidden);
+  }
 }
 
 function importRecipes(newRecipes) {

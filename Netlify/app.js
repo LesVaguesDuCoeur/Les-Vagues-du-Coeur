@@ -65,12 +65,34 @@ loadData: function() {
     fetch(this.API_URL)
     .then(res => res.json())
     .then(data => {
-        if (data && data.menu) {
-             this.state.menu = data.menu;
-             this.state.recipes = Array.isArray(data.recipes) ? data.recipes : [];
-             this.state.favorites = Array.isArray(data.favorites) ? data.favorites : [];
-             this.state.ramadanMode = !!data.ramadanMode;
-             this.showToast('Données chargées depuis le Cloud ☁️');
+        // Always prioritize cloud data if available structure exists
+        if (data) {
+             if (data.menus) window.GastroData.menus = data.menus; // Global menus cache
+             if (data.menu) this.state.menu = data.menu; // Current week menu fallback/legacy
+
+             // Recipes: use cloud if not empty, otherwise keep local (if imported offline)
+             if (Array.isArray(data.recipes) && data.recipes.length > 0) {
+                 this.state.recipes = data.recipes;
+             }
+
+             // Favorites
+             if (Array.isArray(data.favorites)) this.state.favorites = data.favorites;
+
+             // Settings
+             if (data.settings && data.settings.ramadanMode !== undefined) {
+                 this.state.ramadanMode = data.settings.ramadanMode;
+             } else if (data.ramadanMode !== undefined) {
+                 // Legacy or direct property
+                 this.state.ramadanMode = data.ramadanMode;
+             }
+
+             // Forbidden Items (Dynamic)
+             if (data.forbidden) {
+                 // Merge cloud forbidden with static default
+                 this.state.forbidden = { ...this.state.forbidden, ...data.forbidden };
+             }
+
+             this.showToast('Données synchronisées ☁️');
         } else {
              // New user or empty drive
              this.loadLocalOrDefault();
@@ -83,8 +105,18 @@ loadData: function() {
     })
     .finally(() => {
         this.ensureState();
+        this.loadWeekMenu(); // Ensure correct week is loaded from global menus
         this.updateRamadanState();
-        this.navigateTo('home');
+
+        // Refresh current view
+        if (this.state.currentView === 'recipes') this.renderRecipeCatalog();
+        if (this.state.currentView === 'forbidden') this.renderForbidden();
+        if (this.state.currentView === 'menu') this.renderWeeklyMenu();
+        if (this.state.currentView === 'home') this.renderHome();
+
+        // If first load initiated from init(), navigateHome is called.
+        // But if loadData called manually, we might stay on page.
+        // Let's assume init flow handles navigation or we respect current view.
     });
 },
 
@@ -908,7 +940,14 @@ renderForbidden: function(searchQuery = '') {
                 <p class="text-sm text-gray-500 mb-4 italic">${group.raison}</p>
 
                 <div class="flex flex-wrap gap-2 mb-4">
-                    ${itemsDisplay.map(a => `<span class="inline-block bg-red-50 text-red-700 px-2 py-1 rounded-md text-sm border border-red-100">${a}</span>`).join('')}
+                    ${itemsDisplay.map(a => `
+                        <span class="inline-flex items-center bg-red-50 text-red-700 px-2 py-1 rounded-md text-sm border border-red-100 group">
+                            ${a}
+                            <button onclick="app.removeForbiddenItem('${a.replace(/'/g, "\\'")}', '${key}')" class="ml-1 opacity-50 group-hover:opacity-100 hover:text-red-900">
+                                <i data-lucide="x" class="w-3 h-3"></i>
+                            </button>
+                        </span>
+                    `).join('')}
                 </div>
 
                 <div class="bg-green-50 rounded-lg p-3 border border-green-100">
@@ -1198,10 +1237,11 @@ showToast: function(message, isError = false) {
 
 syncWithGoogle: function(action = 'save') {
     const btn = document.getElementById('sync-btn');
-    if (!btn) return;
-    const originalIcon = btn.innerHTML;
-    btn.innerHTML = `<div class="loader" style="width: 16px; height: 16px; border-width: 2px;"></div>`;
-    btn.disabled = true;
+    if (btn) {
+        const originalIcon = btn.innerHTML;
+        btn.innerHTML = `<div class="loader" style="width: 16px; height: 16px; border-width: 2px;"></div>`;
+        btn.disabled = true;
+    }
 
     const payload = {
         action: action,
@@ -1209,7 +1249,8 @@ syncWithGoogle: function(action = 'save') {
         menu: this.state.menu,
         favorites: this.state.favorites,
         ramadanMode: this.state.ramadanMode,
-        recipes: this.state.recipes // SYNC RECIPES
+        recipes: this.state.recipes, // SYNC RECIPES
+        forbidden: this.state.forbidden // SYNC FORBIDDEN
     };
 
     fetch(this.API_URL, {
@@ -1224,10 +1265,47 @@ syncWithGoogle: function(action = 'save') {
         this.showToast('Erreur Cloud', true);
     })
     .finally(() => {
-        btn.innerHTML = originalIcon;
-        btn.disabled = false;
-        lucide.createIcons();
+        if (btn) {
+            btn.innerHTML = '<i data-lucide="refresh-cw" class="w-5 h-5"></i>';
+            btn.disabled = false;
+            lucide.createIcons();
+        }
     });
+},
+
+addForbiddenItem: function(name, category, reason) {
+    if (!name || !category) return;
+
+    // Ensure category exists
+    if (!this.state.forbidden[category]) {
+        // Fallback or create new?
+        // Let's create a custom category if it doesn't exist
+        this.state.forbidden[category] = {
+            titre: category.charAt(0).toUpperCase() + category.slice(1),
+            aliments: [],
+            raison: reason || "Personnalisé",
+            alternatives: []
+        };
+    }
+
+    // Add item if not exists
+    if (!this.state.forbidden[category].aliments.includes(name)) {
+        this.state.forbidden[category].aliments.push(name);
+        this.saveMenu(); // Triggers sync
+        this.renderForbidden();
+        this.showToast(`${name} ajouté aux interdits`);
+    } else {
+        this.showToast(`${name} est déjà interdit`);
+    }
+},
+
+removeForbiddenItem: function(name, category) {
+    if (this.state.forbidden[category]) {
+        this.state.forbidden[category].aliments = this.state.forbidden[category].aliments.filter(i => i !== name);
+        this.saveMenu(); // Triggers sync
+        this.renderForbidden();
+        this.showToast(`${name} retiré`);
+    }
 },
 
 // NEW FUNCTIONS
@@ -1329,6 +1407,27 @@ confirmDeleteByIngredient: function() {
 
 printWeek: function() {
     window.print();
+},
+
+showAddForbiddenModal: function() {
+    document.getElementById('modal-add-forbidden').classList.remove('modal-hidden');
+},
+
+closeAddForbiddenModal: function() {
+    document.getElementById('modal-add-forbidden').classList.add('modal-hidden');
+},
+
+confirmAddForbidden: function() {
+    const name = document.getElementById('forbidden-name-input').value.trim();
+    const category = document.getElementById('forbidden-category-select').value;
+
+    if (name && category) {
+        this.addForbiddenItem(name, category);
+        this.closeAddForbiddenModal();
+        document.getElementById('forbidden-name-input').value = '';
+    } else {
+        this.showToast("Veuillez remplir tous les champs", true);
+    }
 }
 
 };
