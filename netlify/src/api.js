@@ -1,6 +1,5 @@
-// Remplacez cette URL par l'URL de votre déploiement Web App Google Apps Script
-// Exemple : https://script.google.com/macros/s/AKfycbx.../exec
-export const API_URL = "https://script.google.com/macros/s/AKfycbx_PLACEHOLDER_YOUR_ID_HERE/exec";
+// URL fournie par l'utilisateur
+export const API_URL = "https://script.google.com/macros/s/AKfycbyErNnaIpoo_fdnxZpz7ol3NHgutd9DmvsNddiddqGkF7-pV-XjkiDMvRyUsXhiWQ1_/exec";
 
 export const api = {
   async getRecipes() {
@@ -30,7 +29,8 @@ export const api = {
   },
 
   async sendAction(action, payload) {
-    // Important: Content-Type text/plain pour éviter CORS Preflight (OPTIONS)
+    // Important: Content-Type text/plain pour éviter CORS Preflight complexes avec Apps Script.
+    // Bien que Code.gs gère maintenant OPTIONS, text/plain est le standard le plus robuste pour GAS.
     const response = await fetch(API_URL, {
       method: "POST",
       headers: {
@@ -38,7 +38,9 @@ export const api = {
       },
       body: JSON.stringify({ action, payload }),
     });
-    if (!response.ok) throw new Error("Erreur réseau");
+
+    if (!response.ok) throw new Error("Erreur réseau: " + response.status);
+
     const data = await response.json();
     if (data.error) throw new Error(data.error);
     return data;

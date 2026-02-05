@@ -11,6 +11,11 @@ function doPost(e) {
   lock.tryLock(30000);
 
   try {
+    // Check if postData exists
+    if (!e.postData || !e.postData.contents) {
+      return createJSONOutput({ error: "No data received" });
+    }
+
     const request = JSON.parse(e.postData.contents);
     const action = request.action;
     const payload = request.payload;
@@ -39,7 +44,6 @@ function doPost(e) {
       const ingredientToRemove = payload.ingredient.toLowerCase().trim();
       if (ingredientToRemove) {
         recipes = recipes.filter(r => {
-          // Check if any ingredient in the recipe matches the one to remove
           const hasIngredient = r.ingredients && r.ingredients.some(i => i.toLowerCase().includes(ingredientToRemove));
           return !hasIngredient;
         });
@@ -65,7 +69,7 @@ function doPost(e) {
        ingredientsChanged = true;
 
     } else {
-      return createJSONOutput({ error: "Unknown action" });
+      return createJSONOutput({ error: "Unknown action: " + action });
     }
 
     if (recipesChanged) saveRecipes(recipes);
@@ -82,6 +86,15 @@ function doPost(e) {
   } finally {
     lock.releaseLock();
   }
+}
+
+// Handle CORS Preflight
+function doOptions(e) {
+  return ContentService.createTextOutput("")
+    .setMimeType(ContentService.MimeType.TEXT)
+    .setHeader("Access-Control-Allow-Origin", "*")
+    .setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+    .setHeader("Access-Control-Allow-Headers", "Content-Type");
 }
 
 function getFolder() {
@@ -130,5 +143,6 @@ function saveFile(filename, data) {
 
 function createJSONOutput(data) {
   return ContentService.createTextOutput(JSON.stringify(data))
-    .setMimeType(ContentService.MimeType.JSON);
+    .setMimeType(ContentService.MimeType.JSON)
+    .setHeader("Access-Control-Allow-Origin", "*"); // Ensure header is present on GET/POST too
 }
