@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCOC Companion Tool</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;600;700&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- Sidebar Navigation (Desktop) -->
+        <nav class="sidebar">
+            <div class="logo">
+                <i class="fa-solid fa-gamepad"></i>
+                <span>MCOC Companion</span>
+            </div>
+
+            <ul class="nav-links">
+                <li class="nav-item active" data-target="dashboard">
+                    <i class="fa-solid fa-house"></i> <span>Dashboard</span>
+                </li>
+                <li class="nav-item" data-target="champions-db">
+                    <i class="fa-solid fa-book-open"></i> <span>Champions DB</span>
+                </li>
+                <li class="nav-item" data-target="roster">
+                    <i class="fa-solid fa-users"></i> <span>Mon Roster</span>
+                </li>
+                <li class="nav-item" data-target="resources">
+                    <i class="fa-solid fa-flask"></i> <span>Ressources</span>
+                </li>
+                <li class="nav-item" data-target="rankup">
+                    <i class="fa-solid fa-arrow-up-right-dots"></i> <span>Rank Up</span>
+                </li>
+                <li class="nav-item" data-target="teams">
+                    <i class="fa-solid fa-user-group"></i> <span>Équipes</span>
+                </li>
+                <li class="nav-item" data-target="quests">
+                    <i class="fa-solid fa-map-location-dot"></i> <span>Quêtes</span>
+                </li>
+                <li class="nav-item" data-target="mastery">
+                    <i class="fa-solid fa-bullseye"></i> <span>Maîtrises</span>
+                </li>
+                <li class="nav-item" data-target="stats">
+                    <i class="fa-solid fa-chart-pie"></i> <span>Stats</span>
+                </li>
+                <li class="nav-item" data-target="backup">
+                    <i class="fa-solid fa-floppy-disk"></i> <span>Sauvegarde</span>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+
+            <!-- Dashboard View -->
+            <section id="dashboard" class="view active-view">
+                <header class="view-header">
+                    <h1>Dashboard</h1>
+                    <div class="user-status">Invocateur</div>
+                </header>
+                <div class="dashboard-grid">
+                    <div class="card summary-card">
+                        <h3>Roster Total</h3>
+                        <div class="big-number" id="dash-total-champs">0</div>
+                    </div>
+                    <div class="card summary-card">
+                        <h3>Top PI</h3>
+                        <div class="big-number" id="dash-top-pi">0</div>
+                    </div>
+                    <!-- More dashboard widgets will be injected via JS -->
+                </div>
+                <div class="card" style="margin-top: 20px;">
+                    <h3>Actions Rapides</h3>
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" onclick="app.backup.exportData()">Exporter Sauvegarde</button>
+                        <button class="btn btn-secondary" onclick="document.getElementById('import-file').click()">Importer Sauvegarde</button>
+                        <input type="file" id="import-file" style="display:none" onchange="app.backup.importData(this)">
+                    </div>
+                </div>
+            </section>
+
+            <!-- Champions DB View -->
+            <section id="champions-db" class="view">
+                <header class="view-header">
+                    <h1>Base de Données Champions</h1>
+                    <div class="search-bar">
+                        <input type="text" id="db-search" placeholder="Rechercher un champion...">
+                        <select id="db-class-filter">
+                            <option value="all">Toutes Classes</option>
+                            <option value="science">Science</option>
+                            <option value="skill">Skill</option>
+                            <option value="mutant">Mutant</option>
+                            <option value="cosmic">Cosmic</option>
+                            <option value="tech">Tech</option>
+                            <option value="mystic">Mystic</option>
+                        </select>
+                    </div>
+                </header>
+                <div class="champions-grid" id="db-list">
+                    <!-- Champions injected here -->
+                </div>
+            </section>
+
+            <!-- Roster View -->
+            <section id="roster" class="view">
+                <header class="view-header">
+                    <h1>Mon Roster</h1>
+                    <button class="btn btn-success" id="add-champ-btn"><i class="fa-solid fa-plus"></i> Ajouter Champion</button>
+                </header>
+                 <div class="filters-bar">
+                     <!-- Filters similar to DB -->
+                    <input type="text" id="roster-search" placeholder="Filtrer...">
+                 </div>
+                <div class="champions-grid" id="roster-list">
+                    <!-- User roster injected here -->
+                </div>
+            </section>
+
+            <!-- Resources View -->
+            <section id="resources" class="view">
+                <header class="view-header">
+                    <h1>Ressources</h1>
+                </header>
+                <div class="resources-grid" id="resources-container">
+                    <!-- Injected via JS -->
+                </div>
+            </section>
+
+             <!-- Rank Up View -->
+             <section id="rankup" class="view">
+                <header class="view-header">
+                    <h1>Rank Up Advisor</h1>
+                </header>
+                <div class="card">
+                    <p>Sélectionnez un champion de votre roster pour voir les coûts.</p>
+                    <select id="rankup-select" class="full-width-select">
+                        <option value="">Choisir un champion...</option>
+                    </select>
+                    <div id="rankup-details" class="rankup-results"></div>
+                </div>
+            </section>
+
+            <!-- Teams View -->
+            <section id="teams" class="view">
+                <header class="view-header">
+                    <h1>Mes Équipes</h1>
+                    <button class="btn btn-success" id="create-team-btn"><i class="fa-solid fa-plus"></i> Nouvelle Équipe</button>
+                </header>
+                <div id="teams-list">
+                    <!-- Teams injected here -->
+                </div>
+            </section>
+
+            <!-- Quests View -->
+            <section id="quests" class="view">
+                <header class="view-header">
+                    <h1>Aide Quêtes</h1>
+                </header>
+                <div class="card">
+                    <h3>Sélection</h3>
+                    <div class="form-group">
+                        <label>Acte</label>
+                        <select id="quest-act"><option>Acte 6</option><option>Acte 7</option><option>Acte 8</option></select>
+                    </div>
+                    <div id="quest-suggestions"></div>
+                </div>
+            </section>
+
+            <!-- Mastery View -->
+            <section id="mastery" class="view">
+                <header class="view-header">
+                    <h1>Maîtrises</h1>
+                </header>
+                <div class="mastery-container">
+                    <div class="mastery-tree" id="offense-tree">
+                        <h3>Offense</h3>
+                        <!-- Tree Visual -->
+                    </div>
+                     <div class="mastery-tree" id="defense-tree">
+                        <h3>Defense</h3>
+                    </div>
+                     <div class="mastery-tree" id="utility-tree">
+                        <h3>Utility</h3>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Stats View -->
+            <section id="stats" class="view">
+                <header class="view-header">
+                    <h1>Statistiques</h1>
+                </header>
+                <div id="stats-container"></div>
+            </section>
+
+            <!-- Backup View -->
+             <section id="backup" class="view">
+                <header class="view-header">
+                    <h1>Sauvegarde & Options</h1>
+                </header>
+                <div class="card">
+                    <h3>Gestion des Données</h3>
+                    <p>Tout est stocké localement dans votre navigateur.</p>
+                    <div class="action-buttons">
+                         <button class="btn btn-primary" onclick="app.backup.exportData()"><i class="fa-solid fa-download"></i> Exporter JSON</button>
+                         <button class="btn btn-danger" onclick="app.backup.resetData()"><i class="fa-solid fa-trash"></i> Reset All Data</button>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- Mobile Bottom Navigation -->
+        <nav class="bottom-nav">
+            <div class="nav-item active" data-target="dashboard"><i class="fa-solid fa-house"></i></div>
+            <div class="nav-item" data-target="roster"><i class="fa-solid fa-users"></i></div>
+            <div class="nav-item" data-target="teams"><i class="fa-solid fa-user-group"></i></div>
+            <div class="nav-item" data-target="quests"><i class="fa-solid fa-map-location-dot"></i></div>
+            <div class="nav-item" id="mobile-menu-more"><i class="fa-solid fa-bars"></i></div>
+        </nav>
+    </div>
+
+    <!-- Modals -->
+    <div id="champion-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="js/data.js"></script>
+    <script src="js/backup.js"></script>
+    <script src="js/resources.js"></script>
+    <script src="js/roster.js"></script>
+    <script src="js/teams.js"></script>
+    <script src="js/quest.js"></script>
+    <script src="js/mastery.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
