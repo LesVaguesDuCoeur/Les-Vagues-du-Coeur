@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - Carnet de Contacts</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+</head>
+<body class="dark-theme">
+  <nav class="navbar">
+    <div class="nav-brand">Admin Area</div>
+    <div class="nav-actions">
+      <input type="text" id="search-input" placeholder="Rechercher...">
+      <button id="btn-add-contact" class="btn btn-primary"><i class="fas fa-plus"></i> Nouveau</button>
+      <button id="btn-export" class="btn btn-secondary"><i class="fas fa-file-pdf"></i> Exporter PDF</button>
+      <button id="btn-logout" class="btn btn-danger"><i class="fas fa-sign-out-alt"></i></button>
+    </div>
+  </nav>
+
+  <div class="container fade-in">
+    <div id="loader" class="loader hidden"></div>
+    <div id="contacts-container" class="contacts-grid">
+      <!-- Contacts will be dynamically inserted here -->
+    </div>
+  </div>
+
+  <!-- Modal for Add/Edit Contact -->
+  <div id="contact-modal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close-btn">&times;</span>
+      <h2 id="modal-title">Nouveau Contact</h2>
+      <form id="contact-form">
+        <input type="hidden" id="contact-id">
+
+        <div class="form-group">
+          <label>Prénom / Nom *</label>
+          <input type="text" id="contact-name" required>
+        </div>
+
+        <div class="form-group">
+          <label>Relation</label>
+          <select id="contact-relation">
+            <option value="Mère">Mère</option>
+            <option value="Père">Père</option>
+            <option value="Frère">Frère</option>
+            <option value="Sœur">Sœur</option>
+            <option value="Ami(e) proche">Ami(e) proche</option>
+            <option value="Meilleur(e) ami(e)">Meilleur(e) ami(e)</option>
+            <option value="Collègue">Collègue</option>
+            <option value="Patron">Patron</option>
+            <option value="Médecin">Médecin</option>
+            <option value="Avocat">Avocat</option>
+            <option value="Famille éloignée">Famille éloignée</option>
+            <option value="Voisin">Voisin</option>
+            <option value="Autre">Autre</option>
+          </select>
+          <input type="text" id="contact-relation-other" class="hidden" placeholder="Précisez...">
+        </div>
+
+        <div class="form-group">
+          <label>Niveau d'importance (1 = Priorité absolue, 5 = Moins urgent)</label>
+          <div class="importance-rating">
+            <input type="radio" name="importance" value="1" id="imp1" required><label for="imp1">1</label>
+            <input type="radio" name="importance" value="2" id="imp2"><label for="imp2">2</label>
+            <input type="radio" name="importance" value="3" id="imp3"><label for="imp3">3</label>
+            <input type="radio" name="importance" value="4" id="imp4"><label for="imp4">4</label>
+            <input type="radio" name="importance" value="5" id="imp5" checked><label for="imp5">5</label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Téléphone</label>
+          <input type="tel" id="contact-phone">
+        </div>
+
+        <div class="form-group">
+          <label>Snapchat (@)</label>
+          <input type="text" id="contact-snap">
+        </div>
+
+        <div class="form-group">
+          <label>Instagram (@)</label>
+          <input type="text" id="contact-insta">
+        </div>
+
+        <div class="form-group">
+          <label>Note personnelle</label>
+          <textarea id="contact-notes" rows="4"></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="btn-save-contact">Enregistrer</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/crypto.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

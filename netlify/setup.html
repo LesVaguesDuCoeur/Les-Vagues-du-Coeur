@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configuration Initiale</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+</head>
+<body class="dark-theme">
+  <div class="container fade-in">
+    <div class="setup-box">
+      <h2>Configuration Initiale</h2>
+      <p>Bienvenue dans votre carnet de contacts sécurisé.</p>
+
+      <form id="setup-form">
+        <div class="form-group">
+          <label for="admin-pwd">Mot de passe administrateur</label>
+          <input type="password" id="admin-pwd" required>
+        </div>
+
+        <div class="form-group">
+          <label for="emergency-pwd">Mot de passe urgence</label>
+          <input type="password" id="emergency-pwd" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="btn-setup">Valider la configuration</button>
+      </form>
+      <div id="loader" class="loader hidden"></div>
+    </div>
+  </div>
+  <script src="js/api.js"></script>
+  <script src="js/crypto.js"></script>
+  <script src="js/setup.js"></script>
+</body>
+</html>
