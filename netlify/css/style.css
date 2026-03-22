@@ -108,6 +108,28 @@ body.dark-theme {
   border-color: var(--primary-color);
 }
 
+.importance-rating {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.radio-option {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.radio-option input[type="radio"] {
+  width: auto;
+  margin: 0;
+}
+
 /* Buttons */
 .btn {
   padding: 12px 24px;

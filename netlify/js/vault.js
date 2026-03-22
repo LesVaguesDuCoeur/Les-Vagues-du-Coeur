@@ -37,7 +37,46 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.location.href = 'index.html';
   });
 
+  // Try admin master key bypass on load
+  if (adminKey) {
+      if (fullData && fullData.adminHash === hashPassword(adminKey)) {
+          if (fullData.vaultKeyEncrypted) {
+              const decryptedVaultKey = decryptData(fullData.vaultKeyEncrypted, adminKey);
+              if (decryptedVaultKey) {
+                  vaultKey = decryptedVaultKey;
+                  isAdminMaster = true;
+                  loadVaultData();
+                  return; // Stop normal init
+              }
+          } else {
+              // Fallback
+              vaultKey = adminKey;
+              isAdminMaster = true;
+              loadVaultData();
+              return; // Stop normal init
+          }
+      }
+  }
+
   const attemptUnlock = async () => {
+    // Si on est admin, on passe directement (click listener)
+    if (adminKey && fullData && fullData.adminHash === hashPassword(adminKey)) {
+      if (fullData.vaultKeyEncrypted) {
+          const decryptedVaultKey = decryptData(fullData.vaultKeyEncrypted, adminKey);
+          if (decryptedVaultKey) {
+              vaultKey = decryptedVaultKey;
+              isAdminMaster = true;
+              loadVaultData();
+              return;
+          }
+      } else {
+          vaultKey = adminKey;
+          isAdminMaster = true;
+          loadVaultData();
+          return;
+      }
+    }
+
     const code = vaultAccessInput.value.trim();
     if (!code) return;
 
@@ -75,21 +114,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   };
 
   btnVaultLogin.addEventListener('click', attemptUnlock);
-
-  // Try admin master key bypass if adminKey is already in session
-  if (adminKey && fullData && fullData.adminHash === hashPassword(adminKey)) {
-      if (fullData.vaultKeyEncrypted) {
-          const decryptedVaultKey = decryptData(fullData.vaultKeyEncrypted, adminKey);
-          if (decryptedVaultKey) {
-              vaultKey = decryptedVaultKey;
-              isAdminMaster = true;
-              loadVaultData();
-          }
-      } else {
-          // Fallback if testing with mocked data or no encrypted key setup yet
-          isAdminMaster = true;
-      }
-  }
 
   if (vaultKey && !isAdminMaster) {
      loadVaultData();

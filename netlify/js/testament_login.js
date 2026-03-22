@@ -1,4 +1,11 @@
 document.addEventListener('DOMContentLoaded', async () => {
+  const adminKey = sessionStorage.getItem('adminKey');
+  if (adminKey) {
+    // Rediriger directement vers testament.html sans demander de mot de passe
+    window.location.href = 'testament.html';
+    return;
+  }
+
   const nomInput = document.getElementById('nom-declare');
   const codeInput = document.getElementById('testament-access-code');
   const btnLogin = document.getElementById('btn-login');

@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let useAdminDuplicate = false;
 
   if (fullData) {
-      if (adminKey && hashPassword(adminKey) === fullData.adminHash && (!testamentKey || testamentKey === adminKey)) {
+      if (adminKey && hashPassword(adminKey) === fullData.adminHash) {
           // Admin master access: decrypt the original testamentKey using the adminKey
           if (fullData.testamentKeyEncrypted) {
               const decryptedKey = decryptData(fullData.testamentKeyEncrypted, adminKey);
@@ -49,6 +49,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                   isEditingByAdmin = true;
                   btnSave.classList.remove('hidden');
               }
+          } else {
+              activeKey = adminKey; // Fallback
+              isEditingByAdmin = true;
+              btnSave.classList.remove('hidden');
           }
       } else if (testamentKey && hashPassword(testamentKey) === fullData.testamentHash) {
           activeKey = testamentKey;
