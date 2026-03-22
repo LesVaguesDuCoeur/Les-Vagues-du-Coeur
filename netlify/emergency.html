@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liste des Contacts d'Urgence</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <nav>
+            <a href="index.html">← Retour</a>
+            <span id="header-status"></span>
+        </nav>
+
+        <h1>Contacts d'Urgence</h1>
+
+        <div id="content-container" class="hidden">
+            <div class="card">
+                <h2>Ajouter un contact</h2>
+                <form id="add-contact-form">
+                    <div class="form-group">
+                        <label>Nom complet</label>
+                        <input type="text" id="contact-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Telephone</label>
+                        <input type="tel" id="contact-phone" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email (Optionnel)</label>
+                        <input type="email" id="contact-email">
+                    </div>
+                    <div class="form-group">
+                        <label>Relation (ex: Conjoint, Medecin)</label>
+                        <input type="text" id="contact-relation" required>
+                    </div>
+                    <button type="submit">Ajouter</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h2>Liste des contacts</h2>
+                <div id="contact-list" class="contact-list">
+                    <!-- Contacts injectes ici via JS -->
+                </div>
+                <p id="no-contacts" class="hidden" style="text-align: center; margin-top: 20px;">Aucun contact ajoute.</p>
+            </div>
+        </div>
+
+        <div class="card login-box hidden" id="login-container">
+            <h2>Dechiffrement requis</h2>
+            <p>Veuillez entrer le mot de passe "Contact" pour dechiffrer ces donnees.</p>
+
+            <form id="login-form">
+                <div class="form-group">
+                    <input type="password" id="password" placeholder="Mot de passe Contact" required autocomplete="current-password">
+                </div>
+                <button type="submit">Dechiffrer</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/crypto.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/emergency.js"></script>
+</body>
+</html>
