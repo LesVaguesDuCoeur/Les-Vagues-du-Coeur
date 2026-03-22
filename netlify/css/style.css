@@ -114,11 +114,12 @@ body.dark-theme {
   gap: 20px;
   align-items: center;
   margin-top: 8px;
+  flex-wrap: wrap;
 }
 
 .radio-option {
   display: flex;
-  flex-direction: row;
+  flex-direction: row-reverse;
   align-items: center;
   gap: 6px;
   cursor: pointer;
@@ -128,6 +129,7 @@ body.dark-theme {
 .radio-option input[type="radio"] {
   width: auto;
   margin: 0;
+  cursor: pointer;
 }
 
 /* Buttons */

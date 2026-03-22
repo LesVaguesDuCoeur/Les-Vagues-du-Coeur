@@ -39,23 +39,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Try admin master key bypass on load
   if (adminKey) {
-      if (fullData && fullData.adminHash === hashPassword(adminKey)) {
-          if (fullData.vaultKeyEncrypted) {
-              const decryptedVaultKey = decryptData(fullData.vaultKeyEncrypted, adminKey);
-              if (decryptedVaultKey) {
-                  vaultKey = decryptedVaultKey;
-                  isAdminMaster = true;
-                  loadVaultData();
-                  return; // Stop normal init
-              }
+      if (fullData && fullData.vaultKeyEncrypted) {
+          const decryptedVaultKey = decryptData(fullData.vaultKeyEncrypted, adminKey);
+          if (decryptedVaultKey) {
+              vaultKey = decryptedVaultKey;
           } else {
-              // Fallback
-              vaultKey = adminKey;
-              isAdminMaster = true;
-              loadVaultData();
-              return; // Stop normal init
+              vaultKey = adminKey; // Fallback
           }
+      } else {
+          vaultKey = adminKey; // Fallback
       }
+
+      document.getElementById('vault-login').classList.add('hidden');
+      document.getElementById('vault-data').classList.remove('hidden');
+      isAdminMaster = true;
+      loadVaultData();
   }
 
   const attemptUnlock = async () => {
@@ -77,37 +75,40 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     }
 
-    const code = vaultAccessInput.value.trim();
-    if (!code) return;
+    const vaultPwd = vaultAccessInput.value.trim();
+    const emergencyPwd = document.getElementById('vault-emergency-code').value.trim();
 
-    const hash = hashPassword(code);
+    if (!vaultPwd || !emergencyPwd) return;
 
-    const isVaultPassword = (fullData && hash === fullData.vaultHash);
-    const isAdminPassword = (fullData && hash === fullData.adminHash);
+    const vaultHash = hashPassword(vaultPwd);
+    const emergencyHash = hashPassword(emergencyPwd);
 
-    if (isVaultPassword) {
-      vaultKey = code;
-      sessionStorage.setItem('vaultKey', code);
-      loadVaultData();
-    } else if (isAdminPassword) {
+    const isVaultPassword = (fullData && vaultHash === fullData.vaultHash);
+    const isEmergencyPassword = (fullData && emergencyHash === fullData.emergencyHash);
+    const isAdminPassword = (fullData && vaultHash === fullData.adminHash);
+
+    // Si on rentre l'admin, ça bypasse le mot de passe urgence (on ne checke pas isEmergencyPassword)
+    if (isAdminPassword) {
       // Decode vault key with admin password
       if (fullData.vaultKeyEncrypted) {
-        const decryptedVaultKey = decryptData(fullData.vaultKeyEncrypted, code);
+        const decryptedVaultKey = decryptData(fullData.vaultKeyEncrypted, vaultPwd);
         if (decryptedVaultKey) {
             vaultKey = decryptedVaultKey;
             isAdminMaster = true;
-            // Also store adminKey in session if it wasn't already (e.g. direct access)
-            if (!sessionStorage.getItem('adminKey')) sessionStorage.setItem('adminKey', code);
+            if (!sessionStorage.getItem('adminKey')) sessionStorage.setItem('adminKey', vaultPwd);
             loadVaultData();
         } else {
             errorMsg.classList.remove('hidden');
         }
       } else {
-          // Fallback if no encrypted key
-          vaultKey = code; // Try decrypting with admin key directly (old method)
+          vaultKey = vaultPwd;
           isAdminMaster = true;
           loadVaultData();
       }
+    } else if (isVaultPassword && isEmergencyPassword) {
+      vaultKey = vaultPwd;
+      sessionStorage.setItem('vaultKey', vaultPwd);
+      loadVaultData();
     } else {
       errorMsg.classList.remove('hidden');
     }

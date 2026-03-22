@@ -22,36 +22,34 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   btnLogin.addEventListener('click', async () => {
     const nom = nomInput.value.trim();
-    const code = codeInput.value.trim();
+    const testamentPwd = codeInput.value.trim();
+    const emergencyPwd = document.getElementById('testament-emergency-code').value.trim();
 
-    if (!nom || !code) {
-       showError("Veuillez remplir les deux champs.");
+    if (!nom || !testamentPwd || !emergencyPwd) {
+       showError("Veuillez remplir tous les champs.");
        return;
     }
 
-    const hash = hashPassword(code);
+    const testamentHash = hashPassword(testamentPwd);
+    const emergencyHash = hashPassword(emergencyPwd);
 
-    // Si c'est le mot de passe admin, il peut aussi accéder (Master Key).
-    const adminKey = sessionStorage.getItem('adminKey');
-    const isTestamentPassword = (hash === data.testamentHash);
-    const isAdminPassword = (hash === data.adminHash);
+    const isTestamentPassword = (testamentHash === data.testamentHash);
+    const isEmergencyPassword = (emergencyHash === data.emergencyHash);
+    const isAdminPassword = (testamentHash === data.adminHash); // Si on tape l'admin dans le champ testament
 
     let isAdminAccess = false;
     if (isAdminPassword) {
        isAdminAccess = true;
-       // Store the code as adminKey if it wasn't already in session
-       if (!adminKey) sessionStorage.setItem('adminKey', code);
-    } else if (adminKey && hashPassword(adminKey) === data.adminHash && code === adminKey) {
-       isAdminAccess = true;
+       if (!sessionStorage.getItem('adminKey')) sessionStorage.setItem('adminKey', testamentPwd);
     }
 
-    if (isTestamentPassword || isAdminAccess) {
+    // L'admin bypasse la vérification du mot de passe urgence
+    if ((isTestamentPassword && isEmergencyPassword) || isAdminAccess) {
       if (isTestamentPassword) {
-          sessionStorage.setItem('testamentKey', code);
+          sessionStorage.setItem('testamentKey', testamentPwd);
       }
       sessionStorage.setItem('nomDeclare', nom);
 
-      // Envoi du mail AVANT d'accéder
       showLoader();
       let ip = 'non disponible', userAgent = navigator.userAgent, gps = null;
       try {
