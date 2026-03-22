@@ -1,0 +1,397 @@
+================================================================================
+CAHIER DES CHARGES COMPLET - APPLICATION CONTACTS D'URGENCE CHIFFRES
+================================================================================
+
+PROJET : Application web de gestion de contacts d'urgence avec chiffrement
+HEBERGEMENT FRONTEND : Netlify (site statique HTML/JS/CSS)
+BACKEND : Google Apps Script (Google Sheets comme base de données)
+LANGUE DE L'INTERFACE : Français
+
+================================================================================
+1. ARBORESCENCE DU PROJET
+================================================================================
+
+/
+├── netlify/
+│   ├── index.html              (Page d'accueil / Login principal)
+│   ├── admin.html              (Panel administrateur)
+│   ├── emergency.html          (Page contacts d'urgence)
+│   ├── vault.html              (Fiche personnelle / Infos privées)
+│   ├── testament.html          (Testament numérique)
+│   ├── setup.html              (Configuration initiale)
+│   ├── css/
+│   │   └── style.css           (Styles globaux)
+│   ├── js/
+│   │   ├── index.js            (Logique page d'accueil)
+│   │   ├── admin.js            (Logique panel admin)
+│   │   ├── emergency.js        (Logique contacts d'urgence)
+│   │   ├── vault.js            (Logique fiche personnelle)
+│   │   ├── testament.js        (Logique testament)
+│   │   ├── setup.js            (Logique configuration)
+│   │   ├── crypto.js           (Chiffrement/déchiffrement AES)
+│   │   ├── api.js              (Communication avec Google Apps Script)
+│   │   └── utils.js            (Utilitaires : toast, modals, prompts)
+│   └── netlify.toml            (Configuration Netlify)
+├── appscript/
+│   └── Code.gs                 (Backend Google Apps Script)
+└── claude.txt                  (Ce fichier de spécifications)
+
+================================================================================
+2. SYSTEME DE MOTS DE PASSE (4 MDP DISTINCTS)
+================================================================================
+
+L'application utilise 4 mots de passe différents, tous définis lors du setup :
+
+1. MOT DE PASSE CONTACT
+   - Accède à : page emergency.html (contacts d'urgence)
+   - C'est aussi le "mot de passe secondaire" demandé pour vault et testament
+     quand on y accède directement depuis la page d'accueil
+
+2. MOT DE PASSE ADMIN
+   - Accède à : page admin.html (panel d'administration complet)
+   - L'admin peut ensuite naviguer vers toutes les pages SANS re-saisir de mdp
+
+3. MOT DE PASSE VAULT (Mes Infos Privées)
+   - Accède à : page vault.html (fiche personnelle)
+   - Depuis la page d'accueil : si ce mdp est saisi, redirection vers vault.html
+     MAIS une fenêtre s'ouvre d'abord demandant :
+       → Nom complet OU Nom de la société
+       → Mot de passe CONTACT (le mdp n°1)
+   - Ces infos sont envoyées par email (alerte d'accès d'urgence)
+
+4. MOT DE PASSE TESTAMENT
+   - Accède à : page testament.html
+   - Depuis la page d'accueil : si ce mdp est saisi, redirection vers testament.html
+     MAIS une fenêtre s'ouvre d'abord demandant :
+       → Nom complet OU Nom de la société
+       → Mot de passe CONTACT (le mdp n°1)
+   - Ces infos sont envoyées par email (alerte d'accès d'urgence)
+
+STOCKAGE DES HASH :
+- Les hash SHA-256 des 4 mots de passe sont stockés dans Google Sheets
+- Champs : contactHash, adminHash, vaultHash, testamentHash
+- Les mots de passe eux-mêmes servent de clé de chiffrement AES
+
+================================================================================
+3. FLUX DE NAVIGATION
+================================================================================
+
+PAGE D'ACCUEIL (index.html) :
+┌─────────────────────────────────────────────────────────────────┐
+│  Un seul champ de saisie de mot de passe                        │
+│  L'app teste le hash contre les 4 hash stockés                  │
+│                                                                  │
+│  Si mdp == contactHash  → Redirige vers emergency.html           │
+│  Si mdp == adminHash    → Redirige vers admin.html               │
+│  Si mdp == vaultHash    → Ouvre modal (nom + mdp contact)        │
+│                           puis redirige vers vault.html           │
+│  Si mdp == testamentHash→ Ouvre modal (nom + mdp contact)        │
+│                           puis redirige vers testament.html       │
+│  Sinon                  → Affiche erreur (toast, PAS alert())    │
+└─────────────────────────────────────────────────────────────────┘
+
+ADMIN (admin.html) :
+- Accès à toutes les sections sans re-saisir de mot de passe
+- Peut voir/modifier les contacts d'urgence
+- Peut voir/modifier la fiche personnelle (vault)
+- Peut voir/modifier le testament
+- Peut modifier les mots de passe
+- Peut exporter/importer les données
+- sessionStorage.adminKey est défini pour bypass les mdp des sous-pages
+
+VAULT (vault.html) - Accès direct depuis index :
+- sessionStorage.vaultKey est défini
+- Le formulaire de login standard est remplacé par un formulaire simplifié :
+  → Champ "Nom complet"
+  → Champ "Mot de passe d'urgence" (= mot de passe contact)
+- Une alerte email est envoyée avec le nom de la personne qui accède
+
+TESTAMENT (testament.html) - Accès direct depuis index :
+- sessionStorage.testamentKey est défini
+- Le formulaire de login standard est remplacé par un formulaire simplifié :
+  → Champ "Nom complet"
+  → Champ "Mot de passe d'urgence" (= mot de passe contact)
+- Une alerte email est envoyée avec le nom de la personne qui accède
+
+================================================================================
+4. CHIFFREMENT (crypto.js)
+================================================================================
+
+ALGORITHME : AES-GCM (Web Crypto API native du navigateur)
+DERIVATION DE CLE : PBKDF2 (SHA-256, 100 000 itérations)
+SEL : Généré aléatoirement (16 octets) pour chaque opération
+IV : Généré aléatoirement (12 octets) pour chaque opération
+
+PROCESSUS DE CHIFFREMENT :
+1. Le mot de passe est converti en clé via PBKDF2
+2. Un sel et un IV aléatoires sont générés
+3. Les données sont chiffrées avec AES-GCM
+4. Le résultat est encodé en base64 : sel + iv + données chiffrées
+
+PROCESSUS DE DECHIFFREMENT :
+1. Le base64 est décodé
+2. Le sel (16 premiers octets) et l'IV (12 octets suivants) sont extraits
+3. La clé est dérivée du mot de passe avec PBKDF2 + le sel
+4. Les données sont déchiffrées avec AES-GCM
+
+TOUT EST CHIFFRE :
+- Les contacts d'urgence
+- Les données de la fiche personnelle (vault)
+- Le testament
+- Chaque section est chiffrée avec son propre mot de passe comme clé
+
+================================================================================
+5. BACKEND - GOOGLE APPS SCRIPT (Code.gs)
+================================================================================
+
+URL DU SCRIPT : (À définir lors du déploiement)
+METHODE : doPost(e) - reçoit des requêtes POST en JSON
+
+FONCTIONNALITES :
+1. SAVE (action: 'save') :
+   - Reçoit { action: 'save', data: payload }
+   - Extrait payload.data si payload.action === 'save' (unwrapping)
+   - Sauvegarde les données chiffrées dans Google Sheets
+   - La feuille contient une seule ligne avec toutes les données en JSON
+
+2. LOAD :
+   - Retourne toutes les données stockées en JSON
+   - Les données restent chiffrées (le déchiffrement se fait côté client)
+
+3. EMERGENCY ACCESS (action: 'emergencyAccess') :
+   - Reçoit { action: 'emergencyAccess', name: '...', section: '...', timestamp: '...' }
+   - Envoie un email d'alerte à l'adresse configurée
+   - NE sauvegarde PAS les données (ne doit pas écraser la BDD)
+   - L'email contient : qui a accédé, quelle section, quand
+
+4. SETUP :
+   - Initialise la structure de données dans Google Sheets
+   - Stocke les hash des 4 mots de passe
+   - Stocke l'email de notification
+
+STRUCTURE DE DONNEES DANS GOOGLE SHEETS :
+{
+  "contactHash": "sha256...",
+  "adminHash": "sha256...",
+  "vaultHash": "sha256...",
+  "testamentHash": "sha256...",
+  "email": "user@example.com",
+  "contacts": "données_chiffrées_base64",
+  "vault": "données_chiffrées_base64",
+  "testament": "données_chiffrées_base64"
+}
+
+================================================================================
+6. API (api.js)
+================================================================================
+
+FONCTION PRINCIPALE : postToApi(payload)
+- Envoie un POST JSON au Google Apps Script
+- Si payload.action === 'emergencyAccess' → envoie directement (pas de wrapping)
+- Sinon → wrappe dans { action: 'save', data: payload }
+- Gère les erreurs réseau avec des messages utilisateur
+
+FONCTION DE CHARGEMENT : loadFromApi()
+- GET ou POST pour récupérer les données
+- Retourne le JSON parsé
+
+================================================================================
+7. DESIGN / UI (style.css)
+================================================================================
+
+THEME : Sombre, moderne, professionnel
+PALETTE DE COULEURS :
+- Fond principal : #0a0a0a ou #111111 (noir profond)
+- Fond cartes/sections : #1a1a1a ou #1e1e1e (gris très foncé)
+- Accent principal : #00d4ff ou #00bcd4 (bleu cyan néon)
+- Accent secondaire : #7c4dff ou #6c5ce7 (violet)
+- Texte principal : #ffffff (blanc)
+- Texte secondaire : #aaaaaa ou #b0b0b0 (gris clair)
+- Erreur : #ff4444 ou #e74c3c (rouge)
+- Succès : #00e676 ou #2ecc71 (vert)
+- Warning : #ffab00 ou #f39c12 (orange/doré)
+
+TYPOGRAPHIE :
+- Police principale : 'Inter', 'Segoe UI', sans-serif
+- Titres : gras, taille grande
+- Corps : taille normale, lisible
+
+COMPOSANTS UI :
+- Boutons : coins arrondis (8-12px), effet hover avec transition
+- Cartes : fond sombre, border subtile, border-radius 12-16px
+- Inputs : fond sombre, bordure subtile, focus avec couleur accent
+- Pas de bulles natives (alert/confirm/prompt) → tout en toast/modal custom
+
+SYSTEME DE NOTIFICATIONS (utils.js) :
+- Toast notifications : apparaissent en haut à droite, disparaissent après 3-5s
+  → showToast(message, type) avec type = 'success', 'error', 'warning', 'info'
+- Modal personnalisé : remplace alert()
+  → showAlert(message, title?)
+- Modal de confirmation : remplace confirm()
+  → showConfirm(message, title?) → retourne Promise<boolean>
+- Modal de saisie : remplace prompt()
+  → showPrompt(message, defaultValue?, title?) → retourne Promise<string|null>
+
+RESPONSIVE :
+- Mobile-first
+- Fonctionne sur smartphone et desktop
+- Breakpoints adaptés
+
+LAYOUT PAGE D'ACCUEIL :
+- Logo ou titre de l'app centré en haut
+- Champ de mot de passe centré
+- Bouton de connexion stylé
+- Fond avec effet subtil (gradient ou pattern)
+
+================================================================================
+8. PAGES DETAILLEES
+================================================================================
+
+--- SETUP.HTML ---
+Première utilisation uniquement.
+Formulaire avec :
+- Email de notification (pour les alertes d'urgence)
+- Mot de passe Contact (+ confirmation)
+- Mot de passe Admin (+ confirmation)
+- Mot de passe Vault/Infos Privées (+ confirmation)
+- Mot de passe Testament (+ confirmation)
+- Bouton "Initialiser"
+→ Hash les 4 mdp, envoie tout au backend, redirige vers index.html
+
+--- INDEX.HTML ---
+Page d'accueil / Login.
+- Un seul champ mot de passe
+- Un bouton "Accéder"
+- Le mdp saisi est hashé et comparé aux 4 hash stockés
+- Redirection selon le mdp reconnu (voir section 3)
+- Erreur en toast si mdp incorrect (JAMAIS de alert() natif)
+
+--- EMERGENCY.HTML ---
+Page des contacts d'urgence.
+- Formulaire d'ajout de contact : nom, téléphone, email, relation
+- Liste des contacts existants (déchiffrés à l'affichage)
+- Boutons modifier/supprimer par contact
+- Tout est chiffré avec le mot de passe contact comme clé
+
+--- ADMIN.HTML ---
+Panel d'administration.
+- Login avec mot de passe admin
+- Vue d'ensemble de toutes les sections
+- Navigation vers contacts, vault, testament SANS re-saisir de mdp
+- Options de gestion (modifier mdp, export, etc.)
+- Utilise showPrompt() au lieu de prompt() natif
+
+--- VAULT.HTML ---
+Fiche personnelle / Infos privées.
+- Informations personnelles sensibles (à définir par l'utilisateur)
+- Formulaire de saisie/modification
+- Tout chiffré avec le mot de passe vault comme clé
+- Si accès direct depuis index → formulaire simplifié (nom + mdp urgence)
+- Envoie une alerte email en cas d'accès direct (action: 'emergencyAccess')
+  avec préfixe "Fiche Personnelle:" dans le nom
+
+--- TESTAMENT.HTML ---
+Testament numérique.
+- Contenu du testament (texte libre ou structuré)
+- Formulaire de saisie/modification
+- Tout chiffré avec le mot de passe testament comme clé
+- Si accès direct depuis index → formulaire simplifié (nom + mdp urgence)
+- Envoie une alerte email en cas d'accès direct (action: 'emergencyAccess')
+
+================================================================================
+9. ALERTES EMAIL
+================================================================================
+
+Quand quelqu'un accède au vault ou au testament depuis la page d'accueil :
+1. Il entre le mot de passe vault/testament sur index.html
+2. Une modal s'ouvre demandant nom + mot de passe contact
+3. Si le mdp contact est correct :
+   - Une alerte email est envoyée via le backend
+   - L'email contient :
+     → Qui : le nom saisi
+     → Quoi : quelle section (Fiche Personnelle ou Testament)
+     → Quand : date et heure
+   - L'utilisateur est redirigé vers la page correspondante
+4. Si le mdp contact est incorrect → erreur (toast)
+
+L'email d'alerte est envoyé à l'adresse configurée lors du setup.
+
+================================================================================
+10. SECURITE - REGLES IMPORTANTES
+================================================================================
+
+- TOUT est chiffré côté client avant envoi au serveur
+- Le serveur ne voit JAMAIS les données en clair
+- Les mots de passe ne sont JAMAIS stockés en clair (uniquement les hash SHA-256)
+- Les mots de passe servent de clé de chiffrement AES-GCM
+- Pas de session serveur → tout est en sessionStorage côté client
+- sessionStorage est vidé à la fermeture de l'onglet
+- JAMAIS de alert(), confirm(), prompt() natifs → utiliser les modals custom
+- Pas de console.log des données sensibles en production
+
+================================================================================
+11. CONFIGURATION NETLIFY (netlify.toml)
+================================================================================
+
+[build]
+  publish = "netlify"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+(Adapter selon les besoins)
+
+================================================================================
+12. LIENS ET URLS
+================================================================================
+
+- URL Google Apps Script : À configurer dans api.js
+  Format : https://script.google.com/macros/s/XXXXXX/exec
+- L'URL est la même pour toutes les opérations (save, load, emergency)
+- Le frontend est hébergé sur Netlify
+
+================================================================================
+13. BUGS CORRIGES (HISTORIQUE)
+================================================================================
+
+Ces bugs ont été identifiés et doivent être évités dans la reconstruction :
+
+1. Les mots de passe vault et testament ne fonctionnaient pas depuis la page
+   d'accueil → Corrigé : le hash est comparé correctement à vaultHash et
+   testamentHash dans les données retournées par l'API
+
+2. Les bulles natives (alert/confirm/prompt) apparaissaient → Corrigé : tout
+   remplacé par des toast/modal custom via utils.js
+
+3. L'admin devait re-saisir les mdp pour accéder aux sous-pages → Corrigé :
+   sessionStorage.adminKey bypass les formulaires de login des sous-pages
+
+4. Le payload emergencyAccess était traité comme un save et écrasait la BDD
+   → Corrigé : Code.gs vérifie action === 'emergencyAccess' et ne sauvegarde pas
+
+5. api.js wrappait tous les payloads, y compris emergencyAccess → Corrigé :
+   les payloads avec action: 'emergencyAccess' ne sont pas wrappés
+
+6. vault.js cachait le .login-box entier avec parentElement.style.display
+   → Corrigé : re-render complet du innerHTML de .login-box
+
+================================================================================
+14. NOTES POUR LE DEVELOPPEUR
+================================================================================
+
+- Tout le code est en JavaScript vanilla (pas de framework)
+- Pas de dépendances npm, pas de bundler
+- L'app est 100% statique côté Netlify
+- Le backend Google Apps Script est le seul serveur
+- Utiliser la Web Crypto API native pour le chiffrement (pas de lib externe)
+- Tester avec les 4 mots de passe depuis la page d'accueil
+- Tester le flux complet : setup → login → ajout données → accès urgence
+- Vérifier que les emails d'alerte sont bien envoyés
+- Vérifier que l'admin peut naviguer sans re-saisir de mdp
+- Vérifier qu'aucun alert()/confirm()/prompt() natif n'apparaît
+
+================================================================================
+FIN DU CAHIER DES CHARGES
+================================================================================

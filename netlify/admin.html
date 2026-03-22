@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administration - SecurApp</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header-actions">
+            <h2>Panel d'Administration</h2>
+            <div class="nav-links">
+                <a href="index.html" id="btn-logout" class="btn btn-secondary btn-small">Déconnexion</a>
+            </div>
+        </div>
+
+        <div id="content-box">
+            <p class="mb-2">Vous êtes connecté en tant qu'administrateur. Vous avez accès à toutes les sections sans avoir à saisir leurs mots de passe.</p>
+
+            <div class="grid grid-3">
+                <div class="card text-center">
+                    <h3>Contacts d'urgence</h3>
+                    <p>Gérer les contacts qui seront prévenus en cas de besoin.</p>
+                    <a href="emergency.html" class="btn btn-primary mt-1">Accéder</a>
+                </div>
+
+                <div class="card text-center">
+                    <h3>Fiche Personnelle</h3>
+                    <p>Gérer les informations privées (santé, emplacements).</p>
+                    <a href="vault.html" class="btn btn-primary mt-1">Accéder</a>
+                </div>
+
+                <div class="card text-center">
+                    <h3>Testament</h3>
+                    <p>Gérer le testament numérique.</p>
+                    <a href="testament.html" class="btn btn-primary mt-1">Accéder</a>
+                </div>
+            </div>
+
+            <div class="card mt-2">
+                <h3>Options système</h3>
+                <div class="btn-group mt-1">
+                    <button class="btn btn-secondary" id="btn-change-passwords">Réinitialiser les mots de passe</button>
+                    <!-- Potential export/import could go here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/utils.js"></script>
+    <script src="js/crypto.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+</html>
