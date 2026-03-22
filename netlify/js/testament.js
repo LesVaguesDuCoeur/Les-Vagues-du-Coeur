@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     showLoader('testament-loader');
     serverData = await fetchFromApi();
     const realKey = decryptData(serverData.testamentKeyEnc, adminKey);
-    if (!realKey) { alert('Erreur déchiffrement clé testament'); return; }
+    if (!realKey) { showToast('Erreur déchiffrement clé testament'); return; }
     testamentKey = realKey;
     hideLoader('testament-loader');
     await openTestament('Admin (accès direct)', true);

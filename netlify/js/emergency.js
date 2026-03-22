@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   btnPanic.addEventListener('click', async () => {
-    if (confirm("Êtes-vous sûr de vouloir alerter tous les contacts de niveau 1 ?")) {
+    if (await showConfirm("Êtes-vous sûr de vouloir alerter tous les contacts de niveau 1 ?")) {
       const level1Contacts = contacts.filter(c => c.importance === 1);
 
       // Send an alert request to the backend for level 1
@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
       hideLoader();
 
-      alert("Alerte envoyée.");
+      showToast("Alerte envoyée.", 'success');
     }
   });
 

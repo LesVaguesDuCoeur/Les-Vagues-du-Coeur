@@ -123,7 +123,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let emergencyKey = sessionStorage.getItem('knownEmergencyKey');
     if (!emergencyKey) {
-      emergencyKey = prompt("Veuillez entrer le mot de passe d'urgence pour mettre à jour la vue urgence :");
+      emergencyKey = await showPrompt("Veuillez entrer le mot de passe d'urgence pour mettre à jour la vue urgence :");
       if (emergencyKey) {
         sessionStorage.setItem('knownEmergencyKey', emergencyKey);
       }
@@ -261,7 +261,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     document.querySelectorAll('.del-btn').forEach(btn => {
       btn.addEventListener('click', async (e) => {
-        if(confirm("Supprimer ce contact ?")) {
+        if(await showConfirm("Supprimer ce contact ?")) {
           const id = e.currentTarget.getAttribute('data-id');
           contacts = contacts.filter(c => c.id !== id);
           renderContacts(contacts);

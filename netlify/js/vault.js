@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     showLoader('vault-loader');
     serverData = await fetchFromApi();
     const realKey = decryptData(serverData.vaultKeyEnc, adminKey);
-    if (!realKey) { alert('Erreur déchiffrement clé vault'); return; }
+    if (!realKey) { showToast('Erreur déchiffrement clé vault'); return; }
     vaultKey = realKey;
     hideLoader('vault-loader');
     await openVault();
@@ -60,6 +60,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       const eHash = CryptoJS.SHA256(ePwd).toString();
       if (eHash === serverData.emergencyHash) {
         vaultKey = directVaultKey;
+
+        try {
+          await postToApi({
+            action: 'testamentAccess',
+            nomDeclare: "Fiche Personnelle: " + nom,
+            userAgent: navigator.userAgent,
+            timestamp: new Date().toISOString()
+          });
+        } catch(e) {
+          console.warn('Alerte email échouée', e);
+        }
+
         await openVault();
       } else {
         hideLoader('vault-loader-direct');
@@ -293,7 +305,7 @@ function submitVaultItem() {
 }
 
 function deleteItem(section, id) {
-  if (!confirm('Supprimer cet élément ?')) return;
+  if (!await showConfirm('Supprimer cet élément ?')) return;
   vaultData[section] = (vaultData[section] || []).filter(x => x.id !== id);
   renderSection(section, { apps: 'apps-list', bank: 'bank-list', docs: 'docs-list' }[section]);
 }

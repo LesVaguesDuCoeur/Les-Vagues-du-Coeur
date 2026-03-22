@@ -13,19 +13,19 @@ document.addEventListener('DOMContentLoaded', () => {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    if (adminPwd.value !== adminPwd2.value) { alert("Les mots de passe administrateur ne correspondent pas."); return; }
-    if (emergencyPwd.value !== emergencyPwd2.value) { alert("Les mots de passe urgence ne correspondent pas."); return; }
-    if (vaultPwd.value !== vaultPwd2.value) { alert("Les mots de passe fiche personnelle ne correspondent pas."); return; }
-    if (testamentPwd.value !== testamentPwd2.value) { alert("Les mots de passe testament ne correspondent pas."); return; }
+    if (adminPwd.value !== adminPwd2.value) { showToast("Les mots de passe administrateur ne correspondent pas."); return; }
+    if (emergencyPwd.value !== emergencyPwd2.value) { showToast("Les mots de passe urgence ne correspondent pas."); return; }
+    if (vaultPwd.value !== vaultPwd2.value) { showToast("Les mots de passe fiche personnelle ne correspondent pas."); return; }
+    if (testamentPwd.value !== testamentPwd2.value) { showToast("Les mots de passe testament ne correspondent pas."); return; }
 
     const pwds = [adminPwd.value, emergencyPwd.value, vaultPwd.value, testamentPwd.value];
     if (new Set(pwds).size !== pwds.length) {
-      alert("Tous les mots de passe principaux doivent être différents.");
+      showToast("Tous les mots de passe principaux doivent être différents.");
       return;
     }
 
     if (adminPwd.value.length < 8) {
-      alert("Le mot de passe admin doit faire au moins 8 caractères.");
+      showToast("Le mot de passe admin doit faire au moins 8 caractères.");
       return;
     }
 
@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
       sessionStorage.setItem('adminHash', payload.adminHash);
       window.location.href = 'admin.html';
     } else {
-      alert("Erreur lors de l'enregistrement. Veuillez réessayer.");
+      showToast("Erreur lors de l'enregistrement. Veuillez réessayer.");
       btnSetup.disabled = false;
     }
   });
