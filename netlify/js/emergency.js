@@ -39,6 +39,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Send an alert request to the backend for level 1
       showLoader();
       await postToApi({
+        action: 'emergencyAccess',
         emergencyAccess: true,
         panicAlert: true,
         level1Count: level1Contacts.length

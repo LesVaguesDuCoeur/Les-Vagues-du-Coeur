@@ -25,6 +25,70 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
+  // DIRECT ACCESS VIA INDEX
+  const directTestamentKey = sessionStorage.getItem('testamentKey');
+  if (directTestamentKey) {
+    showLoader('testament-loader');
+    serverData = await fetchFromApi();
+    hideLoader('testament-loader');
+
+    // Si on vient de l'index, le hash a déjà été vérifié.
+    const loginBox = document.querySelector('.login-box');
+    loginBox.innerHTML = `
+      <div class="login-icon"><i class="fas fa-scroll fa-2x"></i></div>
+      <h3>Validation de Sécurité</h3>
+      <p class="text-muted">Testament - Veuillez vous identifier pour continuer</p>
+      <input type="text" id="t-nom-direct" placeholder="Votre nom complet ou société" autocomplete="off" required>
+      <input type="password" id="t-emg-direct" placeholder="Mot de passe Urgence" autocomplete="off" style="margin-top:10px;">
+      <button id="btn-testament-login-direct" class="btn btn-primary" style="margin-top:15px; width:100%;">
+        <i class="fas fa-lock-open"></i> Accéder
+      </button>
+      <div id="testament-error-direct" class="error-msg hidden">Identifiants incorrects</div>
+      <div id="testament-loader-direct" class="loader hidden"></div>
+    `;
+
+    document.getElementById('btn-testament-login-direct').addEventListener('click', async () => {
+      const nom = document.getElementById('t-nom-direct').value.trim();
+      const ePwd = document.getElementById('t-emg-direct').value;
+      if (!nom || !ePwd) {
+        document.getElementById('testament-error-direct').textContent = 'Tous les champs sont obligatoires';
+        document.getElementById('testament-error-direct').classList.remove('hidden');
+        return;
+      }
+
+      document.getElementById('testament-error-direct').classList.add('hidden');
+      showLoader('testament-loader-direct');
+
+      const eHash = CryptoJS.SHA256(ePwd).toString();
+      if (eHash === serverData.emergencyHash) {
+        testamentKey = directTestamentKey;
+
+        try {
+          await postToApi({
+            action: 'testamentAccess',
+            nomDeclare: nom,
+            userAgent: navigator.userAgent,
+            timestamp: new Date().toISOString()
+          });
+        } catch(e) {
+          console.warn('Alerte email échouée', e);
+        }
+
+        await openTestament(nom, false);
+      } else {
+        hideLoader('testament-loader-direct');
+        document.getElementById('testament-error-direct').textContent = 'Mot de passe Urgence incorrect';
+        document.getElementById('testament-error-direct').classList.remove('hidden');
+      }
+    });
+
+    document.getElementById('t-emg-direct').addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('btn-testament-login-direct').click();
+    });
+
+    return;
+  }
+
   // LOGIN NORMAL
   document.getElementById('btn-testament-login').addEventListener('click', loginTestament);
   document.getElementById('t-emg').addEventListener('keydown', e => { if (e.key === 'Enter') loginTestament(); });

@@ -64,6 +64,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       async function sendAlertAndRedirect() {
         await postToApi({
+          action: 'emergencyAccess',
           emergencyAccess: true,
           ip,
           userAgent,
@@ -72,6 +73,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.location.href = 'emergency.html';
       }
 
+    } else if (data && data.vaultHash === hash) {
+      sessionStorage.setItem('vaultKey', code);
+      sessionStorage.setItem('vaultHash', hash);
+      window.location.href = 'vault.html';
+    } else if (data && data.testamentHash === hash) {
+      sessionStorage.setItem('testamentKey', code);
+      sessionStorage.setItem('testamentHash', hash);
+      window.location.href = 'testament.html';
     } else {
       hideLoader();
       attempts++;

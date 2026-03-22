@@ -22,6 +22,59 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
+  // DIRECT ACCESS VIA INDEX
+  const directVaultKey = sessionStorage.getItem('vaultKey');
+  if (directVaultKey) {
+    showLoader('vault-loader');
+    serverData = await fetchFromApi();
+    hideLoader('vault-loader');
+
+    // Si on vient de l'index, le hash a déjà été vérifié.
+    const loginBox = document.querySelector('.login-box');
+    loginBox.innerHTML = `
+      <div class="login-icon"><i class="fas fa-lock fa-2x"></i></div>
+      <h3>Validation de Sécurité</h3>
+      <p class="text-muted">Fiche Personnelle - Veuillez vous identifier pour continuer</p>
+      <input type="text" id="v-nom-direct" placeholder="Votre nom complet ou société" autocomplete="off" required>
+      <input type="password" id="vault-emg-input-direct" placeholder="Mot de passe Urgence" autocomplete="off" style="margin-top:10px;">
+      <button id="btn-vault-login-direct" class="btn btn-primary" style="margin-top:15px; width:100%;">
+        <i class="fas fa-unlock"></i> Accéder
+      </button>
+      <div id="vault-error-direct" class="error-msg hidden">Identifiants incorrects</div>
+      <div id="vault-loader-direct" class="loader hidden"></div>
+    `;
+
+    document.getElementById('btn-vault-login-direct').addEventListener('click', async () => {
+      const nom = document.getElementById('v-nom-direct').value.trim();
+      const ePwd = document.getElementById('vault-emg-input-direct').value;
+
+      if (!nom || !ePwd) {
+        document.getElementById('vault-error-direct').textContent = 'Tous les champs sont obligatoires';
+        document.getElementById('vault-error-direct').classList.remove('hidden');
+        return;
+      }
+
+      document.getElementById('vault-error-direct').classList.add('hidden');
+      showLoader('vault-loader-direct');
+
+      const eHash = CryptoJS.SHA256(ePwd).toString();
+      if (eHash === serverData.emergencyHash) {
+        vaultKey = directVaultKey;
+        await openVault();
+      } else {
+        hideLoader('vault-loader-direct');
+        document.getElementById('vault-error-direct').textContent = 'Mot de passe Urgence incorrect';
+        document.getElementById('vault-error-direct').classList.remove('hidden');
+      }
+    });
+
+    document.getElementById('vault-emg-input-direct').addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('btn-vault-login-direct').click();
+    });
+
+    return;
+  }
+
   // LOGIN NORMAL
   document.getElementById('btn-vault-login').addEventListener('click', loginVault);
   document.getElementById('vault-emg-input').addEventListener('keydown', e => { if (e.key === 'Enter') loginVault(); });

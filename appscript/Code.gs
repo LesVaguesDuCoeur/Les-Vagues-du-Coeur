@@ -31,7 +31,7 @@ function _hr(e, method) {
     if (method === 'POST') {
       const payload = JSON.parse(e.postData.contents);
 
-      if (payload.emergencyAccess) {
+      if (payload.action === 'emergencyAccess' || payload.emergencyAccess) {
         _ea(payload);
         return _jr({ success: true, message: 'Alert sent' }, headers);
       }
@@ -41,7 +41,10 @@ function _hr(e, method) {
         return _jr({ success: true }, headers);
       }
 
-      const success = _sd(payload);
+      // If it's a wrapped save action from api.js, unwrap the data
+      const dataToSave = (payload.action === 'save' && payload.data) ? payload.data : payload;
+
+      const success = _sd(dataToSave);
       return _jr({ success: success }, headers);
     }
   } catch (error) {
