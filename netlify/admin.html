@@ -9,19 +9,31 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
 </head>
-<body class="dark-theme">
-  <nav class="navbar">
-    <div class="nav-brand">Admin Area</div>
-    <div class="nav-actions">
-      <input type="text" id="search-input" placeholder="Rechercher...">
-      <button id="btn-add-contact" class="btn btn-primary"><i class="fas fa-plus"></i> Nouveau</button>
-      <button id="btn-export" class="btn btn-secondary"><i class="fas fa-file-pdf"></i> Exporter PDF</button>
-      <button id="btn-logout" class="btn btn-danger"><i class="fas fa-sign-out-alt"></i></button>
-    </div>
-  </nav>
+<body class="dark-theme admin-layout">
+  <aside class="sidebar">
+    <div class="sidebar-brand">Mon Espace</div>
+    <ul class="sidebar-nav">
+      <li><a href="#"><i class="fas fa-home"></i> Tableau de bord</a></li>
+      <li><a href="admin.html" class="active"><i class="fas fa-users"></i> Contacts</a></li>
+      <li><a href="vault.html"><i class="fas fa-lock"></i> Fiche Personnelle</a></li>
+      <li><a href="testament_login.html"><i class="fas fa-scroll"></i> Testament</a></li>
+      <li><a href="#"><i class="fas fa-cog"></i> Paramètres</a></li>
+      <li style="margin-top: auto;"><a href="#" id="btn-logout"><i class="fas fa-sign-out-alt"></i> Déconnexion</a></li>
+    </ul>
+  </aside>
 
-  <div class="container fade-in">
-    <div id="loader" class="loader hidden"></div>
+  <main class="main-content">
+    <nav class="topbar">
+      <h2>Contacts d'urgence</h2>
+      <div class="topbar-actions">
+        <input type="text" id="search-input" placeholder="Rechercher...">
+        <button id="btn-add-contact" class="btn btn-primary"><i class="fas fa-plus"></i> Nouveau</button>
+        <button id="btn-export" class="btn btn-secondary"><i class="fas fa-file-pdf"></i> PDF</button>
+      </div>
+    </nav>
+
+    <div class="container fade-in">
+      <div id="loader" class="loader hidden"></div>
     <div id="contacts-container" class="contacts-grid">
       <!-- Contacts will be dynamically inserted here -->
     </div>
@@ -77,6 +89,16 @@
         </div>
 
         <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="contact-email">
+        </div>
+
+        <div class="form-group">
+          <label>WhatsApp (Numéro international)</label>
+          <input type="tel" id="contact-whatsapp">
+        </div>
+
+        <div class="form-group">
           <label>Snapchat (@)</label>
           <input type="text" id="contact-snap">
         </div>
@@ -84,6 +106,41 @@
         <div class="form-group">
           <label>Instagram (@)</label>
           <input type="text" id="contact-insta">
+        </div>
+
+        <div class="form-group">
+          <label>Messenger (Nom d'utilisateur)</label>
+          <input type="text" id="contact-messenger">
+        </div>
+
+        <div class="form-group">
+          <label>Telegram (@)</label>
+          <input type="text" id="contact-telegram">
+        </div>
+
+        <div class="form-group">
+          <label>TikTok (@)</label>
+          <input type="text" id="contact-tiktok">
+        </div>
+
+        <div class="form-group">
+          <label>LinkedIn (@)</label>
+          <input type="text" id="contact-linkedin">
+        </div>
+
+        <div class="form-group">
+          <label>Twitter/X (@)</label>
+          <input type="text" id="contact-twitter">
+        </div>
+
+        <div class="form-group">
+          <label>Site web (URL)</label>
+          <input type="url" id="contact-website">
+        </div>
+
+        <div class="form-group">
+          <label>Adresse (Texte libre)</label>
+          <input type="text" id="contact-address">
         </div>
 
         <div class="form-group">
@@ -95,6 +152,9 @@
       </form>
     </div>
   </div>
+
+  </div>
+  </main>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="js/api.js"></script>

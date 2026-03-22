@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connexion Testament</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+</head>
+<body class="dark-theme">
+  <div class="container center-screen fade-in">
+    <div class="login-box">
+      <h3 style="margin-bottom: 20px;">Accès au Testament</h3>
+      <input type="text" id="nom-declare" placeholder="Votre nom complet" autocomplete="off" autofocus>
+      <input type="password" id="testament-access-code" placeholder="Mot de passe Testament" autocomplete="off">
+      <button id="btn-login" class="btn btn-primary"><i class="fas fa-lock"></i> Accéder</button>
+      <div id="error-message" class="error-msg hidden">Code ou nom incorrect</div>
+      <div id="loader" class="loader hidden"></div>
+    </div>
+  </div>
+  <script src="js/api.js"></script>
+  <script src="js/crypto.js"></script>
+  <script src="js/testament_login.js"></script>
+</body>
+</html>

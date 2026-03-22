@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fiche Personnelle (Vault) - Carnet de Contacts</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+</head>
+<body class="dark-theme admin-layout">
+  <aside class="sidebar">
+    <div class="sidebar-brand">Mon Espace</div>
+    <ul class="sidebar-nav">
+      <li><a href="#"><i class="fas fa-home"></i> Tableau de bord</a></li>
+      <li><a href="admin.html"><i class="fas fa-users"></i> Contacts</a></li>
+      <li><a href="vault.html" class="active"><i class="fas fa-lock"></i> Fiche Personnelle</a></li>
+      <li><a href="testament_login.html"><i class="fas fa-scroll"></i> Testament</a></li>
+      <li><a href="#"><i class="fas fa-cog"></i> Paramètres</a></li>
+      <li style="margin-top: auto;"><a href="#" id="btn-logout"><i class="fas fa-sign-out-alt"></i> Déconnexion</a></li>
+    </ul>
+  </aside>
+
+  <main class="main-content">
+    <nav class="topbar">
+      <h2>Fiche Personnelle (Vault)</h2>
+      <div class="topbar-actions">
+        <button id="btn-save" class="btn btn-primary"><i class="fas fa-save"></i> Enregistrer</button>
+      </div>
+    </nav>
+
+    <div class="container fade-in" id="vault-content">
+      <div id="loader" class="loader hidden"></div>
+
+      <!-- Login View -->
+      <div id="vault-login" class="login-box center-screen">
+        <h3 style="margin-bottom: 20px;">Accès Protégé</h3>
+        <input type="password" id="vault-access-code" placeholder="Mot de passe Fiche" autocomplete="off">
+        <button id="btn-vault-login" class="btn btn-primary"><i class="fas fa-unlock"></i> Déverrouiller</button>
+        <div id="vault-error" class="error-msg hidden">Mot de passe incorrect</div>
+      </div>
+
+      <!-- Data View -->
+      <div id="vault-data" class="hidden">
+        <!-- Section A -->
+        <div class="vault-section" style="margin-bottom: 30px;">
+          <h3>Identifiants & Mots de passe d'applications</h3>
+          <div id="section-a-items" class="vault-items-container"></div>
+          <button class="btn btn-secondary btn-sm" id="btn-add-a"><i class="fas fa-plus"></i> Ajouter</button>
+        </div>
+
+        <!-- Section B -->
+        <div class="vault-section" style="margin-bottom: 30px;">
+          <h3>Informations bancaires & Codes</h3>
+          <div id="section-b-items" class="vault-items-container"></div>
+          <button class="btn btn-secondary btn-sm" id="btn-add-b"><i class="fas fa-plus"></i> Ajouter</button>
+        </div>
+
+        <!-- Section C -->
+        <div class="vault-section" style="margin-bottom: 30px;">
+          <h3>Documents & Informations importantes</h3>
+          <div id="section-c-items" class="vault-items-container"></div>
+          <button class="btn btn-secondary btn-sm" id="btn-add-c"><i class="fas fa-plus"></i> Ajouter</button>
+        </div>
+
+        <!-- Section D -->
+        <div class="vault-section" style="margin-bottom: 30px;">
+          <h3>Champ libre personnel</h3>
+          <textarea id="section-d-textarea" rows="6" style="width: 100%;" placeholder="Notes..."></textarea>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal for Vault Item Add/Edit -->
+  <div id="vault-modal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close-btn">&times;</span>
+      <h2 id="vault-modal-title">Nouvel Élément</h2>
+      <form id="vault-form">
+        <input type="hidden" id="vault-item-id">
+        <input type="hidden" id="vault-section-id">
+
+        <div id="dynamic-form-fields"></div>
+
+        <div class="form-group" style="margin-top: 15px; border-top: 1px solid var(--secondary-color); padding-top: 15px;">
+          <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+            <input type="checkbox" id="item-locked" style="width: auto;">
+            <span>🔒 Verrouiller cet élément</span>
+          </label>
+        </div>
+
+        <div id="lock-options" class="hidden" style="margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.3); border-radius: var(--border-radius);">
+          <div class="form-group">
+            <label>Prénom de la personne autorisée *</label>
+            <input type="text" id="item-auth-name">
+          </div>
+          <div class="form-group">
+            <label>Mot de passe de cet élément *</label>
+            <input type="password" id="item-pwd">
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="btn-save-vault-item" style="margin-top: 20px;">Ajouter</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/crypto.js"></script>
+  <script src="js/vault.js"></script>
+</body>
+</html>

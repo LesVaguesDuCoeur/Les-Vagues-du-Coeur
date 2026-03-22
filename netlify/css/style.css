@@ -150,6 +150,73 @@ body.dark-theme {
   background-color: #444;
 }
 
+/* Admin Layout */
+.admin-layout {
+  flex-direction: row;
+}
+
+.sidebar {
+  width: 250px;
+  background: #111116;
+  border-right: 1px solid var(--secondary-color);
+  padding: 20px 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-brand {
+  font-size: 1.5rem;
+  font-weight: bold;
+  padding: 0 20px 20px;
+  border-bottom: 1px solid var(--secondary-color);
+  margin-bottom: 20px;
+  color: var(--primary-color);
+}
+
+.sidebar-nav {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.sidebar-nav li a {
+  display: flex;
+  align-items: center;
+  padding: 15px 20px;
+  color: var(--text-color);
+  text-decoration: none;
+  transition: var(--transition);
+  gap: 15px;
+}
+
+.sidebar-nav li a:hover, .sidebar-nav li a.active {
+  background: rgba(255, 255, 255, 0.05);
+  border-left: 4px solid var(--primary-color);
+  color: var(--primary-color);
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 30px;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid var(--secondary-color);
+  box-shadow: var(--shadow);
+}
+
+.topbar-actions {
+  display: flex;
+  gap: 10px;
+}
+
 /* Navbar */
 .navbar {
   display: flex;
@@ -258,6 +325,15 @@ body.dark-theme {
 .action-icon.tel:hover { background: #25D366; }
 .action-icon.snap:hover { background: #FFFC00; color: black; }
 .action-icon.insta:hover { background: #E1306C; }
+.action-icon.email:hover { background: #ea4335; }
+.action-icon.whatsapp:hover { background: #25D366; }
+.action-icon.messenger:hover { background: #0084FF; }
+.action-icon.telegram:hover { background: #0088cc; }
+.action-icon.tiktok:hover { background: #ff0050; color: white; }
+.action-icon.linkedin:hover { background: #0077b5; }
+.action-icon.twitter:hover { background: #1da1f2; }
+.action-icon.website:hover { background: var(--primary-color); }
+.action-icon.address:hover { background: #ea4335; }
 
 /* Utilities */
 .hidden { display: none !important; }

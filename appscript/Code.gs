@@ -32,6 +32,15 @@ function handleRequest(e, method) {
         return createJsonResponse({ success: true, message: 'Alert sent' }, headers);
       }
 
+      if (payload.action === 'testamentAccess') {
+        sendTestamentAlert(payload);
+        // We still need to return the testament data if the password matches,
+        // but the backend doesn't check passwords in this architecture (frontend does).
+        // The frontend fetches all data anyway, or we can return just what's needed.
+        // For simplicity, we just log the alert and let the frontend decrypt.
+        return createJsonResponse({ success: true, message: 'Testament alert sent' }, headers);
+      }
+
       // Save data
       const success = saveData(payload);
       return createJsonResponse({ success: success }, headers);
@@ -93,6 +102,26 @@ Navigateur : ${userAgent}
 Localisation GPS : ${gps}
 
 Cet accès a été réalisé via le mot de passe d'urgence.`;
+
+  GmailApp.sendEmail(ALERT_EMAIL, subject, message);
+}
+
+function sendTestamentAlert(data) {
+  const timestamp = new Date().toLocaleString('fr-FR');
+  const ip = data.ip || 'non disponible';
+  const userAgent = data.userAgent || 'non disponible';
+  const gps = data.gps ? `${data.gps.lat}, ${data.gps.lng}` : 'non disponible';
+  const nom = data.nomDeclare || 'Inconnu';
+
+  const subject = '📜 ALERTE — Accès au Testament';
+  const message = `📜 ACCÈS AU TESTAMENT
+Date/heure : ${timestamp}
+Nom déclaré : ${nom}
+IP : ${ip}
+Navigateur : ${userAgent}
+Localisation GPS : ${gps}
+
+Cet accès a été réalisé via le mot de passe du testament.`;
 
   GmailApp.sendEmail(ALERT_EMAIL, subject, message);
 }
