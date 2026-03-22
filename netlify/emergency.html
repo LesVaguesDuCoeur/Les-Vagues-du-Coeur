@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Accès d'Urgence - Carnet de Contacts</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+</head>
+<body class="dark-theme emergency-theme">
+  <nav class="navbar emergency-nav">
+    <div class="nav-brand text-danger"><i class="fas fa-exclamation-triangle"></i> URGENCE</div>
+    <div class="nav-actions">
+      <button id="btn-panic" class="btn btn-danger"><i class="fas fa-bullhorn"></i> Alerter Niveau 1</button>
+      <button id="btn-logout" class="btn btn-secondary"><i class="fas fa-sign-out-alt"></i></button>
+    </div>
+  </nav>
+
+  <div class="container fade-in">
+    <div id="loader" class="loader hidden"></div>
+
+    <div id="emergency-message" class="alert-box text-center hidden">
+      <!-- Custom emergency message injected here -->
+    </div>
+
+    <div id="contacts-container" class="contacts-grid">
+      <!-- Contacts will be dynamically inserted here -->
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/crypto.js"></script>
+  <script src="js/emergency.js"></script>
+</body>
+</html>
