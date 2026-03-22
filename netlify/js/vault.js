@@ -43,10 +43,32 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const hash = hashPassword(code);
 
-    if (fullData && fullData.vaultHash === hash) {
+    const isVaultPassword = (fullData && hash === fullData.vaultHash);
+    const isAdminPassword = (fullData && hash === fullData.adminHash);
+
+    if (isVaultPassword) {
       vaultKey = code;
       sessionStorage.setItem('vaultKey', code);
       loadVaultData();
+    } else if (isAdminPassword) {
+      // Decode vault key with admin password
+      if (fullData.vaultKeyEncrypted) {
+        const decryptedVaultKey = decryptData(fullData.vaultKeyEncrypted, code);
+        if (decryptedVaultKey) {
+            vaultKey = decryptedVaultKey;
+            isAdminMaster = true;
+            // Also store adminKey in session if it wasn't already (e.g. direct access)
+            if (!sessionStorage.getItem('adminKey')) sessionStorage.setItem('adminKey', code);
+            loadVaultData();
+        } else {
+            errorMsg.classList.remove('hidden');
+        }
+      } else {
+          // Fallback if no encrypted key
+          vaultKey = code; // Try decrypting with admin key directly (old method)
+          isAdminMaster = true;
+          loadVaultData();
+      }
     } else {
       errorMsg.classList.remove('hidden');
     }
@@ -54,8 +76,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   btnVaultLogin.addEventListener('click', attemptUnlock);
 
-  // Try admin master key bypass
-  if (fullData && fullData.adminHash === hashPassword(adminKey)) {
+  // Try admin master key bypass if adminKey is already in session
+  if (adminKey && fullData && fullData.adminHash === hashPassword(adminKey)) {
       if (fullData.vaultKeyEncrypted) {
           const decryptedVaultKey = decryptData(fullData.vaultKeyEncrypted, adminKey);
           if (decryptedVaultKey) {

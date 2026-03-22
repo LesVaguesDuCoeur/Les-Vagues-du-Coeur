@@ -26,13 +26,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Si c'est le mot de passe admin, il peut aussi accéder (Master Key).
     const adminKey = sessionStorage.getItem('adminKey');
+    const isTestamentPassword = (hash === data.testamentHash);
+    const isAdminPassword = (hash === data.adminHash);
+
     let isAdminAccess = false;
-    if (adminKey && hashPassword(adminKey) === data.adminHash && code === adminKey) {
+    if (isAdminPassword) {
+       isAdminAccess = true;
+       // Store the code as adminKey if it wasn't already in session
+       if (!adminKey) sessionStorage.setItem('adminKey', code);
+    } else if (adminKey && hashPassword(adminKey) === data.adminHash && code === adminKey) {
        isAdminAccess = true;
     }
 
-    if (data.testamentHash === hash || isAdminAccess) {
-      sessionStorage.setItem('testamentKey', code);
+    if (isTestamentPassword || isAdminAccess) {
+      if (isTestamentPassword) {
+          sessionStorage.setItem('testamentKey', code);
+      }
       sessionStorage.setItem('nomDeclare', nom);
 
       // Envoi du mail AVANT d'accéder
