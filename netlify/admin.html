@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administration - Contacts d'Urgence</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <nav>
+            <a href="index.html">← Accueil</a>
+            <span style="color: var(--warning);">Mode Admin</span>
+        </nav>
+
+        <h1>Panel Administrateur</h1>
+
+        <div id="admin-content" class="hidden">
+            <div class="admin-grid">
+                <a href="emergency.html" class="admin-card">
+                    <h3>Contacts d'Urgence</h3>
+                    <span class="status" id="status-contacts">Chargement...</span>
+                </a>
+                <a href="vault.html" class="admin-card">
+                    <h3>Fiche Personnelle</h3>
+                    <span class="status" id="status-vault">Chargement...</span>
+                </a>
+                <a href="testament.html" class="admin-card">
+                    <h3>Testament Numerique</h3>
+                    <span class="status" id="status-testament">Chargement...</span>
+                </a>
+            </div>
+
+            <div class="card">
+                <h2>Parametres generaux</h2>
+                <div class="form-group">
+                    <label>Email de notification</label>
+                    <input type="email" id="admin-email" disabled>
+                </div>
+
+                <h3 style="margin-top: 20px;">Actions de securite</h3>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <button id="btn-change-pwd" class="secondary">Modifier un mot de passe</button>
+                    <button id="btn-export-data" class="secondary">Exporter les donnees (JSON chiffré)</button>
+                    <button id="btn-reset-app" class="danger">Reinitialiser l'application</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card login-box hidden" id="login-container">
+            <h2>Authentification Admin</h2>
+            <p>Veuillez entrer le mot de passe administrateur pour acceder a ce panel.</p>
+
+            <form id="login-form">
+                <div class="form-group">
+                    <input type="password" id="password" placeholder="Mot de passe Admin" required autocomplete="current-password">
+                </div>
+                <button type="submit">Acceder</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/crypto.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+</html>

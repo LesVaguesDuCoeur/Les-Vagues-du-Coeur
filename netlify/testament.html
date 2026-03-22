@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Testament Numerique</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <nav>
+            <a href="index.html" id="back-link">← Retour</a>
+            <span id="header-status"></span>
+        </nav>
+
+        <h1>Testament Numerique</h1>
+
+        <div id="content-container" class="hidden">
+            <div class="card">
+                <form id="testament-form">
+                    <h2>Dernieres volontes</h2>
+                    <div class="form-group">
+                        <label>Contenu du testament / Directives anticipees</label>
+                        <textarea id="t-content" style="min-height: 250px;" placeholder="Ecrivez vos directives ici..."></textarea>
+                    </div>
+
+                    <h2 style="margin-top: 30px;">Contacts Juridiques</h2>
+                    <div class="form-group">
+                        <label>Notaire / Contact Legal</label>
+                        <input type="text" id="t-notary" placeholder="Nom, Adresse, Telephone">
+                    </div>
+                    <div class="form-group">
+                        <label>Lieu des documents originaux</label>
+                        <textarea id="t-location" placeholder="Ex: Coffre-fort au domicile..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Notes complementaires</label>
+                        <textarea id="t-notes"></textarea>
+                    </div>
+
+                    <button type="submit" id="save-btn">Sauvegarder les modifications</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card login-box hidden" id="login-container">
+            <h2 id="login-title">Dechiffrement requis</h2>
+            <p>Veuillez entrer le mot de passe "Testament" pour acceder a ces donnees.</p>
+
+            <form id="login-form">
+                <div class="form-group">
+                    <input type="password" id="password" placeholder="Mot de passe Testament" required autocomplete="current-password">
+                </div>
+                <button type="submit">Dechiffrer</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/crypto.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/testament.js"></script>
+</body>
+</html>
