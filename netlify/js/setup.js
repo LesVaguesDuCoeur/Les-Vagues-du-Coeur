@@ -67,10 +67,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 contacts: encryptData([], pwdAdmin),
                 emergencyContacts: encryptData([], pwdEmergency),
                 vaultData: encryptData([], pwdVault),
-                testamentData: encryptData("", pwdTestament),
+                testamentData: encryptData({content:'', lastModified:null}, pwdTestament),
 
-                emergencyMessage: msgEmergency ? encryptData(msgEmergency, pwdEmergency) : encryptData("", pwdEmergency),
-                accessLogs: encryptData([], pwdAdmin)
+                emergencyMessage: msgEmergency ? encryptData(msgEmergency, pwdAdmin) : encryptData("", pwdAdmin),
+                accessLogs: encryptData([], pwdAdmin),
+                publicAccessLogs: []
             };
 
             const response = await api.setup(initialData);

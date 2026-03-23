@@ -36,11 +36,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         AppState.contacts = decryptData(encryptedPayload.contacts, adminKey) || [];
         AppState.vaultData = decryptData(encryptedPayload.vaultData, AppState.vaultKey) || [];
-        AppState.testamentData = decryptData(encryptedPayload.testamentData, AppState.testamentKey) || "";
+        const tDataObj = decryptData(encryptedPayload.testamentData, AppState.testamentKey);
+        AppState.testamentData = tDataObj ? (tDataObj.content || "") : "";
+        AppState.testamentLastModified = tDataObj ? tDataObj.lastModified : null;
 
-        AppState.encryptedEmergencyMsg = encryptedPayload.emergencyMessage;
-        let derivedEkey = sessionStorage.getItem('derivedEmergencyKey');
-        AppState.emergencyMsg = derivedEkey ? decryptData(encryptedPayload.emergencyMessage, derivedEkey) : "";
+        // Changed per requirements: emergencyMessage is encrypted with adminKey
+        AppState.emergencyMsg = decryptData(encryptedPayload.emergencyMessage, adminKey) || "";
 
         initUI();
     } catch (e) {
@@ -100,17 +101,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             let encryptedLogs = decryptData(AppState.data.accessLogs, adminKey) || [];
             let allLogs = [...publicLogs.reverse(), ...encryptedLogs].slice(0, 50);
 
-            if (!AppState.emergencyMsg && eKey && AppState.encryptedEmergencyMsg) {
-                AppState.emergencyMsg = decryptData(AppState.encryptedEmergencyMsg, eKey) || "";
-            }
-
             const payload = {
                 ...AppState.data,
                 contacts: encryptData(AppState.contacts, adminKey),
                 emergencyContacts: encryptData(AppState.contacts, eKey),
                 vaultData: encryptData(AppState.vaultData, AppState.vaultKey),
-                testamentData: encryptData(AppState.testamentData, AppState.testamentKey),
-                emergencyMessage: encryptData(AppState.emergencyMsg, eKey),
+                testamentData: encryptData({content: AppState.testamentData, lastModified: AppState.testamentLastModified}, AppState.testamentKey),
+                emergencyMessage: encryptData(AppState.emergencyMsg, adminKey),
                 accessLogs: encryptData(allLogs, adminKey),
                 publicAccessLogs: []
             };
@@ -445,7 +442,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         let actualFields = item.fields;
         if (item.locked && item.fields['_adminEncrypted']) {
              try {
-                 actualFields = JSON.parse(decryptData(item.fields['_adminEncrypted'], adminKey));
+                 const decrypted = decryptData(item.fields['_adminEncrypted'], adminKey);
+                 actualFields = typeof decrypted === 'string' ? JSON.parse(decrypted) : decrypted;
              } catch(e) {
                  actualFields = {};
              }
@@ -594,6 +592,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             clearTimeout(tTimeout);
             tTimeout = setTimeout(async () => {
                 AppState.testamentData = quill.root.innerHTML;
+                AppState.testamentLastModified = new Date().toISOString();
                 await saveAllData();
                 tStatus.innerText = `Dernière sauvegarde: ${new Date().toLocaleTimeString()}`;
             }, 30000); // Auto-save after 30s of inactivity
@@ -652,9 +651,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const msgBox = document.getElementById('settingsEmergencyMsg');
         msgBox.value = AppState.emergencyMsg;
-        if (!AppState.emergencyMsg && AppState.encryptedEmergencyMsg) {
-             msgBox.placeholder = "Mot de passe urgence requis pour afficher l'ancien message. Entrez un nouveau ou sauvegardez la page avec le mot de passe pour le charger.";
-        }
     }
 
     document.getElementById('saveEmergencyMsgBtn').addEventListener('click', async () => {
@@ -756,10 +752,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     contacts: encryptData(AppState.contacts, finalAdminKey),
                     emergencyContacts: encryptData(AppState.contacts, eKey),
                     vaultData: encryptData(AppState.vaultData, finalVaultKey),
-                    testamentData: encryptData(AppState.testamentData, finalTestamentKey),
+                    testamentData: encryptData({content: AppState.testamentData, lastModified: AppState.testamentLastModified}, finalTestamentKey),
 
-                    emergencyMessage: encryptData(AppState.emergencyMsg, eKey),
-                    accessLogs: encryptData(decryptData(AppState.data.accessLogs, adminKey), finalAdminKey)
+                    emergencyMessage: encryptData(AppState.emergencyMsg, finalAdminKey),
+                    accessLogs: encryptData(decryptData(AppState.data.accessLogs, adminKey) || [], finalAdminKey),
+                    publicAccessLogs: []
                 };
 
                 const res = await api.save(newPayload);

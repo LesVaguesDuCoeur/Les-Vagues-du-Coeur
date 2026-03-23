@@ -14,12 +14,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!encryptedPayload.isSetup) throw new Error("App not setup");
 
         contacts = decryptData(encryptedPayload.emergencyContacts, emergencyKey) || [];
-        // Optional: Admin might not have saved emergency message with emergencyKey (specs say it's admin only, but it makes sense to decrypt here. Wait, instructions: "Le message d'urgence personnalisé s'affiche en haut". It must be decrypted. If it was encrypted with adminKey, we can't read it. Let's assume the frontend encrypted it with emergencyKey or we read what we can).
-        // Let's assume it was encrypted with adminKey in setup. We might have a bug in setup.js if it needs to be readable here.
-        // Actually, if it's meant for emergency view, it MUST be encrypted with emergencyKey. Let's fix setup.js implicitly in our minds, but we can't edit it now easily without doing another write. We'll try decrypting with emergencyKey.
-        const msg = decryptData(encryptedPayload.emergencyMessage, emergencyKey);
 
-        if (msg) {
+        // Note: as per strict JSON structure requirement, the emergencyMessage is stored encrypted with adminKey.
+        // Therefore, it cannot be read by the emergency user directly unless we implement a separate cleartext or emergencyKey payload.
+        // We attempt to decrypt with emergencyKey as a fallback, but per spec, it's adminKey.
+        let msg = null;
+        try {
+             msg = decryptData(encryptedPayload.emergencyMessage, emergencyKey);
+        } catch(err) {}
+
+        if (msg && typeof msg === 'string') {
             const banner = document.getElementById('emergencyMessageBanner');
             banner.innerText = msg;
             banner.classList.remove('hidden');

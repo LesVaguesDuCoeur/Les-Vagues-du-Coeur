@@ -14,6 +14,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         { id: 'ids', name: 'Identifiants & Mots de passe', icon: 'fa-key' },
         { id: 'cards', name: 'Cartes bancaires', icon: 'fa-credit-card' },
         { id: 'docs', name: 'Documents d\'identité', icon: 'fa-id-card' },
+        { id: 'accounts', name: 'Comptes bancaires', icon: 'fa-university' },
+        { id: 'codes', name: 'Codes & PIN divers', icon: 'fa-lock' },
+        { id: 'medical', name: 'Informations médicales', icon: 'fa-heartbeat' },
+        { id: 'insurance', name: 'Assurances', icon: 'fa-shield-alt' },
+        { id: 'subscriptions', name: 'Licences & Abonnements', icon: 'fa-barcode' },
         { id: 'notes', name: 'Notes libres', icon: 'fa-sticky-note' }
     ];
     let currentVaultCategory = 'ids';
@@ -137,12 +142,50 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                         // Decrypt nested content
                         const decrypted = decryptData(item.fields._encrypted, pwd);
-                        contentDiv.innerHTML = `
-                            <div class="vault-field mt-2">
-                                <span class="vault-field-label">Contenu</span>
-                                <span class="vault-field-value" style="white-space: pre-wrap; font-family: inherit;">${escapeHTML(decrypted || 'Erreur déchiffrement')}</span>
-                            </div>
-                        `;
+                        try {
+                            const decryptedFields = typeof decrypted === 'string' ? JSON.parse(decrypted) : decrypted;
+                            if (decryptedFields && typeof decryptedFields === 'object') {
+                                contentDiv.innerHTML = Object.entries(decryptedFields).map(([dk, dv]) => `
+                                    <div class="vault-field mt-2">
+                                        <span class="vault-field-label">${escapeHTML(dk)}</span>
+                                        <span class="vault-field-value">
+                                            <span class="truncate max-w-[200px]" id="val-${item.id}-unlocked-${dk}">${dv.type === 'password' ? '••••••••' : escapeHTML(dv.value)}</span>
+                                            <div class="flex gap-2 text-white">
+                                                <button class="btn-icon text-xs btn-reveal" data-target="val-${item.id}-unlocked-${dk}" data-val="${escapeHTML(dv.value)}"><i class="fas fa-eye"></i></button>
+                                                <button class="btn-icon text-xs btn-copy" data-val="${escapeHTML(dv.value)}"><i class="fas fa-copy"></i></button>
+                                            </div>
+                                        </span>
+                                    </div>
+                                `).join('');
+
+                                // Re-bind listeners for newly injected unlocked content
+                                contentDiv.querySelectorAll('.btn-reveal').forEach(b => {
+                                    b.addEventListener('click', (ev) => {
+                                        const targetId = ev.currentTarget.getAttribute('data-target');
+                                        const val = ev.currentTarget.getAttribute('data-val');
+                                        const span = document.getElementById(targetId);
+                                        const isHidden = span.innerText === '••••••••';
+                                        span.innerText = isHidden ? val : '••••••••';
+                                        ev.currentTarget.innerHTML = isHidden ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
+                                    });
+                                });
+                                contentDiv.querySelectorAll('.btn-copy').forEach(b => {
+                                    b.addEventListener('click', (ev) => {
+                                        const val = ev.currentTarget.getAttribute('data-val');
+                                        navigator.clipboard.writeText(val).then(() => showToast("Copié", "success"));
+                                    });
+                                });
+                            } else {
+                                throw new Error("Not an object");
+                            }
+                        } catch(e) {
+                            contentDiv.innerHTML = `
+                                <div class="vault-field mt-2">
+                                    <span class="vault-field-label">Contenu</span>
+                                    <span class="vault-field-value" style="white-space: pre-wrap; font-family: inherit;">${escapeHTML(decrypted || 'Erreur déchiffrement')}</span>
+                                </div>
+                            `;
+                        }
                     } else {
                         showAlert("Mot de passe incorrect.");
                     }
