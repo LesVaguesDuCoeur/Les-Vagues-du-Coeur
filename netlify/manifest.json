@@ -1,0 +1,16 @@
+{
+  "name": "Coffre-Fort Numérique",
+  "short_name": "Vault",
+  "description": "Coffre-fort numérique personnel",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#0a0a0f",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2889/2889312.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
