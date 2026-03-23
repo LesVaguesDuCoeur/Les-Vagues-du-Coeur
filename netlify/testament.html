@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Testament</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body class="p-4 flex flex-col items-center">
+<div class="w-full" style="max-width: 800px;">
+<div class="flex justify-between items-center mb-6">
+<h1 class="text-xl font-bold m-0"><i class="fas fa-scroll"></i> Testament <span class="text-sm font-normal text-muted">(Lecture seule)</span></h1>
+<div class="flex items-center gap-4">
+<div class="text-sm text-muted">Fermeture: <span id="timer">15:00</span></div>
+<button id="exportPdfBtn" class="btn"><i class="fas fa-file-pdf"></i> PDF</button>
+<button id="logoutBtn" class="btn btn-danger"><i class="fas fa-sign-out-alt"></i></button>
+</div>
+</div>
+
+<div id="pdfContent" class="bg-element p-6 rounded border" style="background: #141420;">
+<div class="text-center mb-6">
+<h2 class="text-xl font-bold m-0" style="text-transform: uppercase;">TESTAMENT — DERNIÈRES VOLONTÉS</h2>
+</div>
+<div id="civilState" class="mb-6 grid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:0.9rem;"></div>
+<div class="border-b mb-6"></div>
+<div id="testamentBody" class="ql-editor p-0" style="line-height:1.6;"></div>
+</div>
+</div>
+
+<div id="modalContainer"></div>
+<script src="js/utils.js"></script>
+<script src="js/crypto.js"></script>
+<script src="js/api.js"></script>
+<script src="js/testament.js"></script>
+</body>
+</html>

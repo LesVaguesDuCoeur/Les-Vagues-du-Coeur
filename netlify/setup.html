@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Initialisation</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+</head>
+<body class="flex items-center justify-center p-4">
+<div class="w-full" style="max-width: 400px;">
+<h1 class="text-xl font-bold mb-6 text-center">Initialisation du Coffre</h1>
+<form id="setupForm" class="flex flex-col gap-4">
+<div><label class="text-sm text-muted">Mot de passe ADMIN</label><input type="password" id="pwdAdmin" required></div>
+<div><label class="text-sm text-muted">Mot de passe URGENCE</label><input type="password" id="pwdUrgence" required></div>
+<div><label class="text-sm text-muted">Mot de passe VAULT</label><input type="password" id="pwdVault" required></div>
+<div><label class="text-sm text-muted">Mot de passe TESTAMENT</label><input type="password" id="pwdTestament" required></div>
+<button type="submit" class="btn btn-primary mt-4" id="btnSetup">Initialiser</button>
+</form>
+<div id="loader" class="text-center mt-4 hidden"><i class="fas fa-spinner fa-spin text-xl"></i></div>
+</div>
+<script src="js/utils.js"></script>
+<script src="js/crypto.js"></script>
+<script src="js/api.js"></script>
+<script src="js/setup.js"></script>
+</body>
+</html>
