@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Testament</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.5/purify.min.js"></script>
+</head>
+<body>
+    <header class="app-header" style="background: rgba(255, 209, 102, 0.1); border-bottom: 1px solid var(--warning);">
+        <h1 class="text-xl font-bold m-0" style="color:var(--warning);"><i class="fas fa-scroll mr-2"></i> Dernières Volontés</h1>
+        <div class="flex gap-2">
+            <button id="btn-export" class="btn-primary"><i class="fas fa-file-pdf mr-2"></i> Exporter PDF</button>
+            <button id="btn-logout" class="action-btn text-muted"><i class="fas fa-sign-out-alt"></i> Quitter</button>
+        </div>
+    </header>
+
+    <div id="loader" class="loader-container"><div class="spinner" style="border-left-color: var(--warning);"></div></div>
+
+    <main class="p-6 max-w-4xl mx-auto hidden" id="testament-content" style="max-width: 800px; background: #1a1a2e; margin-top: 20px; border-radius: 12px; border: 1px solid var(--border);">
+        <div class="text-center border-b pb-4 mb-6" style="border-color: rgba(255,255,255,0.1);">
+            <h2 class="text-2xl font-bold uppercase tracking-wider mb-2" style="color: white;">Testament — Dernières Volontés</h2>
+            <p id="testament-date" class="text-sm text-muted italic">Mis à jour le ...</p>
+        </div>
+
+        <div id="testament-identity" class="mb-8 p-4 rounded text-sm leading-relaxed" style="background: rgba(0,0,0,0.3); border-left: 4px solid var(--warning);">
+            <!-- Injecté -->
+        </div>
+
+        <div id="testament-body" class="quill-content text-base leading-relaxed" style="color: #e0e0e0; font-family: 'Inter', sans-serif;">
+            <!-- HTML Injecté de Quill -->
+        </div>
+
+        <div class="mt-12 text-center text-sm text-muted italic pt-4 border-t" style="border-color: rgba(255,255,255,0.1);">
+            Document numérique authentifié — Ce document tient lieu d'expression de volontés.
+        </div>
+    </main>
+
+    <script src="js/api.js"></script>
+    <script src="js/crypto.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/testament.js"></script>
+</body>
+</html>

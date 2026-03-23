@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vault</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+</head>
+<body>
+    <header class="app-header" style="background: rgba(69, 123, 157, 0.1); border-bottom: 1px solid var(--accent);">
+        <h1 class="text-xl font-bold m-0" style="color:var(--accent);"><i class="fas fa-lock mr-2"></i> Vault</h1>
+        <button id="btn-logout" class="action-btn text-muted"><i class="fas fa-sign-out-alt"></i> Quitter</button>
+    </header>
+
+    <div id="loader" class="loader-container"><div class="spinner"></div></div>
+
+    <div class="vault-layout">
+        <div class="vault-sidebar" id="vault-categories">
+            <!-- Injectées -->
+        </div>
+        <div class="vault-main p-4">
+            <h2 id="current-cat-title" class="text-xl mb-4 font-bold border-b pb-2">Sélectionnez une catégorie</h2>
+            <div id="vault-entries" class="flex-col gap-4">
+                <!-- Injectées -->
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/crypto.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/vault.js"></script>
+</body>
+</html>
