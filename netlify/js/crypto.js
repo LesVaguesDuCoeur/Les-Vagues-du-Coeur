@@ -1,0 +1,3 @@
+function hashPassword(pwd){return CryptoJS.SHA256(pwd).toString();}
+function encryptData(data,pwd){var k=hashPassword(pwd);var i=CryptoJS.lib.WordArray.random(16);var e=CryptoJS.AES.encrypt(JSON.stringify(data),CryptoJS.enc.Hex.parse(k),{iv:i,mode:CryptoJS.mode.CBC,padding:CryptoJS.pad.Pkcs7});return i.toString()+':'+e.toString();}
+function decryptData(encData,pwd){try{var p=encData.split(':');if(p.length!==2)return null;var i=CryptoJS.enc.Hex.parse(p[0]);var k=hashPassword(pwd);var d=CryptoJS.AES.decrypt(p[1],CryptoJS.enc.Hex.parse(k),{iv:i,mode:CryptoJS.mode.CBC,padding:CryptoJS.pad.Pkcs7});var s=d.toString(CryptoJS.enc.Utf8);if(!s)return null;return JSON.parse(s);}catch(e){return null;}}
