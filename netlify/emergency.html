@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contacts Urgence</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="manifest" href="manifest.json">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand font-bold text-xl"><i class="fas fa-heartbeat text-accent-danger"></i> Urgence</div>
+        <div class="flex gap-2">
+            <button id="panicBtn" class="btn btn-danger"><i class="fas fa-exclamation-triangle"></i> Alerter Niv 1</button>
+            <button id="logoutBtn" class="btn btn-secondary btn-icon"><i class="fas fa-sign-out-alt"></i></button>
+        </div>
+    </nav>
+
+    <main class="container fade-in">
+        <div id="emergencyMessageBanner" class="hidden mb-6 p-4 rounded bg-accent-danger bg-opacity-20 border border-accent-danger">
+            <!-- Injected by JS -->
+        </div>
+
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="m-0">Contacts à prévenir</h2>
+            <input type="text" id="contactSearch" placeholder="Rechercher..." class="w-64">
+        </div>
+
+        <div id="contactsList" class="contact-list">
+            <!-- Injected via JS -->
+        </div>
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/crypto.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/emergency.js"></script>
+</body>
+</html>
