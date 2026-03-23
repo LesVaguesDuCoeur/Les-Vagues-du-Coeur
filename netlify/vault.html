@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coffre-fort Personnel</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="manifest" href="manifest.json">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand font-bold text-xl"><i class="fas fa-vault"></i> Coffre-fort</div>
+        <button id="logoutBtn" class="btn btn-secondary btn-icon"><i class="fas fa-sign-out-alt"></i></button>
+    </nav>
+
+    <main class="container fade-in">
+        <div class="vault-layout">
+            <div class="vault-sidebar" id="vaultCategories">
+                <!-- Injected via JS -->
+            </div>
+            <div class="vault-main">
+                <h2 id="currentCategoryTitle" class="mb-4 m-0">Catégorie</h2>
+                <div id="vaultList" class="vault-content">
+                    <!-- Injected via JS -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/crypto.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/vault.js"></script>
+</body>
+</html>
