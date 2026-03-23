@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuration</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container flex items-center justify-center min-h-screen">
+        <div class="custom-modal-dialog setup-modal fade-in">
+            <h2 class="text-center mb-4">Configuration Initiale</h2>
+            <p class="text-muted text-center text-sm mb-6">Créez vos mots de passe. Conservez-les précieusement.</p>
+
+            <form id="setupForm" class="flex-col gap-4">
+                <div class="flex gap-4">
+                    <div class="form-group flex-1">
+                        <label>1. Mot de passe Admin (min 8 chars)</label>
+                        <input type="password" id="pwdAdmin" required minlength="8">
+                    </div>
+                    <div class="form-group flex-1">
+                        <label>Confirmation Admin</label>
+                        <input type="password" id="pwdAdminConfirm" required minlength="8">
+                    </div>
+                </div>
+
+                <div class="flex gap-4">
+                    <div class="form-group flex-1">
+                        <label>2. Mdp Urgence / Contacts (min 6 chars)</label>
+                        <input type="password" id="pwdEmergency" required minlength="6">
+                    </div>
+                    <div class="form-group flex-1">
+                        <label>Confirmation Urgence</label>
+                        <input type="password" id="pwdEmergencyConfirm" required minlength="6">
+                    </div>
+                </div>
+
+                <div class="flex gap-4">
+                    <div class="form-group flex-1">
+                        <label>3. Mdp Vault / Infos perso (min 6 chars)</label>
+                        <input type="password" id="pwdVault" required minlength="6">
+                    </div>
+                    <div class="form-group flex-1">
+                        <label>Confirmation Vault</label>
+                        <input type="password" id="pwdVaultConfirm" required minlength="6">
+                    </div>
+                </div>
+
+                <div class="flex gap-4">
+                    <div class="form-group flex-1">
+                        <label>4. Mdp Testament (min 6 chars)</label>
+                        <input type="password" id="pwdTestament" required minlength="6">
+                    </div>
+                    <div class="form-group flex-1">
+                        <label>Confirmation Testament</label>
+                        <input type="password" id="pwdTestamentConfirm" required minlength="6">
+                    </div>
+                </div>
+
+                <div class="form-group mt-2">
+                    <label>Message d'urgence (Optionnel)</label>
+                    <textarea id="msgEmergency" rows="3" placeholder="Message visible par les personnes utilisant le code d'urgence..."></textarea>
+                </div>
+
+                <div id="setupError" class="error-message text-center"></div>
+
+                <button type="submit" class="btn btn-primary justify-center mt-4">
+                    <span id="setupBtnText">Finaliser la configuration</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script src="/js/utils.js"></script>
+    <script src="/js/crypto.js"></script>
+    <script src="/js/api.js"></script>
+    <script src="/js/setup.js"></script>
+</body>
+</html>
