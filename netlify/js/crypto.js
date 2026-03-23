@@ -1,0 +1,3 @@
+function hashPassword(p){return CryptoJS.SHA256(p).toString(CryptoJS.enc.Hex);}
+function encryptData(d,k){if(!d)return"";var s=typeof d==="string"?d:JSON.stringify(d);return CryptoJS.AES.encrypt(s,k).toString();}
+function decryptData(e,k){if(!e)return null;try{var b=CryptoJS.AES.decrypt(e,k);var s=b.toString(CryptoJS.enc.Utf8);if(!s)return null;try{return JSON.parse(s);}catch(x){return s;}}catch(y){return null;}}

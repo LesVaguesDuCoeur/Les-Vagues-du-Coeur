@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vault</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="navbar-brand">Vault</div>
+    <div class="navbar-actions">
+      <button id="logout-btn" class="btn btn-secondary"><i class="fas fa-sign-out-alt"></i></button>
+    </div>
+  </nav>
+  <div class="container" style="max-width:1200px;">
+    <div class="vault-layout">
+      <div class="vault-sidebar" id="vault-sidebar"></div>
+      <div class="vault-content">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <h3 id="vault-cat-title">Catégorie</h3>
+        </div>
+        <div id="vault-items"></div>
+      </div>
+    </div>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/crypto.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/vault.js"></script>
+</body>
+</html>
