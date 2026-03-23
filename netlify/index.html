@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connexion - Coffre-Fort</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="manifest" href="manifest.json">
+</head>
+<body class="flex items-center justify-center min-h-screen">
+  <div class="modal-dialog">
+    <div id="loading" class="text-center">Chargement...</div>
+    <form id="login-form" class="hidden flex-col gap-4">
+      <div class="flex-col gap-2">
+        <div class="flex gap-2">
+          <input type="password" id="login-pwd" required>
+          <button type="button" class="action-btn" onclick="toggleVisibility(this, 'login-pwd')"><i class="fas fa-eye"></i></button>
+        </div>
+      </div>
+      <button type="submit" id="btn-login" class="w-full">Entrer</button>
+    </form>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script src="js/crypto.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/index.js"></script>
+</body>
+</html>

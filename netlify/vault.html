@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vault - Coffre-Fort</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="p-4">
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-xl font-bold text-accent"><i class="fas fa-lock"></i> Consultation Vault</h1>
+    <button class="action-btn" id="btn-logout" style="width:auto; padding:0 10px; color:var(--danger)"><i class="fas fa-sign-out-alt"></i> Quitter</button>
+  </div>
+  <div id="loading" class="text-center">Déchiffrement en cours...</div>
+
+  <div id="content-container" class="hidden flex flex-row-mobile-col gap-4 max-w-[1200px] mx-auto">
+    <div class="sidebar" id="vault-sidebar">
+    </div>
+    <div class="flex-1">
+      <h2 class="text-xl font-bold mb-4" id="vault-cat-title">Catégorie</h2>
+      <div id="vault-list" class="flex-col gap-2"></div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script src="js/crypto.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/vault.js"></script>
+</body>
+</html>
