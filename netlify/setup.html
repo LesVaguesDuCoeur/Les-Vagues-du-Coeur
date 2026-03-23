@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Setup - Coffre-Fort Numérique</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="flex items-center justify-center min-h-screen">
+  <div class="card w-64 max-w-md mx-auto my-8">
+    <h1 class="text-xl font-bold mb-6 text-center">Initialisation du Coffre-Fort</h1>
+    <div id="setupError" class="text-danger mb-4 hidden text-sm text-center"></div>
+    <form id="setupForm" class="flex-col gap-4">
+      <div class="form-group">
+        <label>Mot de passe Admin (min 8 caractères)</label>
+        <input type="password" id="adminPwd" class="form-control" required minlength="8">
+      </div>
+      <div class="form-group">
+        <label>Confirmer Admin</label>
+        <input type="password" id="adminPwdConfirm" class="form-control" required minlength="8">
+      </div>
+      <hr class="my-4 border-border">
+      <div class="form-group">
+        <label>Mot de passe Urgence (min 6 caractères)</label>
+        <input type="password" id="emergencyPwd" class="form-control" required minlength="6">
+      </div>
+      <div class="form-group">
+        <label>Confirmer Urgence</label>
+        <input type="password" id="emergencyPwdConfirm" class="form-control" required minlength="6">
+      </div>
+      <hr class="my-4 border-border">
+      <div class="form-group">
+        <label>Mot de passe Vault (min 6 caractères)</label>
+        <input type="password" id="vaultPwd" class="form-control" required minlength="6">
+      </div>
+      <div class="form-group">
+        <label>Confirmer Vault</label>
+        <input type="password" id="vaultPwdConfirm" class="form-control" required minlength="6">
+      </div>
+      <hr class="my-4 border-border">
+      <div class="form-group">
+        <label>Mot de passe Testament (min 6 caractères)</label>
+        <input type="password" id="testamentPwd" class="form-control" required minlength="6">
+      </div>
+      <div class="form-group">
+        <label>Confirmer Testament</label>
+        <input type="password" id="testamentPwdConfirm" class="form-control" required minlength="6">
+      </div>
+      <hr class="my-4 border-border">
+      <div class="form-group">
+        <label>Message d'urgence global (Optionnel)</label>
+        <textarea id="emergencyMessage" class="form-control" rows="3" placeholder="Instructions en cas d'urgence..."></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary w-full mt-4" id="submitSetupBtn">Initialiser le Coffre</button>
+    </form>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/crypto.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/setup.js"></script>
+</body>
+</html>
