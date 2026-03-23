@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configuration Initiale - Coffre-Fort</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+</head>
+<body class="flex items-center justify-center min-h-screen" style="min-height: 100vh;">
+  <div class="card max-w-md w-full">
+    <h1 class="text-2xl font-bold mb-4 text-center">Configuration Initiale</h1>
+    <form id="setupForm" class="flex-col gap-4">
+      <div class="flex-col gap-2">
+        <label>Mot de passe Admin (min 8)</label>
+        <input type="password" id="adminPwd" required minlength="8">
+        <input type="password" id="adminPwdConfirm" placeholder="Confirmer" required minlength="8">
+      </div>
+      <div class="flex-col gap-2">
+        <label>Mot de passe Urgence (min 6)</label>
+        <input type="password" id="urgPwd" required minlength="6">
+        <input type="password" id="urgPwdConfirm" placeholder="Confirmer" required minlength="6">
+      </div>
+      <div class="flex-col gap-2">
+        <label>Mot de passe Vault (min 6)</label>
+        <input type="password" id="vaultPwd" required minlength="6">
+        <input type="password" id="vaultPwdConfirm" placeholder="Confirmer" required minlength="6">
+      </div>
+      <div class="flex-col gap-2">
+        <label>Mot de passe Testament (min 6)</label>
+        <input type="password" id="testPwd" required minlength="6">
+        <input type="password" id="testPwdConfirm" placeholder="Confirmer" required minlength="6">
+      </div>
+      <div class="flex-col gap-2">
+        <label>Message d'urgence global</label>
+        <textarea id="urgMessage" rows="3" placeholder="Texte affiché en cas d'accès urgence..."></textarea>
+      </div>
+      <button type="submit" id="submitBtn" class="btn btn-primary w-full mt-4">Terminer l'installation</button>
+    </form>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/crypto.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/setup.js"></script>
+</body>
+</html>

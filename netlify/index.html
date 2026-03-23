@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coffre-Fort Numérique - Connexion</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+</head>
+<body class="flex items-center justify-center min-h-screen" style="min-height: 100vh;">
+  <div class="card max-w-md w-full text-center">
+    <h1 class="text-2xl font-bold mb-8"><i class="fas fa-shield-alt text-primary"></i> Coffre-Fort Numérique</h1>
+    <form id="loginForm" class="flex-col gap-4">
+      <div id="loadingIndicator" class="mb-4">Chargement...</div>
+      <div id="loginSection" class="hidden flex-col gap-4">
+        <input type="password" id="password" placeholder="Mot de passe d'accès" required>
+        <button type="submit" id="loginBtn" class="btn btn-primary w-full">Accéder</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="nameModal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <h2 class="text-xl font-bold mb-4">Identification requise</h2>
+      <p class="mb-4 text-muted">Veuillez saisir votre nom complet et le mot de passe d'urgence pour accéder à cette section.</p>
+      <form id="nameForm" class="flex-col gap-4">
+        <input type="text" id="visitorName" placeholder="Nom complet" required>
+        <input type="password" id="visitorEmergencyPwd" placeholder="Mot de passe d'urgence" required>
+        <div class="flex justify-between mt-4">
+          <button type="button" class="btn btn-danger" onclick="hideModal('nameModal')">Annuler</button>
+          <button type="submit" class="btn btn-primary">Valider</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/crypto.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/index.js"></script>
+</body>
+</html>
