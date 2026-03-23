@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vault - Coffre-Fort</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="flex flex-col min-h-screen">
+<nav class="flex items-center p-4 border-b justify-between">
+<h1 class="text-xl font-bold"><i class="fas fa-lock text-muted"></i> Vault</h1>
+<button id="logout-btn" class="p-2 border rounded" style="background:transparent;color:var(--text);border-color:var(--border);">Fermer</button>
+</nav>
+<main class="flex-1 p-4 flex flex-col items-center">
+<div class="w-full flex flex-col md:flex-row gap-4" style="max-width:1000px;">
+<aside class="sidebar flex flex-col gap-2 w-full md:w-64">
+<button class="vault-cat-btn active text-left p-2 rounded" data-cat="etat_civil"><i class="fas fa-user w-6"></i> État civil / Mon identité</button>
+<button class="vault-cat-btn text-left p-2 rounded" data-cat="identifiants"><i class="fas fa-key w-6"></i> Identifiants & MDP</button>
+<button class="vault-cat-btn text-left p-2 rounded" data-cat="cartes_bancaires"><i class="fas fa-credit-card w-6"></i> Cartes bancaires</button>
+<button class="vault-cat-btn text-left p-2 rounded" data-cat="documents"><i class="fas fa-id-card w-6"></i> Documents</button>
+<button class="vault-cat-btn text-left p-2 rounded" data-cat="comptes_bancaires"><i class="fas fa-university w-6"></i> Comptes bancaires</button>
+<button class="vault-cat-btn text-left p-2 rounded" data-cat="codes_pin"><i class="fas fa-lock w-6"></i> Codes & PIN</button>
+<button class="vault-cat-btn text-left p-2 rounded" data-cat="infos_medicales"><i class="fas fa-heartbeat w-6"></i> Infos médicales</button>
+<button class="vault-cat-btn text-left p-2 rounded" data-cat="assurances"><i class="fas fa-shield-alt w-6"></i> Assurances</button>
+<button class="vault-cat-btn text-left p-2 rounded" data-cat="licences"><i class="fas fa-barcode w-6"></i> Licences</button>
+<button class="vault-cat-btn text-left p-2 rounded" data-cat="notes"><i class="fas fa-sticky-note w-6"></i> Notes libres</button>
+</aside>
+<div class="vault-content flex-1 p-4 rounded" style="background:var(--bg-element);">
+<h3 id="current-vault-cat" class="mb-4">Catégorie</h3>
+<div id="vault-items-list" class="flex flex-col gap-2"></div>
+</div>
+</div>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/api.js"></script>
+<script src="js/crypto.js"></script>
+<script src="js/vault.js"></script>
+</body>
+</html>

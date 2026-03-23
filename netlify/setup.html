@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Setup - Coffre-Fort</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="flex items-center justify-center min-h-screen">
+<div class="login-box w-full max-w-md p-6 rounded" style="background:var(--bg-element);">
+<h2 class="text-center mb-6">Configuration initiale</h2>
+<div id="setup-form" class="flex flex-col gap-4">
+<div class="flex flex-col gap-2">
+<label class="text-sm font-bold">1. Mot de passe Admin (TOUT)</label>
+<input type="password" id="s-admin" class="p-3 rounded border" style="background:var(--bg);color:var(--text);border-color:var(--border);">
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-sm font-bold">2. Mot de passe Urgence (Contacts)</label>
+<input type="password" id="s-emergency" class="p-3 rounded border" style="background:var(--bg);color:var(--text);border-color:var(--border);">
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-sm font-bold">3. Mot de passe Vault (Documents)</label>
+<input type="password" id="s-vault" class="p-3 rounded border" style="background:var(--bg);color:var(--text);border-color:var(--border);">
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-sm font-bold">4. Mot de passe Testament (Volontés)</label>
+<input type="password" id="s-testament" class="p-3 rounded border" style="background:var(--bg);color:var(--text);border-color:var(--border);">
+</div>
+<button id="setup-btn" class="p-3 rounded text-xl font-bold mt-4" style="background:var(--accent);color:var(--text);border:none;cursor:pointer;">Initialiser le Coffre</button>
+</div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/api.js"></script>
+<script src="js/crypto.js"></script>
+<script src="js/setup.js"></script>
+</body>
+</html>
