@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - Coffre-Fort</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="p-4">
+  <div class="tabs" id="admin-tabs">
+    <div class="tab active" data-tab="tab-contacts"><i class="fas fa-users"></i> Contacts</div>
+    <div class="tab" data-tab="tab-vault"><i class="fas fa-lock"></i> Vault</div>
+    <div class="tab" data-tab="tab-testament"><i class="fas fa-scroll"></i> Testament</div>
+    <div class="tab" data-tab="tab-settings"><i class="fas fa-cog"></i> Paramètres</div>
+    <div class="tab" style="margin-left:auto; color:var(--danger)" id="btn-logout"><i class="fas fa-sign-out-alt"></i> Quitter</div>
+  </div>
+
+  <div id="loading" class="text-center mt-4">Chargement des données...</div>
+
+  <div id="content-container" class="hidden">
+    <div id="tab-contacts" class="tab-content">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold">Contacts d'urgence</h2>
+        <button id="btn-add-contact"><i class="fas fa-plus"></i> Ajouter</button>
+      </div>
+      <div id="contacts-list" class="flex-col gap-2"></div>
+    </div>
+
+    <div id="tab-vault" class="tab-content hidden flex flex-row-mobile-col gap-4">
+      <div class="sidebar" id="vault-sidebar">
+      </div>
+      <div class="flex-1">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-bold" id="vault-cat-title">Catégorie</h2>
+          <button id="btn-add-vault"><i class="fas fa-plus"></i> Ajouter</button>
+        </div>
+        <div id="vault-list" class="flex-col gap-2"></div>
+      </div>
+    </div>
+
+    <div id="tab-testament" class="tab-content hidden">
+      <h2 class="text-xl font-bold mb-4">Testament & État civil</h2>
+      <div class="flex-col gap-4 mb-4 bg-element p-4 rounded border">
+        <h3 class="font-bold border-b pb-2 mb-2">État Civil</h3>
+        <div class="flex gap-4 flex-row-mobile-col">
+          <div class="flex-1 flex-col gap-2"><label>Nom Complet</label><input type="text" id="test-nom" class="w-full"></div>
+          <div class="flex-1 flex-col gap-2"><label>Date de naissance</label><input type="date" id="test-dob" class="w-full"></div>
+        </div>
+        <div class="flex gap-4 flex-row-mobile-col">
+          <div class="flex-1 flex-col gap-2"><label>Lieu de naissance</label><input type="text" id="test-lieu" class="w-full"></div>
+          <div class="flex-1 flex-col gap-2"><label>Nationalité</label><input type="text" id="test-nat" class="w-full"></div>
+        </div>
+        <div class="flex-col gap-2"><label>Adresse complète</label><textarea id="test-addr" rows="2"></textarea></div>
+      </div>
+      <div class="flex justify-between items-center mb-2">
+        <h3 class="font-bold">Dernières Volontés</h3>
+        <div class="flex gap-2">
+          <button id="btn-save-testament"><i class="fas fa-save"></i> Sauvegarder</button>
+          <button id="btn-pdf-testament" class="btn-success"><i class="fas fa-file-pdf"></i> PDF</button>
+        </div>
+      </div>
+      <div id="editor-container"></div>
+    </div>
+
+    <div id="tab-settings" class="tab-content hidden">
+      <h2 class="text-xl font-bold mb-4">Paramètres</h2>
+      <div class="flex flex-col gap-6">
+        <div class="p-4 border rounded bg-element">
+          <h3 class="font-bold mb-4"><i class="fas fa-envelope"></i> Message d'Urgence</h3>
+          <p class="text-sm text-muted mb-2">Message affiché à la personne qui ouvre l'accès urgence.</p>
+          <textarea id="settings-msg" rows="4" class="mb-2"></textarea>
+          <button id="btn-save-msg">Enregistrer message</button>
+        </div>
+        <div class="p-4 border rounded bg-element">
+          <h3 class="font-bold mb-4"><i class="fas fa-key"></i> Mots de passe</h3>
+          <p class="text-sm text-muted mb-4 text-warning"><i class="fas fa-exclamation-triangle"></i> Changer un mot de passe va re-chiffrer toutes les données associées.</p>
+          <div class="flex gap-4 flex-row-mobile-col">
+            <button id="btn-change-admin" class="flex-1">Changer Admin</button>
+            <button id="btn-change-urgence" class="flex-1">Changer Urgence</button>
+            <button id="btn-change-vault" class="flex-1">Changer Vault</button>
+            <button id="btn-change-testament" class="flex-1">Changer Testament</button>
+          </div>
+        </div>
+        <div class="p-4 border rounded bg-element">
+          <h3 class="font-bold mb-4"><i class="fas fa-history"></i> Historique d'accès (50 derniers)</h3>
+          <div id="access-logs-list" class="flex flex-col gap-2 text-sm text-muted" style="max-height: 300px; overflow-y: auto;">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="js/crypto.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>
