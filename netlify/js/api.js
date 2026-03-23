@@ -6,7 +6,8 @@ async function postToApi(payload) {
     try {
         const response = await fetch(API_URL, {
             method: 'POST',
-            body: JSON.stringify(payload) // pas de headers CORS stricts pour Apps Script
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(payload)
         });
         return await response.json();
     } catch (e) {
