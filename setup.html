@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Installation — Utilitaire</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body style="padding: 2rem;">
+  <div style="max-width: 600px; margin: 0 auto; background: #141420; padding: 2rem; border-radius: 12px;">
+    <h2 style="margin-top: 0; color: #fff;">Initialisation</h2>
+    <p style="color: #aaa; margin-bottom: 2rem;">Veuillez définir les 4 mots de passe différents requis pour l'application.</p>
+
+    <div class="mb-4">
+      <label class="text-sm text-gray" style="display: block; margin-bottom: 4px;">Mot de passe ADMIN (min 8 chars)</label>
+      <input type="password" id="s-admin" class="input-field mb-2">
+      <input type="password" id="s-admin-c" class="input-field" placeholder="Confirmer">
+    </div>
+
+    <div class="mb-4">
+      <label class="text-sm text-gray" style="display: block; margin-bottom: 4px;">Mot de passe URGENCE (min 6 chars)</label>
+      <input type="password" id="s-urg" class="input-field mb-2">
+      <input type="password" id="s-urg-c" class="input-field" placeholder="Confirmer">
+    </div>
+
+    <div class="mb-4">
+      <label class="text-sm text-gray" style="display: block; margin-bottom: 4px;">Mot de passe VAULT (min 6 chars)</label>
+      <input type="password" id="s-vault" class="input-field mb-2">
+      <input type="password" id="s-vault-c" class="input-field" placeholder="Confirmer">
+    </div>
+
+    <div class="mb-4">
+      <label class="text-sm text-gray" style="display: block; margin-bottom: 4px;">Mot de passe TESTAMENT (min 6 chars)</label>
+      <input type="password" id="s-test" class="input-field mb-2">
+      <input type="password" id="s-test-c" class="input-field" placeholder="Confirmer">
+    </div>
+
+    <div class="mb-4">
+      <label class="text-sm text-gray" style="display: block; margin-bottom: 4px;">Message d'urgence (optionnel)</label>
+      <textarea id="s-msg" class="input-field" rows="4" style="resize: vertical;"></textarea>
+    </div>
+
+    <button id="btn-setup" class="btn btn-primary w-full mt-4" style="padding: 14px;">Terminer l'installation</button>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script src="js/crypto.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/setup.js"></script>
+</body>
+</html>
