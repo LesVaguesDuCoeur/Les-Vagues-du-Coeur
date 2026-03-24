@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Urgence — Utilitaire</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body style="padding: 1rem; max-width: 800px; margin: 0 auto;">
+  <div class="flex justify-between items-center mb-6">
+    <h2 style="margin: 0; color: #fff;">Contacts d'Urgence</h2>
+    <div class="flex gap-4">
+      <button id="btn-panic" class="btn btn-danger"><i class="fas fa-exclamation-triangle" style="margin-right:8px;"></i> Alerter Niveau 1</button>
+      <button id="btn-logout-u" class="btn btn-secondary"><i class="fas fa-sign-out-alt"></i></button>
+    </div>
+  </div>
+
+  <div id="msg-container" class="bg-card p-4 rounded-lg mb-6 hidden" style="border-left: 4px solid #e63946;">
+    <h4 style="margin-top: 0; margin-bottom: 8px; color: #e63946;">Message du titulaire</h4>
+    <div id="msg-content" style="color: #ccc; white-space: pre-wrap;"></div>
+  </div>
+
+  <input type="text" id="search-urg" class="input-field mb-6" placeholder="Rechercher un contact d'urgence...">
+  <div id="list-urg-contacts"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script src="js/crypto.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/emergency.js"></script>
+</body>
+</html>
