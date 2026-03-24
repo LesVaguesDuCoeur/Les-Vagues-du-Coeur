@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Testament — Utilitaire</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body style="padding: 2rem; max-width: 900px; margin: 0 auto;">
+  <div class="flex justify-between items-center mb-6">
+    <h2 style="margin: 0; color: #fff;">Testament — Dernières volontés</h2>
+    <div class="flex gap-4">
+      <button id="btn-pdf-t" class="btn btn-secondary"><i class="fas fa-file-pdf" style="margin-right:8px;"></i> Exporter PDF</button>
+      <button id="btn-logout-t" class="btn btn-danger"><i class="fas fa-lock" style="margin-right:8px;"></i> Quitter</button>
+    </div>
+  </div>
+
+  <div class="bg-card p-4 rounded-lg mb-6">
+    <h3 style="margin-top: 0; margin-bottom: 1rem; color: #ccc;">État civil de l'émetteur</h3>
+    <div class="grid grid-cols-2 gap-4">
+      <div><span class="text-sm text-gray">Nom :</span> <span id="r-nom" style="font-weight: 600;"></span></div>
+      <div><span class="text-sm text-gray">Prénom :</span> <span id="r-prenom" style="font-weight: 600;"></span></div>
+      <div><span class="text-sm text-gray">Date de naissance :</span> <span id="r-date" style="font-weight: 600;"></span></div>
+      <div><span class="text-sm text-gray">Lieu :</span> <span id="r-lieu" style="font-weight: 600;"></span></div>
+      <div><span class="text-sm text-gray">Nationalité :</span> <span id="r-nat" style="font-weight: 600;"></span></div>
+      <div><span class="text-sm text-gray">Adresse :</span> <span id="r-addr" style="font-weight: 600;"></span></div>
+    </div>
+  </div>
+
+  <div class="bg-card p-6 rounded-lg mb-6">
+    <div id="r-content" style="color: #fff; line-height: 1.6;"></div>
+  </div>
+
+  <div class="text-sm text-gray text-center mb-6">
+    Dernière modification : <span id="r-mod"></span>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="js/crypto.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/testament.js"></script>
+</body>
+</html>
