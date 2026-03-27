@@ -1,0 +1,72 @@
+[
+  {
+    "id": "recette_1",
+    "title": "Flocons avoine banane poêlée",
+    "category": "Petit Dejeuner",
+    "time": "5 min",
+    "ingredients": [
+      "Flocons avoine",
+      "Lait amande",
+      "Banane"
+    ],
+    "steps": [
+      "Faire chauffer le lait d'amande.",
+      "Ajouter les flocons d'avoine.",
+      "Poêler les bananes à côté.",
+      "Mélanger et servir."
+    ],
+    "tags": ["vegetarien", "rapide"]
+  },
+  {
+    "id": "recette_2",
+    "title": "Flocons avoine compote",
+    "category": "Petit Dejeuner",
+    "time": "5 min",
+    "ingredients": [
+      "Flocons avoine",
+      "Lait amande",
+      "Compote pomme"
+    ],
+    "steps": [
+      "Mélanger les flocons d'avoine et le lait.",
+      "Ajouter la compote de pomme.",
+      "Déguster."
+    ],
+    "tags": ["vegetarien", "leger"]
+  },
+  {
+    "id": "recette_3",
+    "title": "Overnight oats banane",
+    "category": "Petit Dejeuner",
+    "time": "0 min",
+    "ingredients": [
+      "Flocons avoine",
+      "Yaourt 0%",
+      "Banane"
+    ],
+    "steps": [
+      "Mélanger les ingrédients dans un bocal.",
+      "Laisser reposer au frais toute la nuit.",
+      "Manger le lendemain matin."
+    ],
+    "tags": ["sans_cuisson", "frais"]
+  },
+  {
+    "id": "recette_4",
+    "title": "Porridge banane cannelle",
+    "category": "Petit Dejeuner",
+    "time": "5 min",
+    "ingredients": [
+      "Flocons",
+      "Lait",
+      "Banane",
+      "Cannelle"
+    ],
+    "steps": [
+      "Faire cuire les flocons dans le lait.",
+      "Ajouter la banane écrasée.",
+      "Saupoudrer de cannelle."
+    ],
+    "tags": ["chaud", "epice"]
+  }
+]
