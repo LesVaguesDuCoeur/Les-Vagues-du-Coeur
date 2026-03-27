@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Vault - Utilitaire</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="manifest" href="manifest.json">
+</head>
+<body>
+<div id="modal-identity" class="modal-overlay">
+<div class="modal-dialog">
+<h3><i class="fas fa-id-card"></i> Identité Requise</h3>
+<p style="margin-bottom:16px;color:var(--text-sec);">Pour accéder au Vault, veuillez confirmer votre identité.</p>
+<form id="form-identity">
+<div class="input-group"><label>Nom Complet</label><input type="text" id="id-nom" required></div>
+<div class="input-group"><label>Code Urgence</label><input type="password" id="id-code" required></div>
+<button type="submit" class="btn btn-primary btn-block">Accéder</button>
+<div id="id-error" style="color:var(--danger);margin-top:8px;display:none;"></div>
+</form>
+</div>
+</div>
+<div id="vault-content" style="display:none;height:100vh;flex-direction:column;">
+<div class="top-bar" style="padding:16px 32px;background:var(--bg-card);border-bottom:1px solid var(--border);margin-bottom:0;">
+<h2><i class="fas fa-vault" style="color:var(--accent);margin-right:8px;"></i> Mon Vault</h2>
+<button class="btn btn-secondary" id="btn-logout"><i class="fas fa-sign-out-alt"></i> Quitter</button>
+</div>
+<div class="vault-layout" style="padding:24px;flex:1;">
+<div class="vault-sidebar" id="cat-sidebar"></div>
+<div class="vault-main" id="items-grid" class="grid-cards"></div>
+</div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<script src="js/api.js"></script>
+<script src="js/crypto.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/vault.js"></script>
+</body>
+</html>
