@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Utilitaire</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <div class="admin-header">
+      <div class="logo-text">Administration</div>
+      <button id="btn-logout" class="danger" style="width:auto;">Déconnexion</button>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="contacts">Contacts</button>
+      <button class="tab-btn" data-tab="vault">Vault</button>
+      <button class="tab-btn" data-tab="testament">Testament</button>
+      <button class="tab-btn" data-tab="settings">Paramètres</button>
+    </div>
+
+    <div id="tab-contacts" class="tab-content">
+      <div class="card">
+        <h3>Nouveau Contact</h3>
+        <input type="text" id="c-nom" placeholder="Nom Complet (obligatoire)">
+        <select id="c-rel">
+          <option value="">-- Relation --</option>
+          <option value="Mère">Mère</option>
+          <option value="Père">Père</option>
+          <option value="Frère">Frère</option>
+          <option value="Sœur">Sœur</option>
+          <option value="Demi-frère">Demi-frère</option>
+          <option value="Demi-sœur">Demi-sœur</option>
+          <option value="Grand-père">Grand-père</option>
+          <option value="Grand-mère">Grand-mère</option>
+          <option value="Oncle">Oncle</option>
+          <option value="Tante">Tante</option>
+          <option value="Cousin(e)">Cousin(e)</option>
+          <option value="Fils">Fils</option>
+          <option value="Fille">Fille</option>
+          <option value="Conjoint(e)">Conjoint(e)</option>
+          <option value="Ex-conjoint(e)">Ex-conjoint(e)</option>
+          <option value="Ami(e) proche">Ami(e) proche</option>
+          <option value="Meilleur(e) ami(e)">Meilleur(e) ami(e)</option>
+          <option value="Connaissance">Connaissance</option>
+          <option value="Collègue">Collègue</option>
+          <option value="Patron/Manager">Patron/Manager</option>
+          <option value="Associé(e)">Associé(e)</option>
+          <option value="Client">Client</option>
+          <option value="Médecin">Médecin</option>
+          <option value="Avocat">Avocat</option>
+          <option value="Notaire">Notaire</option>
+          <option value="Comptable">Comptable</option>
+          <option value="Banquier">Banquier</option>
+          <option value="Assureur">Assureur</option>
+          <option value="Voisin(e)">Voisin(e)</option>
+          <option value="Propriétaire/Bailleur">Propriétaire/Bailleur</option>
+          <option value="Professeur">Professeur</option>
+          <option value="Famille éloignée">Famille éloignée</option>
+          <option value="Autre">Autre</option>
+        </select>
+        <input type="text" id="c-rel-autre" placeholder="Précisez la relation..." class="hidden">
+
+        <label>Importance</label>
+        <div class="importance-selector">
+          <label class="imp-btn" data-value="1">
+            <input type="radio" name="c-imp" value="1">
+            <span>1</span>
+          </label>
+          <label class="imp-btn" data-value="2">
+            <input type="radio" name="c-imp" value="2">
+            <span>2</span>
+          </label>
+          <label class="imp-btn" data-value="3">
+            <input type="radio" name="c-imp" value="3" checked>
+            <span>3</span>
+          </label>
+          <label class="imp-btn" data-value="4">
+            <input type="radio" name="c-imp" value="4">
+            <span>4</span>
+          </label>
+          <label class="imp-btn" data-value="5">
+            <input type="radio" name="c-imp" value="5">
+            <span>5</span>
+          </label>
+        </div>
+
+        <input type="tel" id="c-tel" placeholder="Téléphone">
+        <input type="email" id="c-mail" placeholder="Email">
+        <input type="text" id="c-wa" placeholder="WhatsApp (numéro sans +)">
+        <input type="text" id="c-tg" placeholder="Telegram (username sans @)">
+        <input type="text" id="c-snap" placeholder="Snapchat (username)">
+        <input type="text" id="c-ig" placeholder="Instagram (username sans @)">
+        <input type="text" id="c-msg" placeholder="Messenger (username)">
+        <textarea id="c-notes" placeholder="Notes..." rows="2"></textarea>
+
+        <button id="btn-save-contact" class="success mt-3">Ajouter</button>
+      </div>
+
+      <div id="contacts-list"></div>
+    </div>
+
+    <div id="tab-vault" class="tab-content hidden vault-layout">
+      <div class="vault-sidebar" id="vault-sidebar">
+      </div>
+      <div class="vault-content">
+        <div class="card">
+          <div class="d-flex justify-between align-center mb-4">
+            <h3 id="vault-cat-title">État civil / Mon identité</h3>
+            <button id="btn-add-vault-item" class="success" style="width:auto;"><i class="fas fa-plus"></i></button>
+          </div>
+          <div id="vault-items-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-testament" class="tab-content hidden">
+      <div class="card mb-4">
+        <h3>État Civil</h3>
+        <div class="d-flex gap-3 mb-3">
+          <input type="text" id="t-nom" placeholder="Nom">
+          <input type="text" id="t-prenom" placeholder="Prénom">
+        </div>
+        <div class="d-flex gap-3 mb-3">
+          <input type="text" id="t-dateN" placeholder="Date de naissance (JJ/MM/AAAA)">
+          <input type="text" id="t-lieuN" placeholder="Lieu de naissance">
+        </div>
+        <div class="d-flex gap-3 mb-3">
+          <input type="text" id="t-nat" placeholder="Nationalité">
+        </div>
+        <textarea id="t-adresse" placeholder="Adresse complète" rows="2"></textarea>
+      </div>
+
+      <div class="card">
+        <div class="d-flex justify-between align-center mb-3">
+          <h3>Dernières Volontés</h3>
+          <span id="t-status" style="color:#aaa; font-size:0.85rem;"></span>
+        </div>
+        <div id="quill-container" style="height:300px; margin-bottom:16px;"></div>
+        <div class="d-flex gap-3">
+          <button id="btn-save-test" class="success">Sauvegarder</button>
+          <button id="btn-pdf-test" class="info">Générer PDF</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-settings" class="tab-content hidden">
+      <div class="card mb-4">
+        <h3>Modification Mot de Passe</h3>
+        <select id="s-pwd-type">
+          <option value="admin">Admin</option>
+          <option value="urg">Urgence</option>
+          <option value="vault">Vault</option>
+          <option value="test">Testament</option>
+        </select>
+        <input type="password" id="s-pwd-new" placeholder="Nouveau">
+        <input type="password" id="s-pwd-conf" placeholder="Confirmer">
+        <button id="btn-change-pwd" class="warning mt-2">Mettre à jour</button>
+      </div>
+
+      <div class="card mb-4">
+        <h3>Message d'urgence global</h3>
+        <textarea id="s-msg-urg" rows="4"></textarea>
+        <button id="btn-save-msg" class="success mt-2">Sauvegarder</button>
+      </div>
+
+      <div class="card">
+        <div class="d-flex justify-between align-center mb-3">
+          <h3>Historique d'accès</h3>
+          <button id="btn-clear-logs" class="danger" style="width:auto; padding:6px 12px; font-size:0.85rem;"><i class="fas fa-trash"></i></button>
+        </div>
+        <div id="logs-list" style="max-height:400px; overflow-y:auto;"></div>
+      </div>
+    </div>
+  </div>
+  <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/crypto.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>
