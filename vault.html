@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Utilitaire - Vault</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+</head>
+<body>
+  <div class="layout-wrapper" id="app" style="display:none;">
+    <aside class="sidebar" id="sb" style="display:flex;flex-direction:column;gap:5px;">
+      <h2 style="font-size:1.2rem;text-align:center;margin-bottom:20px;color:#fca311;"><i class="fas fa-lock"></i> Vault</h2>
+    </aside>
+    <main class="main-content">
+      <h2 id="c-t" style="margin-bottom:20px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:10px;">Catégorie</h2>
+      <div class="vault-grid" id="v-l"></div>
+    </main>
+  </div>
+  <script src="js/api.js"></script>
+  <script src="js/crypto.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/vault.js"></script>
+</body>
+</html>
