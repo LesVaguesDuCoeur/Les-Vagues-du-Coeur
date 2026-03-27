@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Urgence - Utilitaire</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="manifest" href="manifest.json">
+</head>
+<body>
+<div class="top-bar" style="padding:16px 32px;background:var(--bg-card);border-bottom:1px solid var(--border);margin-bottom:0;">
+<h2><i class="fas fa-kit-medical" style="color:var(--danger);margin-right:8px;"></i> Contacts d'Urgence</h2>
+<button class="btn btn-secondary" id="btn-logout"><i class="fas fa-sign-out-alt"></i> Quitter</button>
+</div>
+<div class="main-content" style="max-width:1200px;margin:0 auto;padding-top:24px;">
+<div id="em-msg-container" class="card" style="border-left:4px solid var(--danger);margin-bottom:24px;display:none;">
+<h3 style="color:var(--danger);margin-bottom:8px;"><i class="fas fa-triangle-exclamation"></i> Informations Importantes</h3>
+<p id="em-msg-content" style="white-space:pre-wrap;"></p>
+</div>
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:16px;">
+<input type="text" id="search-input" placeholder="Rechercher un contact..." style="max-width:300px;">
+<button class="btn btn-danger" id="btn-panic"><i class="fas fa-bell"></i> Panique Niveau 1</button>
+</div>
+<div class="grid-cards" id="contacts-grid"></div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<script src="js/api.js"></script>
+<script src="js/crypto.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/emergency.js"></script>
+</body>
+</html>

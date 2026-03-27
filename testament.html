@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Testament - Utilitaire</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="manifest" href="manifest.json">
+</head>
+<body>
+<div id="modal-identity" class="modal-overlay">
+<div class="modal-dialog">
+<h3><i class="fas fa-id-card"></i> Identité Requise</h3>
+<p style="margin-bottom:16px;color:var(--text-sec);">Pour accéder au Testament, veuillez confirmer votre identité.</p>
+<form id="form-identity">
+<div class="input-group"><label>Nom Complet</label><input type="text" id="id-nom" required></div>
+<div class="input-group"><label>Code Urgence</label><input type="password" id="id-code" required></div>
+<button type="submit" class="btn btn-primary btn-block">Accéder</button>
+<div id="id-error" style="color:var(--danger);margin-top:8px;display:none;"></div>
+</form>
+</div>
+</div>
+<div id="testament-content" style="display:none;height:100vh;flex-direction:column;">
+<div class="top-bar" style="padding:16px 32px;background:var(--bg-card);border-bottom:1px solid var(--border);margin-bottom:0;">
+<h2><i class="fas fa-scroll" style="color:var(--warning);margin-right:8px;"></i> Testament</h2>
+<div>
+<button class="btn btn-secondary" id="btn-pdf"><i class="fas fa-file-pdf"></i> Générer PDF</button>
+<button class="btn btn-secondary" id="btn-logout" style="margin-left:8px;"><i class="fas fa-sign-out-alt"></i> Quitter</button>
+</div>
+</div>
+<div class="main-content" style="max-width:1000px;margin:0 auto;width:100%;padding-top:32px;">
+<div class="card" style="background:#fff;color:#000;min-height:60vh;border-radius:var(--radius-sm);padding:40px;box-shadow:0 4px 12px rgba(0,0,0,0.5);">
+<div id="content-display" style="font-family:sans-serif;line-height:1.6;"></div>
+</div>
+</div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="js/api.js"></script>
+<script src="js/crypto.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/testament.js"></script>
+</body>
+</html>

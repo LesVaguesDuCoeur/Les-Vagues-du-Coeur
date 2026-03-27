@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Admin - Utilitaire</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<link rel="manifest" href="manifest.json">
+</head>
+<body>
+<div class="layout-admin">
+<div class="sidebar">
+<div class="sidebar-header">
+<i class="fas fa-shield-halved" style="color:var(--accent);font-size:24px;"></i>
+<h2 style="font-size:18px;">Panneau Admin</h2>
+</div>
+<div class="sidebar-nav">
+<div class="nav-item active" data-target="tab-contacts"><i class="fas fa-users"></i> Contacts d'Urgence</div>
+<div class="nav-item" data-target="tab-vault"><i class="fas fa-vault"></i> Vault</div>
+<div class="nav-item" data-target="tab-testament"><i class="fas fa-scroll"></i> Testament</div>
+<div class="nav-item" data-target="tab-settings"><i class="fas fa-cog"></i> Paramètres</div>
+</div>
+<div style="padding:16px;">
+<button class="btn btn-secondary btn-block" id="btn-logout"><i class="fas fa-sign-out-alt"></i> Quitter</button>
+</div>
+</div>
+<div class="main-content">
+<div class="top-bar">
+<h2><i class="fas fa-lock" id="global-lock" style="color:var(--success);margin-right:8px;"></i> <span id="view-title">Contacts d'Urgence</span></h2>
+<button class="btn btn-primary" id="btn-add-item"><i class="fas fa-plus"></i> Ajouter</button>
+</div>
+<div id="tab-contacts" class="tab-pane active">
+<div class="grid-cards" id="contacts-grid"></div>
+</div>
+<div id="tab-vault" class="tab-pane">
+<div class="vault-layout">
+<div class="vault-sidebar" id="vault-cat-sidebar"></div>
+<div class="vault-main" id="vault-items-grid"></div>
+</div>
+</div>
+<div id="tab-testament" class="tab-pane">
+<div class="card">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+<p style="color:var(--text-sec);"><i class="fas fa-info-circle"></i> Sauvegarde automatique toutes les 30s.</p>
+<button class="btn btn-secondary" id="btn-pdf"><i class="fas fa-file-pdf"></i> Générer PDF</button>
+</div>
+<div class="quill-container" id="editor"></div>
+</div>
+</div>
+<div id="tab-settings" class="tab-pane">
+<div class="grid-cards">
+<div class="card">
+<h3><i class="fas fa-key"></i> Changer les codes</h3>
+<form id="form-change-codes" style="margin-top:16px;">
+<div class="input-group"><label>Nouveau Code Admin (optionnel, ≥8)</label><input type="password" id="new-admin"></div>
+<div class="input-group"><label>Nouveau Code Urgence (optionnel, ≥6)</label><input type="password" id="new-em"></div>
+<div class="input-group"><label>Nouveau Code Vault (optionnel, ≥6)</label><input type="password" id="new-vault"></div>
+<div class="input-group"><label>Nouveau Code Testament (optionnel, ≥6)</label><input type="password" id="new-test"></div>
+<div class="input-group"><label>Message d'urgence global</label><textarea id="settings-em-msg" rows="3"></textarea></div>
+<button type="submit" class="btn btn-primary btn-block">Mettre à jour & Re-chiffrer</button>
+</form>
+</div>
+<div class="card">
+<h3><i class="fas fa-history"></i> Historique d'accès</h3>
+<div style="max-height:300px;overflow-y:auto;margin-top:16px;background:var(--bg-input);border-radius:var(--radius-sm);padding:8px;" id="logs-container"></div>
+<div style="margin-top:24px;border-top:1px solid var(--border);padding-top:16px;">
+<h3><i class="fas fa-vial"></i> Mode Test Email</h3>
+<p style="font-size:12px;color:var(--text-sec);margin-bottom:8px;">Envoie un email sans créer de log.</p>
+<button class="btn btn-secondary btn-block" id="btn-test-mail">Tester les alertes email</button>
+</div>
+<div style="margin-top:24px;border-top:1px solid var(--border);padding-top:16px;">
+<h3 style="color:var(--danger);"><i class="fas fa-triangle-exclamation"></i> Zone de Danger</h3>
+<p style="font-size:12px;color:var(--text-sec);margin-bottom:8px;">Cette action est irréversible.</p>
+<button class="btn btn-danger btn-block" id="btn-erase-all">Effacer TOUTES les données</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="js/api.js"></script>
+<script src="js/crypto.js"></script>
+<script src="js/utils.js"></script>
+<div id="modal-contact" class="modal-overlay">
+<div class="modal-dialog" style="max-height:90vh;">
+<h3><i class="fas fa-user"></i> <span id="contact-modal-title">Nouveau Contact</span></h3>
+<form id="form-contact" style="margin-top:16px;">
+<div class="input-group">
+<label>Nom complet</label>
+<input type="text" id="contact-name" required>
+</div>
+<div class="input-group">
+<label>Relation</label>
+<select id="contact-rel">
+<option value="Mère">Mère</option><option value="Père">Père</option><option value="Frère">Frère</option><option value="Sœur">Sœur</option>
+<option value="Demi-frère">Demi-frère</option><option value="Demi-sœur">Demi-sœur</option><option value="Grand-père">Grand-père</option>
+<option value="Grand-mère">Grand-mère</option><option value="Oncle">Oncle</option><option value="Tante">Tante</option><option value="Cousin(e)">Cousin(e)</option>
+<option value="Fils">Fils</option><option value="Fille">Fille</option><option value="Conjoint(e)">Conjoint(e)</option><option value="Ex-conjoint(e)">Ex-conjoint(e)</option>
+<option value="Ami(e) proche">Ami(e) proche</option><option value="Meilleur(e) ami(e)">Meilleur(e) ami(e)</option><option value="Connaissance">Connaissance</option>
+<option value="Collègue">Collègue</option><option value="Patron/Manager">Patron/Manager</option><option value="Associé(e)">Associé(e)</option>
+<option value="Client">Client</option><option value="Médecin">Médecin</option><option value="Avocat">Avocat</option><option value="Notaire">Notaire</option>
+<option value="Comptable">Comptable</option><option value="Banquier">Banquier</option><option value="Assureur">Assureur</option>
+<option value="Voisin(e)">Voisin(e)</option><option value="Propriétaire/Bailleur">Propriétaire/Bailleur</option><option value="Professeur">Professeur</option>
+<option value="Famille éloignée">Famille éloignée</option><option value="Autre">Autre</option>
+</select>
+<input type="text" id="contact-rel-other" placeholder="Préciser..." style="display:none;margin-top:8px;">
+</div>
+<div class="input-group">
+<label>Importance</label>
+<div class="imp-selector">
+<button type="button" class="imp-btn" data-val="1"></button>
+<button type="button" class="imp-btn" data-val="2"></button>
+<button type="button" class="imp-btn" data-val="3"></button>
+<button type="button" class="imp-btn" data-val="4"></button>
+<button type="button" class="imp-btn active" data-val="5"></button>
+</div>
+<input type="hidden" id="contact-imp" value="5">
+</div>
+<div class="input-group"><label>Téléphone</label><input type="tel" id="contact-tel"></div>
+<div class="input-group"><label>Email</label><input type="email" id="contact-mail"></div>
+<div class="input-group"><label>WhatsApp</label><input type="text" id="contact-wa"></div>
+<div class="input-group"><label>Telegram (pseudo)</label><input type="text" id="contact-tg"></div>
+<div class="input-group"><label>Snapchat (pseudo)</label><input type="text" id="contact-snap"></div>
+<div class="input-group"><label>Instagram (pseudo)</label><input type="text" id="contact-ig"></div>
+<div class="input-group"><label>Messenger (pseudo/id)</label><input type="text" id="contact-msg"></div>
+<div class="modal-actions">
+<button type="button" class="btn btn-secondary" onclick="closeModal('modal-contact')">Annuler</button>
+<button type="submit" class="btn btn-primary">Enregistrer</button>
+</div>
+</form>
+</div>
+</div>
+<div id="modal-vault" class="modal-overlay">
+<div class="modal-dialog" style="max-height:90vh;">
+<h3><i class="fas fa-box"></i> <span id="vault-modal-title">Nouvel Élément Vault</span></h3>
+<form id="form-vault" style="margin-top:16px;">
+<div class="input-group">
+<label>Catégorie</label>
+<select id="vault-cat">
+<option value="État civil / Mon identité">État civil / Mon identité</option>
+<option value="Identifiants & MDP">Identifiants & MDP</option>
+<option value="Cartes bancaires">Cartes bancaires</option>
+<option value="Documents">Documents</option>
+<option value="Comptes bancaires">Comptes bancaires</option>
+<option value="Codes & PIN">Codes & PIN</option>
+<option value="Infos médicales">Infos médicales</option>
+<option value="Assurances">Assurances</option>
+<option value="Licences">Licences</option>
+<option value="Notes libres">Notes libres</option>
+</select>
+</div>
+<div class="input-group">
+<label>Titre</label>
+<input type="text" id="vault-title" required>
+</div>
+<div id="vault-dynamic-fields"></div>
+<div style="margin-top:16px;background:rgba(255,255,255,0.05);padding:16px;border-radius:var(--radius-sm);">
+<label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+<input type="checkbox" id="vault-has-lock" style="width:auto;">
+<strong>Verrouillage individuel</strong>
+</label>
+<div id="vault-lock-config" style="display:none;margin-top:12px;">
+<div class="input-group"><label>Prénom de sécurité</label><input type="text" id="vault-lock-name"></div>
+<div class="input-group"><label>Mot de passe spécifique</label><input type="password" id="vault-lock-pwd"></div>
+<p style="font-size:12px;color:var(--text-sec);"><i class="fas fa-info-circle"></i> Le nom et le mot de passe combinés serviront de clé de déchiffrement pour ce document uniquement.</p>
+</div>
+</div>
+<div class="modal-actions">
+<button type="button" class="btn btn-secondary" onclick="closeModal('modal-vault')">Annuler</button>
+<button type="submit" class="btn btn-primary">Enregistrer</button>
+</div>
+</form>
+</div>
+</div>
+<script src="js/admin.js"></script>
+</body>
+</html>
