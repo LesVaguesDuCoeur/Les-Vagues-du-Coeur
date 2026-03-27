@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Utilitaire</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="manifest" href="manifest.json">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+</head>
+<body>
+  <div class="container" style="display:flex; flex-direction:column; justify-content:center; min-height:100vh;">
+    <div class="card" style="max-width:400px; margin:0 auto; width:100%;">
+      <div id="login-box">
+        <div class="input-with-icon">
+          <input type="password" id="login-password" placeholder="..." autocomplete="off">
+          <button type="button" class="input-icon-btn" onclick="toggleVisibility(this, 'login-password')">
+            <i class="fas fa-eye"></i>
+          </button>
+        </div>
+        <button id="btn-login" class="mt-3">Entrer</button>
+      </div>
+      <div id="loading-box" class="hidden text-center">
+        <p>Veuillez patienter...</p>
+      </div>
+    </div>
+  </div>
+  <script src="js/api.js"></script>
+  <script src="js/crypto.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/index.js"></script>
+</body>
+</html>

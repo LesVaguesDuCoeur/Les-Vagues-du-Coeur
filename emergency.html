@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Utilitaire</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <div class="admin-header" style="background:#e63946;">
+      <div class="logo-text">Urgence / Contacts</div>
+      <button id="btn-logout" class="danger" style="width:auto; background:rgba(0,0,0,0.2);">Quitter</button>
+    </div>
+
+    <div class="card mb-4" id="msg-box" style="display:none; border-left:4px solid #fca311;">
+      <h4 style="color:#fca311; margin-bottom:8px;"><i class="fas fa-exclamation-triangle"></i> Message Important</h4>
+      <p id="urg-msg-txt" style="white-space:pre-wrap;"></p>
+    </div>
+
+    <div class="card mb-4 text-center">
+      <button id="btn-panic" class="danger" style="font-size:1.2rem; padding:16px; border-radius:12px;">
+        <i class="fas fa-bell"></i> ALERTER NIVEAU 1
+      </button>
+      <p style="color:#aaa; font-size:0.85rem; margin-top:8px;">Envoie un email immédiat avec votre position.</p>
+    </div>
+
+    <div class="card">
+      <input type="text" id="search-contact" placeholder="Rechercher un contact..." class="mb-4">
+      <div id="contacts-list"></div>
+    </div>
+  </div>
+  <script src="js/api.js"></script>
+  <script src="js/crypto.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/emergency.js"></script>
+</body>
+</html>

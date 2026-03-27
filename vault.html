@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Utilitaire</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <div class="admin-header" style="background:#457b9d;">
+      <div class="logo-text"><i class="fas fa-lock"></i> Vault</div>
+      <button id="btn-logout" class="danger" style="width:auto; background:rgba(0,0,0,0.2);">Quitter</button>
+    </div>
+
+    <div class="vault-layout">
+      <div class="vault-sidebar" id="vault-sidebar">
+      </div>
+      <div class="vault-content">
+        <div class="card">
+          <h3 id="vault-cat-title" class="mb-4">État civil / Mon identité</h3>
+          <div id="vault-items-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="js/api.js"></script>
+  <script src="js/crypto.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/vault.js"></script>
+</body>
+</html>
