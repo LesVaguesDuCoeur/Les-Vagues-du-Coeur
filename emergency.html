@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Utilitaire - Contacts</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+</head>
+<body>
+  <div class="container" id="app" style="display:none;padding-top:20px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <h2 style="color:#457b9d;margin:0;"><i class="fas fa-address-book"></i> Urgence</h2>
+      <button id="p-a" class="btn-danger"><i class="fas fa-exclamation-triangle"></i> Alerter Niveau 1</button>
+    </div>
+    <div id="e-m-c" class="card hidden" style="border-left:4px solid #e63946;">
+      <h3 style="color:#e63946;margin-top:0;">Message d'urgence</h3>
+      <p id="e-m" style="white-space:pre-wrap;"></p>
+    </div>
+    <div style="margin-bottom:20px;">
+      <input type="text" id="s-i" placeholder="Rechercher un contact..." style="background:#1a1a2e;border:1px solid rgba(255,255,255,0.1);padding:12px;width:100%;border-radius:8px;color:#fff;">
+    </div>
+    <div id="c-l"></div>
+  </div>
+  <script src="js/api.js"></script>
+  <script src="js/crypto.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/emergency.js"></script>
+</body>
+</html>
