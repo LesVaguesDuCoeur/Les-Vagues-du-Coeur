@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Utilitaire</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="full-center" id="loader-box">
+    <div class="card card-form text-center">
+      <i class="fas fa-spinner fa-spin fa-3x mb-3" style="color:var(--accent);"></i>
+      <h2>Chargement...</h2>
+    </div>
+  </div>
+  <div class="full-center hidden" id="main-content-box">
+    <div class="card card-form text-center" id="login-box">
+      <i class="fas fa-lock fa-3x mb-3" style="color:var(--accent);"></i>
+      <h1 class="mb-4">Utilitaire</h1>
+      <div id="error-msg" class="text-danger mb-3 hidden">Code incorrect.</div>
+      <div id="lockout-msg" class="text-warning mb-3 hidden">Trop de tentatives. Réessayez dans <span id="lockout-time"></span>s.</div>
+      <form id="login-form">
+        <div class="form-group">
+          <div class="input-wrapper">
+            <input type="password" id="access-code" placeholder="Saisir le code" required>
+            <button type="button" class="input-icon-btn" onclick="toggleVisibility(this, 'access-code')">
+              <i class="fas fa-eye"></i>
+            </button>
+          </div>
+        </div>
+        <button type="submit" class="btn-accent w-100" id="btn-login">Valider</button>
+      </form>
+    </div>
+  </div>
+  </div>
+  <div class="toast-container" id="toast-container"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/crypto.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/index.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js');
+    }
+  </script>
+</body>
+</html>

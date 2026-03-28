@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Urgence - Utilitaire</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="full-center" id="loader-box">
+    <div class="card card-form text-center">
+      <i class="fas fa-spinner fa-spin fa-3x mb-3" style="color:var(--accent);"></i>
+      <h2>Chargement...</h2>
+    </div>
+  </div>
+  <div class="layout-admin hidden" id="main-content-box">
+    <div class="main-content" style="max-width:800px;margin:0 auto;width:100%;">
+      <div class="top-bar flex-column gap-3 mb-4">
+        <div class="d-flex justify-between w-100 align-center">
+          <h2><i class="fas fa-ambulance" style="color:var(--danger)"></i> Contacts d'urgence</h2>
+          <button class="btn-secondary" id="btn-logout"><i class="fas fa-sign-out-alt"></i></button>
+        </div>
+        <button class="btn-danger w-100" id="btn-panic"><i class="fas fa-exclamation-triangle"></i> Alerte Panique Niveau 1</button>
+        <input type="text" id="search-contacts" placeholder="Rechercher...">
+      </div>
+      <div id="urg-msg-box" class="card mb-4 hidden" style="border-left:4px solid var(--warning);">
+        <h3 class="mb-2"><i class="fas fa-info-circle text-warning"></i> Message d'urgence</h3>
+        <p id="urg-msg-text" style="white-space:pre-wrap;"></p>
+      </div>
+      <div id="contacts-list"></div>
+    </div>
+  </div>
+  <div class="toast-container" id="toast-container"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/crypto.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/emergency.js"></script>
+</body>
+</html>

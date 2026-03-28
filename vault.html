@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vault - Utilitaire</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="full-center" id="loader-box">
+    <div class="card card-form text-center">
+      <i class="fas fa-spinner fa-spin fa-3x mb-3" style="color:var(--accent);"></i>
+      <h2>Chargement...</h2>
+    </div>
+  </div>
+  <div class="layout-admin h-100 hidden" id="main-content-box">
+    <div class="main-content" style="max-width:1200px;margin:0 auto;width:100%;">
+      <div class="d-flex justify-between align-center mb-4">
+        <h2><i class="fas fa-piggy-bank" style="color:var(--accent)"></i> Vault</h2>
+        <button class="btn-secondary" id="btn-logout"><i class="fas fa-sign-out-alt"></i> Quitter</button>
+      </div>
+      <div class="layout-vault" style="height:calc(100vh - 120px);">
+        <div class="vault-sidebar" id="vault-cats">
+          <div class="vault-cat active" data-cat="1"><i class="fas fa-user"></i> État civil / Mon identité</div>
+          <div class="vault-cat" data-cat="2"><i class="fas fa-key"></i> Identifiants & MDP</div>
+          <div class="vault-cat" data-cat="3"><i class="fas fa-credit-card"></i> Cartes bancaires</div>
+          <div class="vault-cat" data-cat="4"><i class="fas fa-id-card"></i> Documents</div>
+          <div class="vault-cat" data-cat="5"><i class="fas fa-university"></i> Comptes bancaires</div>
+          <div class="vault-cat" data-cat="6"><i class="fas fa-lock"></i> Codes & PIN</div>
+          <div class="vault-cat" data-cat="7"><i class="fas fa-heartbeat"></i> Infos médicales</div>
+          <div class="vault-cat" data-cat="8"><i class="fas fa-shield-alt"></i> Assurances</div>
+          <div class="vault-cat" data-cat="9"><i class="fas fa-barcode"></i> Licences & Clés</div>
+          <div class="vault-cat" data-cat="10"><i class="fas fa-sticky-note"></i> Notes libres</div>
+        </div>
+        <div class="vault-content">
+          <h3 id="vault-cat-title" class="mb-4"><i class="fas fa-user"></i> État civil / Mon identité</h3>
+          <div id="vault-items-grid" class="vault-grid"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="toast-container" id="toast-container"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/crypto.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/vault.js"></script>
+</body>
+</html>
