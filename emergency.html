@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Urgence — Utilitaire</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="loading" class="spinner-container" style="display:flex;">
+<div class="spinner"></div>
+</div>
+<header class="app-header flex-between p-16 bg-dark">
+<div class="flex-align-center gap-16">
+<i class="fas fa-exclamation-circle text-danger text-xl"></i>
+<h2 class="m-0">Urgence</h2>
+</div>
+<button id="btn-logout" class="btn-secondary"><i class="fas fa-sign-out-alt"></i></button>
+</header>
+<main class="container py-24">
+<div id="emergency-msg-container" class="card border-warning mb-24" style="display:none;">
+<h3 class="text-warning mb-8"><i class="fas fa-exclamation-triangle"></i> Message d'urgence</h3>
+<p id="emergency-msg-content" class="text-white" style="white-space: pre-wrap;"></p>
+</div>
+<div class="flex-between mb-24 flex-wrap gap-16">
+<div class="search-bar flex-1">
+<input type="text" id="search-contacts" placeholder="Rechercher un contact...">
+</div>
+<button id="btn-panic" class="btn-danger py-12 px-24 font-bold"><i class="fas fa-bell"></i> Alerte Panique</button>
+</div>
+<div id="contacts-list" class="grid-list"></div>
+</main>
+<div id="modal-container"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<script src="js/crypto.js"></script>
+<script src="js/api.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/emergency.js"></script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Utilitaire</title>
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="flex-center">
+<div id="loading" class="spinner-container" style="display:flex;">
+<div class="spinner"></div>
+</div>
+<div class="card login-card" style="display:none;" id="login-container">
+<div class="login-header">
+<i class="fas fa-lock login-icon"></i>
+<h1>Utilitaire</h1>
+</div>
+<form id="login-form">
+<div class="input-group">
+<input type="password" id="password" placeholder="Mot de passe" required autocomplete="current-password">
+<button type="button" class="toggle-pwd" onclick="toggleVisibility(this, 'password')">
+<i class="fas fa-eye"></i>
+</button>
+</div>
+<div id="error-msg" class="error-msg" style="display:none;">Mot de passe incorrect</div>
+<div id="lockout-msg" class="error-msg lockout" style="display:none;"></div>
+<button type="submit" class="btn-primary" id="btn-submit">Valider</button>
+</form>
+</div>
+<div id="modal-container"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<script src="js/crypto.js"></script>
+<script src="js/api.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/index.js"></script>
+</body>
+</html>
