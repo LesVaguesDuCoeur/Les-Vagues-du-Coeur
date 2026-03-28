@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configuration Initiale</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="full-center">
+    <div class="card" style="max-width:600px;">
+      <h1 class="text-center"><i class="fas fa-cogs"></i> Configuration</h1>
+      <form id="setup-form">
+        <div class="mb-4">
+          <h3>Code Administrateur (min 8)</h3>
+          <div class="form-group">
+            <div class="input-wrapper">
+              <input type="password" id="admin-code" required minlength="8" oninput="checkStrength(this, 'admin-str')">
+              <button type="button" class="input-icon-btn" onclick="toggleVisibility(this, 'admin-code')"><i class="fas fa-eye"></i></button>
+            </div>
+            <div class="pw-strength" id="admin-str"></div>
+          </div>
+          <div class="form-group">
+            <div class="input-wrapper">
+              <input type="password" id="admin-conf" placeholder="Confirmer" required minlength="8">
+              <button type="button" class="input-icon-btn" onclick="toggleVisibility(this, 'admin-conf')"><i class="fas fa-eye"></i></button>
+            </div>
+          </div>
+        </div>
+        <div class="mb-4">
+          <h3>Code Urgence (min 6)</h3>
+          <div class="form-group">
+            <div class="input-wrapper">
+              <input type="password" id="urg-code" required minlength="6" oninput="checkStrength(this, 'urg-str')">
+              <button type="button" class="input-icon-btn" onclick="toggleVisibility(this, 'urg-code')"><i class="fas fa-eye"></i></button>
+            </div>
+            <div class="pw-strength" id="urg-str"></div>
+          </div>
+          <div class="form-group">
+            <div class="input-wrapper">
+              <input type="password" id="urg-conf" placeholder="Confirmer" required minlength="6">
+              <button type="button" class="input-icon-btn" onclick="toggleVisibility(this, 'urg-conf')"><i class="fas fa-eye"></i></button>
+            </div>
+          </div>
+        </div>
+        <div class="mb-4">
+          <h3>Code Vault (min 6)</h3>
+          <div class="form-group">
+            <div class="input-wrapper">
+              <input type="password" id="vault-code" required minlength="6" oninput="checkStrength(this, 'vault-str')">
+              <button type="button" class="input-icon-btn" onclick="toggleVisibility(this, 'vault-code')"><i class="fas fa-eye"></i></button>
+            </div>
+            <div class="pw-strength" id="vault-str"></div>
+          </div>
+          <div class="form-group">
+            <div class="input-wrapper">
+              <input type="password" id="vault-conf" placeholder="Confirmer" required minlength="6">
+              <button type="button" class="input-icon-btn" onclick="toggleVisibility(this, 'vault-conf')"><i class="fas fa-eye"></i></button>
+            </div>
+          </div>
+        </div>
+        <div class="mb-4">
+          <h3>Code Testament (min 6)</h3>
+          <div class="form-group">
+            <div class="input-wrapper">
+              <input type="password" id="test-code" required minlength="6" oninput="checkStrength(this, 'test-str')">
+              <button type="button" class="input-icon-btn" onclick="toggleVisibility(this, 'test-code')"><i class="fas fa-eye"></i></button>
+            </div>
+            <div class="pw-strength" id="test-str"></div>
+          </div>
+          <div class="form-group">
+            <div class="input-wrapper">
+              <input type="password" id="test-conf" placeholder="Confirmer" required minlength="6">
+              <button type="button" class="input-icon-btn" onclick="toggleVisibility(this, 'test-conf')"><i class="fas fa-eye"></i></button>
+            </div>
+          </div>
+        </div>
+        <div class="mb-4">
+          <h3>Message d'urgence (optionnel)</h3>
+          <textarea id="urg-msg" rows="3" placeholder="Texte visible par l'accès urgence"></textarea>
+        </div>
+        <button type="submit" class="btn-accent w-100" id="btn-setup">Configurer</button>
+      </form>
+    </div>
+  </div>
+  <div class="toast-container" id="toast-container"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/crypto.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/setup.js"></script>
+</body>
+</html>

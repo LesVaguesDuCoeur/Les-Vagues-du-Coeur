@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Testament - Utilitaire</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    .pdf-content { background:#fff; color:#000; padding:40px; border-radius:8px; min-height:600px; }
+    .pdf-header { text-align:center; border-bottom:2px solid #000; padding-bottom:20px; margin-bottom:20px; }
+    .pdf-id { border:1px solid #ccc; padding:20px; margin-bottom:30px; background:#f9f9f9; }
+    .pdf-body { font-size:1.1rem; line-height:1.6; }
+    .pdf-footer { text-align:center; margin-top:50px; font-size:0.9rem; color:#666; border-top:1px solid #ccc; padding-top:20px; }
+  </style>
+</head>
+<body>
+  <div class="full-center" id="loader-box">
+    <div class="card card-form text-center">
+      <i class="fas fa-spinner fa-spin fa-3x mb-3" style="color:var(--accent);"></i>
+      <h2>Chargement...</h2>
+    </div>
+  </div>
+  <div class="layout-admin h-100 hidden" id="main-content-box">
+    <div class="main-content" style="max-width:900px;margin:0 auto;width:100%;">
+      <div class="top-bar">
+        <h2><i class="fas fa-file-signature" style="color:#06d6a0"></i> Testament</h2>
+        <div class="d-flex gap-3">
+          <button class="btn-secondary" id="btn-pdf"><i class="fas fa-file-pdf"></i> Exporter PDF</button>
+          <button class="btn-secondary" id="btn-logout"><i class="fas fa-sign-out-alt"></i></button>
+        </div>
+      </div>
+      <div id="pdf-container" class="pdf-content">
+        <div class="pdf-header">
+          <h1>TESTAMENT — DERNIÈRES VOLONTÉS</h1>
+        </div>
+        <div class="pdf-id" id="id-bloc"></div>
+        <div class="mb-4"><i>Dernière modification : <span id="last-mod"></span></i></div>
+        <div class="pdf-body" id="test-body"></div>
+        <div class="pdf-footer" id="pdf-footer"></div>
+      </div>
+    </div>
+  </div>
+  <div class="toast-container" id="toast-container"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/crypto.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/testament.js"></script>
+</body>
+</html>

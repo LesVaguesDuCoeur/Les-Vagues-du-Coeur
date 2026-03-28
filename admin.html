@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - Utilitaire</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+</head>
+<body>
+  <div class="full-center" id="loader-box">
+    <div class="card card-form text-center">
+      <i class="fas fa-spinner fa-spin fa-3x mb-3" style="color:var(--accent);"></i>
+      <h2>Chargement...</h2>
+    </div>
+  </div>
+  <div class="layout-admin hidden" id="main-content-box">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <i class="fas fa-user-shield header-lock green" id="admin-icon"></i>
+        <h3>Admin</h3>
+      </div>
+      <nav class="sidebar-nav">
+        <a class="nav-item active" data-tab="contacts"><i class="fas fa-users"></i> Contacts</a>
+        <a class="nav-item" data-tab="vault"><i class="fas fa-piggy-bank"></i> Vault</a>
+        <a class="nav-item" data-tab="testament"><i class="fas fa-file-signature"></i> Testament</a>
+        <a class="nav-item" data-tab="settings"><i class="fas fa-cog"></i> Paramètres</a>
+      </nav>
+      <div class="sidebar-footer">
+        <button class="btn-secondary w-100" id="btn-logout"><i class="fas fa-sign-out-alt"></i> Quitter</button>
+      </div>
+    </aside>
+    <main class="main-content">
+      <div id="tab-contacts" class="tab-content">
+        <div class="top-bar">
+          <h2>Contacts</h2>
+          <div class="d-flex gap-3">
+            <input type="text" id="search-contacts" placeholder="Rechercher...">
+            <button class="btn-accent" id="btn-add-contact"><i class="fas fa-plus"></i> Ajouter</button>
+          </div>
+        </div>
+        <div id="contacts-list"></div>
+      </div>
+      <div id="tab-vault" class="tab-content hidden h-100">
+        <div class="layout-vault">
+          <div class="vault-sidebar" id="vault-cats">
+            <div class="vault-cat active" data-cat="1"><i class="fas fa-user"></i> État civil / Mon identité</div>
+            <div class="vault-cat" data-cat="2"><i class="fas fa-key"></i> Identifiants & MDP</div>
+            <div class="vault-cat" data-cat="3"><i class="fas fa-credit-card"></i> Cartes bancaires</div>
+            <div class="vault-cat" data-cat="4"><i class="fas fa-id-card"></i> Documents</div>
+            <div class="vault-cat" data-cat="5"><i class="fas fa-university"></i> Comptes bancaires</div>
+            <div class="vault-cat" data-cat="6"><i class="fas fa-lock"></i> Codes & PIN</div>
+            <div class="vault-cat" data-cat="7"><i class="fas fa-heartbeat"></i> Infos médicales</div>
+            <div class="vault-cat" data-cat="8"><i class="fas fa-shield-alt"></i> Assurances</div>
+            <div class="vault-cat" data-cat="9"><i class="fas fa-barcode"></i> Licences & Clés</div>
+            <div class="vault-cat" data-cat="10"><i class="fas fa-sticky-note"></i> Notes libres</div>
+          </div>
+          <div class="vault-content">
+            <div class="d-flex justify-between align-center mb-4">
+              <h3 id="vault-cat-title"><i class="fas fa-user"></i> État civil / Mon identité</h3>
+              <button class="btn-accent" id="btn-add-vault"><i class="fas fa-plus"></i> Ajouter</button>
+            </div>
+            <div id="vault-items-grid" class="vault-grid"></div>
+          </div>
+        </div>
+      </div>
+      <div id="tab-testament" class="tab-content hidden">
+        <div class="top-bar">
+          <h2>Testament</h2>
+          <div class="d-flex gap-3">
+            <button class="btn-secondary" id="btn-pdf-testament"><i class="fas fa-file-pdf"></i> PDF</button>
+            <button class="btn-accent" id="btn-save-testament"><i class="fas fa-save"></i> Sauvegarder</button>
+          </div>
+        </div>
+        <div class="card mb-4">
+          <h3 class="mb-3">Identité</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <input type="text" id="t-nom" placeholder="Nom">
+            <input type="text" id="t-prenom" placeholder="Prénom">
+            <input type="text" id="t-dnaiss" placeholder="Date de naissance">
+            <input type="text" id="t-lnaiss" placeholder="Lieu de naissance">
+            <input type="text" id="t-nat" placeholder="Nationalité">
+            <input type="text" id="t-adr" placeholder="Adresse">
+          </div>
+        </div>
+        <div class="card">
+          <h3 class="mb-3">Contenu</h3>
+          <div id="editor-container"></div>
+        </div>
+      </div>
+      <div id="tab-settings" class="tab-content hidden">
+        <h2>Paramètres</h2>
+        <div class="card mb-4">
+          <h3 class="mb-3">Changer les codes</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+            <div>
+              <h4 class="mb-2">Code Admin</h4>
+              <input type="password" id="s-admin-old" placeholder="Ancien code" class="mb-2">
+              <input type="password" id="s-admin-new" placeholder="Nouveau (min 8)" class="mb-2">
+              <input type="password" id="s-admin-conf" placeholder="Confirmer" class="mb-2">
+              <button class="btn-secondary w-100" id="btn-change-admin">Modifier Admin</button>
+            </div>
+            <div>
+              <h4 class="mb-2">Code Urgence</h4>
+              <input type="password" id="s-urg-old" placeholder="Ancien code" class="mb-2">
+              <input type="password" id="s-urg-new" placeholder="Nouveau (min 6)" class="mb-2">
+              <input type="password" id="s-urg-conf" placeholder="Confirmer" class="mb-2">
+              <button class="btn-secondary w-100" id="btn-change-urg">Modifier Urgence</button>
+            </div>
+            <div>
+              <h4 class="mb-2">Code Vault</h4>
+              <input type="password" id="s-vault-old" placeholder="Ancien code" class="mb-2">
+              <input type="password" id="s-vault-new" placeholder="Nouveau (min 6)" class="mb-2">
+              <input type="password" id="s-vault-conf" placeholder="Confirmer" class="mb-2">
+              <button class="btn-secondary w-100" id="btn-change-vault">Modifier Vault</button>
+            </div>
+            <div>
+              <h4 class="mb-2">Code Testament</h4>
+              <input type="password" id="s-test-old" placeholder="Ancien code" class="mb-2">
+              <input type="password" id="s-test-new" placeholder="Nouveau (min 6)" class="mb-2">
+              <input type="password" id="s-test-conf" placeholder="Confirmer" class="mb-2">
+              <button class="btn-secondary w-100" id="btn-change-test">Modifier Testament</button>
+            </div>
+          </div>
+        </div>
+        <div class="card mb-4">
+          <h3 class="mb-3">Message d'urgence</h3>
+          <textarea id="s-urg-msg" rows="4" class="mb-3"></textarea>
+          <button class="btn-accent" id="btn-save-urgmsg">Sauvegarder message</button>
+        </div>
+        <div class="card mb-4">
+          <div class="d-flex justify-between align-center mb-3">
+            <h3>Historique des accès</h3>
+            <button class="btn-secondary" id="btn-test-log"><i class="fas fa-paper-plane"></i> Test de log</button>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="table" id="logs-table">
+              <thead><tr><th>Date</th><th>Type</th><th>IP</th><th>Nom</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card mb-4 border-danger">
+          <h3 class="text-danger mb-3"><i class="fas fa-exclamation-triangle"></i> Zone de danger</h3>
+          <button class="btn-danger w-100" id="btn-reset-all"><i class="fas fa-trash-alt"></i> Effacer toutes les données</button>
+        </div>
+      </div>
+    </main>
+  </div>
+  <div class="toast-container" id="toast-container"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/crypto.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>
