@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Testament — Utilitaire</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-dark">
+<div id="loading" class="spinner-container" style="display:flex;">
+<div class="spinner"></div>
+</div>
+<header class="app-header flex-between p-16 mb-24" style="background: #141420;">
+<div class="flex-align-center gap-16">
+<i class="fas fa-scroll text-accent text-xl"></i>
+<h2 class="m-0">Testament</h2>
+</div>
+<div class="flex-align-center gap-16">
+<button id="btn-export-pdf" class="btn-primary"><i class="fas fa-file-pdf"></i> Exporter PDF</button>
+<button id="btn-logout" class="btn-secondary"><i class="fas fa-sign-out-alt"></i></button>
+</div>
+</header>
+<main class="container py-24">
+<div class="card mb-24">
+<h3 class="mb-16"><i class="fas fa-id-card"></i> Identité</h3>
+<div class="grid-2 gap-16">
+<div class="input-group">
+<span class="text-secondary text-sm d-block mb-4">Nom</span>
+<div id="t-nom" class="p-12 bg-dark rounded border-light text-white font-bold"></div>
+</div>
+<div class="input-group">
+<span class="text-secondary text-sm d-block mb-4">Prénom</span>
+<div id="t-prenom" class="p-12 bg-dark rounded border-light text-white font-bold"></div>
+</div>
+<div class="input-group">
+<span class="text-secondary text-sm d-block mb-4">Date de naissance</span>
+<div id="t-ddn" class="p-12 bg-dark rounded border-light text-white"></div>
+</div>
+<div class="input-group">
+<span class="text-secondary text-sm d-block mb-4">Lieu de naissance</span>
+<div id="t-ldn" class="p-12 bg-dark rounded border-light text-white"></div>
+</div>
+<div class="input-group">
+<span class="text-secondary text-sm d-block mb-4">Nationalité</span>
+<div id="t-nat" class="p-12 bg-dark rounded border-light text-white"></div>
+</div>
+<div class="input-group">
+<span class="text-secondary text-sm d-block mb-4">Adresse</span>
+<div id="t-adr" class="p-12 bg-dark rounded border-light text-white"></div>
+</div>
+</div>
+</div>
+<div class="card">
+<h3 class="mb-16"><i class="fas fa-pen-nib"></i> Contenu</h3>
+<div id="testament-content" class="ql-editor bg-dark rounded p-16 border-light text-white" style="min-height: 200px; white-space: pre-wrap;"></div>
+</div>
+</main>
+<div id="modal-container"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="js/crypto.js"></script>
+<script src="js/api.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/testament.js"></script>
+</body>
+</html>

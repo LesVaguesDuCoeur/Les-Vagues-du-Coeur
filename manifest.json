@@ -1,0 +1,8 @@
+{
+  "name": "Utilitaire",
+  "short_name": "Outils",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#457b9d"
+}
