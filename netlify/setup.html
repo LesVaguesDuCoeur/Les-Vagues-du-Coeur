@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuration Initiale - SecurApp</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1 class="mb-2">Configuration Initiale</h1>
+        <div class="card">
+            <p>Bienvenue ! Veuillez configurer vos mots de passe. Cette opération ne se fait qu'une seule fois.</p>
+
+            <form id="setup-form">
+                <div class="form-group">
+                    <label for="email">Email de notification (Alertes d'urgence)</label>
+                    <input type="email" id="email" required>
+                </div>
+
+                <div class="grid grid-2">
+                    <div class="form-group">
+                        <label for="pwd-contact">Mot de passe CONTACT</label>
+                        <input type="password" id="pwd-contact" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="pwd-contact-confirm">Confirmer MDP Contact</label>
+                        <input type="password" id="pwd-contact-confirm" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="pwd-admin">Mot de passe ADMIN</label>
+                        <input type="password" id="pwd-admin" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="pwd-admin-confirm">Confirmer MDP Admin</label>
+                        <input type="password" id="pwd-admin-confirm" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="pwd-vault">Mot de passe VAULT</label>
+                        <input type="password" id="pwd-vault" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="pwd-vault-confirm">Confirmer MDP Vault</label>
+                        <input type="password" id="pwd-vault-confirm" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="pwd-testament">Mot de passe TESTAMENT</label>
+                        <input type="password" id="pwd-testament" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="pwd-testament-confirm">Confirmer MDP Testament</label>
+                        <input type="password" id="pwd-testament-confirm" required>
+                    </div>
+                </div>
+
+                <div class="mt-2 text-center">
+                    <button type="submit" class="btn btn-primary">Initialiser</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/utils.js"></script>
+    <script src="js/crypto.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/setup.js"></script>
+</body>
+</html>

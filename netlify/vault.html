@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fiche Personnelle - SecurApp</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header-actions">
+            <h2>Fiche Personnelle (Vault)</h2>
+            <div class="nav-links">
+                <a href="index.html" id="btn-logout" class="btn btn-secondary btn-small">Déconnexion</a>
+                <a href="admin.html" id="link-admin" class="btn btn-secondary btn-small hidden">Retour Admin</a>
+            </div>
+        </div>
+
+        <div id="login-box" class="login-container mt-2">
+            <h3 class="mb-1">Accès Sécurisé</h3>
+            <p class="mb-2">Veuillez saisir votre mot de passe VAULT.</p>
+            <form id="section-login-form">
+                <div class="form-group">
+                    <input type="password" id="section-password" placeholder="Mot de passe Vault" required autofocus>
+                </div>
+                <button type="submit" class="btn btn-primary">Accéder</button>
+            </form>
+        </div>
+
+        <div id="content-box" class="hidden">
+            <div class="card mb-2">
+                <h3>Informations Personnelles Sensibles</h3>
+                <p>Ces informations sont chiffrées. Personne d'autre n'y a accès sans le mot de passe Vault, ou le mot de passe d'urgence en cas de nécessité absolue.</p>
+                <form id="vault-form" class="mt-1">
+                    <div class="form-group">
+                        <label>Notes médicales (Allergies, traitements...)</label>
+                        <textarea id="vault-medical"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Emplacements importants (Documents physiques...)</label>
+                        <textarea id="vault-locations"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Autres informations privées</label>
+                        <textarea id="vault-other"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary mt-1">Sauvegarder</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/utils.js"></script>
+    <script src="js/crypto.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/vault.js"></script>
+</body>
+</html>

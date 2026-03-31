@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contacts d'urgence - SecurApp</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header-actions">
+            <h2>Contacts d'urgence</h2>
+            <div class="nav-links">
+                <a href="index.html" id="btn-logout" class="btn btn-secondary btn-small">Déconnexion</a>
+                <a href="admin.html" id="link-admin" class="btn btn-secondary btn-small hidden">Retour Admin</a>
+            </div>
+        </div>
+
+        <div id="login-box" class="login-container mt-2">
+            <h3 class="mb-1">Accès Sécurisé</h3>
+            <p class="mb-2">Veuillez saisir votre mot de passe CONTACT.</p>
+            <form id="section-login-form">
+                <div class="form-group">
+                    <input type="password" id="section-password" placeholder="Mot de passe" required autofocus>
+                </div>
+                <button type="submit" class="btn btn-primary">Accéder</button>
+            </form>
+        </div>
+
+        <div id="content-box" class="hidden">
+            <div class="card mb-2">
+                <h3>Ajouter un contact</h3>
+                <form id="add-contact-form" class="mt-1">
+                    <div class="grid grid-2">
+                        <div class="form-group">
+                            <label>Nom complet</label>
+                            <input type="text" id="contact-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Relation</label>
+                            <input type="text" id="contact-relation" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Téléphone</label>
+                            <input type="tel" id="contact-phone" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="contact-email">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary mt-1">Ajouter</button>
+                </form>
+            </div>
+
+            <h3>Liste des contacts</h3>
+            <div id="contacts-list" class="grid grid-2 mt-1">
+                <!-- Contacts will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="js/utils.js"></script>
+    <script src="js/crypto.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/emergency.js"></script>
+</body>
+</html>
