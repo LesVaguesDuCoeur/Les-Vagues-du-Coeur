@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuration Initiale</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+</head>
+<body>
+    <div style="max-width: 600px; margin: 40px auto; padding: 20px; background: #141420; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+        <h2 class="text-xl font-bold mb-6 text-center" style="color: var(--accent);">Configuration du Coffre-Fort</h2>
+
+        <div id="setup-error" class="hidden mb-4 p-4 text-center rounded" style="background: rgba(230,57,70,0.2); border: 1px solid var(--danger); color: #fff;"></div>
+
+        <form id="setup-form" class="flex-col gap-4">
+            <div>
+                <label class="text-sm text-muted mb-2 block">Mot de passe ADMIN (min 8 car.)</label>
+                <input type="password" id="pwd-admin" required minlength="8" placeholder="Accès total">
+                <input type="password" id="pwd-admin-conf" class="mt-2" required placeholder="Confirmer admin">
+            </div>
+
+            <div class="border-b" style="border-color: rgba(255,255,255,0.05); margin: 10px 0;"></div>
+
+            <div>
+                <label class="text-sm text-muted mb-2 block">Mot de passe URGENCE (min 6 car.)</label>
+                <input type="password" id="pwd-emerg" required minlength="6" placeholder="Accès contacts urgence">
+                <input type="password" id="pwd-emerg-conf" class="mt-2" required placeholder="Confirmer urgence">
+            </div>
+
+            <div class="border-b" style="border-color: rgba(255,255,255,0.05); margin: 10px 0;"></div>
+
+            <div>
+                <label class="text-sm text-muted mb-2 block">Mot de passe VAULT (min 6 car.)</label>
+                <input type="password" id="pwd-vault" required minlength="6" placeholder="Accès informations sensibles">
+                <input type="password" id="pwd-vault-conf" class="mt-2" required placeholder="Confirmer vault">
+            </div>
+
+            <div class="border-b" style="border-color: rgba(255,255,255,0.05); margin: 10px 0;"></div>
+
+            <div>
+                <label class="text-sm text-muted mb-2 block">Mot de passe TESTAMENT (min 6 car.)</label>
+                <input type="password" id="pwd-testament" required minlength="6" placeholder="Accès testament">
+                <input type="password" id="pwd-testament-conf" class="mt-2" required placeholder="Confirmer testament">
+            </div>
+
+            <div class="border-b" style="border-color: rgba(255,255,255,0.05); margin: 10px 0;"></div>
+
+            <div>
+                <label class="text-sm text-muted mb-2 block">Message d'urgence global (Optionnel)</label>
+                <textarea id="setup-emergency-message" rows="3" placeholder="Ce message sera visible en haut de la page des contacts d'urgence..."></textarea>
+            </div>
+
+            <button type="submit" class="btn-primary mt-4 py-3 text-xl w-full" id="btn-submit">
+                <i class="fas fa-lock mr-2"></i> Initialiser et chiffrer
+            </button>
+        </form>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/crypto.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/setup.js"></script>
+</body>
+</html>

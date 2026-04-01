@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Urgence</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+</head>
+<body>
+    <header class="app-header" style="background: rgba(230,57,70,0.1); border-bottom: 1px solid var(--danger);">
+        <h1 class="text-xl font-bold m-0" style="color:var(--danger);"><i class="fas fa-exclamation-triangle mr-2"></i> Contacts d'Urgence</h1>
+        <button id="btn-logout" class="action-btn text-muted"><i class="fas fa-sign-out-alt"></i> Quitter</button>
+    </header>
+
+    <div class="p-4" style="max-width: 800px; margin: 0 auto;">
+        <div id="emergency-message-box" class="hidden mb-6 p-4 rounded text-center" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2);">
+            <i class="fas fa-quote-left text-muted mb-2 text-xl"></i>
+            <p id="emergency-message" class="text-lg m-0 italic font-bold" style="color: white;"></p>
+        </div>
+
+        <div class="flex justify-between items-center mb-6 gap-4 flex-wrap">
+            <input type="text" id="search-contact" placeholder="Rechercher un contact..." class="flex-1" style="max-width: 300px;">
+            <button id="btn-panic" class="btn-danger"><i class="fas fa-bell mr-2"></i> ALERTER NIVEAU 1</button>
+        </div>
+
+        <div id="loader" class="loader-container"><div class="spinner" style="border-left-color: var(--danger);"></div></div>
+
+        <div id="contacts-list" class="flex-col gap-2">
+            <!-- Liste injectée -->
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/crypto.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/emergency.js"></script>
+</body>
+</html>
