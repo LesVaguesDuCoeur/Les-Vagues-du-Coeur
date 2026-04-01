@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Urgence</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+</head>
+<body class="p-4 flex flex-col min-h-screen">
+<div class="flex justify-between items-center mb-6">
+<h1 class="text-xl font-bold m-0 text-danger"><i class="fas fa-exclamation-triangle"></i> Accès Urgence</h1>
+<button id="logoutBtn" class="btn btn-danger"><i class="fas fa-sign-out-alt"></i></button>
+</div>
+
+<div id="messageContainer" class="mb-6 p-4 rounded hidden" style="background: rgba(230,57,70,0.1); border: 1px solid var(--danger);"></div>
+
+<button id="panicBtn" class="panic-btn"><i class="fas fa-bell"></i> ALERTER NIVEAU 1</button>
+
+<div class="mb-4">
+<input type="text" id="searchContacts" placeholder="Rechercher un contact..." class="w-full">
+</div>
+
+<div id="contactsList" class="flex-col flex-1 overflow-y-auto mb-6"></div>
+
+<div class="text-center text-sm text-muted">
+Fermeture automatique dans <span id="timer">10:00</span>
+</div>
+
+<div id="modalContainer"></div>
+<script src="js/utils.js"></script>
+<script src="js/crypto.js"></script>
+<script src="js/api.js"></script>
+<script src="js/emergency.js"></script>
+</body>
+</html>
