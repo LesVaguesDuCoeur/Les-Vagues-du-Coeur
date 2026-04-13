@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Configuration - Utilitaire</title>
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="setup-body">
+<div class="setup-container">
+<h1>Configuration Initiale</h1>
+<p class="subtitle">Définissez vos 4 codes d'accès uniques.</p>
+<form id="setup-form">
+<div class="setup-section">
+<h2><i class="fas fa-user-shield"></i> Code Admin</h2>
+<p class="section-desc">Accès total à l'administration (min. 8 caractères).</p>
+<div class="input-group">
+<input type="password" id="admin-code" placeholder="Code Admin" required minlength="8">
+<button type="button" class="toggle-password" onclick="toggleVisibility(this, 'admin-code')"><i class="fas fa-eye"></i></button>
+</div>
+<div class="password-strength" id="strength-admin"></div>
+<div class="input-group">
+<input type="password" id="admin-code-confirm" placeholder="Confirmer le Code Admin" required minlength="8">
+<button type="button" class="toggle-password" onclick="toggleVisibility(this, 'admin-code-confirm')"><i class="fas fa-eye"></i></button>
+</div>
+</div>
+<div class="setup-section">
+<h2><i class="fas fa-ambulance"></i> Code Urgence</h2>
+<p class="section-desc">Accès contacts et bouton panique (min. 6 caractères).</p>
+<div class="input-group">
+<input type="password" id="emergency-code" placeholder="Code Urgence" required minlength="6">
+<button type="button" class="toggle-password" onclick="toggleVisibility(this, 'emergency-code')"><i class="fas fa-eye"></i></button>
+</div>
+<div class="password-strength" id="strength-emergency"></div>
+<div class="input-group">
+<input type="password" id="emergency-code-confirm" placeholder="Confirmer le Code Urgence" required minlength="6">
+<button type="button" class="toggle-password" onclick="toggleVisibility(this, 'emergency-code-confirm')"><i class="fas fa-eye"></i></button>
+</div>
+</div>
+<div class="setup-section">
+<h2><i class="fas fa-vault"></i> Code Vault</h2>
+<p class="section-desc">Accès coffre-fort lecture seule (min. 6 caractères).</p>
+<div class="input-group">
+<input type="password" id="vault-code" placeholder="Code Vault" required minlength="6">
+<button type="button" class="toggle-password" onclick="toggleVisibility(this, 'vault-code')"><i class="fas fa-eye"></i></button>
+</div>
+<div class="password-strength" id="strength-vault"></div>
+<div class="input-group">
+<input type="password" id="vault-code-confirm" placeholder="Confirmer le Code Vault" required minlength="6">
+<button type="button" class="toggle-password" onclick="toggleVisibility(this, 'vault-code-confirm')"><i class="fas fa-eye"></i></button>
+</div>
+</div>
+<div class="setup-section">
+<h2><i class="fas fa-scroll"></i> Code Testament</h2>
+<p class="section-desc">Accès testament lecture seule (min. 6 caractères).</p>
+<div class="input-group">
+<input type="password" id="testament-code" placeholder="Code Testament" required minlength="6">
+<button type="button" class="toggle-password" onclick="toggleVisibility(this, 'testament-code')"><i class="fas fa-eye"></i></button>
+</div>
+<div class="password-strength" id="strength-testament"></div>
+<div class="input-group">
+<input type="password" id="testament-code-confirm" placeholder="Confirmer le Code Testament" required minlength="6">
+<button type="button" class="toggle-password" onclick="toggleVisibility(this, 'testament-code-confirm')"><i class="fas fa-eye"></i></button>
+</div>
+</div>
+<div class="setup-section">
+<h2><i class="fas fa-envelope"></i> Message d'urgence (Optionnel)</h2>
+<p class="section-desc">Ce message sera affiché à la personne qui se connecte avec le code Urgence.</p>
+<textarea id="emergency-message" placeholder="Ex: En cas d'urgence, appelez mon frère en premier..." rows="4"></textarea>
+</div>
+<button type="submit" class="btn-primary btn-large" id="btn-setup">Configurer</button>
+</form>
+<div id="loading-spinner" class="hidden">
+<i class="fas fa-spinner fa-spin"></i> Configuration en cours...
+</div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<script src="js/api.js"></script>
+<script src="js/crypto.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/setup.js"></script>
+</body>
+</html>
