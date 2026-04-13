@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin - Utilitaire</title>
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="admin-body">
+<div class="admin-layout">
+<aside class="sidebar">
+<div class="sidebar-header">
+<i class="fas fa-lock" id="admin-lock-icon"></i>
+<h2>Admin</h2>
+</div>
+<nav class="sidebar-nav">
+<button class="nav-btn active" data-tab="contacts"><i class="fas fa-address-book"></i> Contacts</button>
+<button class="nav-btn" data-tab="vault"><i class="fas fa-vault"></i> Vault</button>
+<button class="nav-btn" data-tab="testament"><i class="fas fa-scroll"></i> Testament</button>
+<button class="nav-btn" data-tab="settings"><i class="fas fa-cog"></i> Paramètres</button>
+<button class="nav-btn" data-tab="activity"><i class="fas fa-chart-line"></i> Activité</button>
+<button class="nav-btn btn-logout" id="btn-logout"><i class="fas fa-sign-out-alt"></i> Déconnexion</button>
+</nav>
+</aside>
+<main class="main-content">
+<div id="loading-overlay" class="loading-overlay">
+<i class="fas fa-spinner fa-spin"></i>
+<p>Chargement des données...</p>
+</div>
+<section id="tab-contacts" class="tab-content active">
+<div class="content-header">
+<h2><i class="fas fa-address-book"></i> Contacts</h2>
+<div class="header-actions">
+<span id="contacts-count">0 contacts</span>
+<input type="text" id="search-contacts" placeholder="Rechercher..." class="search-input">
+<button id="btn-add-contact" class="btn-primary"><i class="fas fa-plus"></i> Ajouter</button>
+</div>
+</div>
+<div id="contacts-list" class="contacts-grid"></div>
+</section>
+<section id="tab-vault" class="tab-content">
+<div class="vault-layout">
+<aside class="vault-sidebar" id="vault-categories"></aside>
+<div class="vault-main">
+<div class="content-header">
+<h2 id="current-vault-category-title">Catégorie</h2>
+<button id="btn-add-vault-item" class="btn-primary"><i class="fas fa-plus"></i> Ajouter</button>
+</div>
+<div id="vault-items-list" class="vault-grid"></div>
+</div>
+</div>
+</section>
+<section id="tab-testament" class="tab-content">
+<div class="content-header">
+<h2><i class="fas fa-scroll"></i> Testament</h2>
+<div class="header-actions">
+<span id="testament-last-saved">Dernière sauvegarde : -</span>
+<button id="btn-export-pdf" class="btn-secondary"><i class="fas fa-file-pdf"></i> Exporter PDF</button>
+<button id="btn-save-testament" class="btn-primary"><i class="fas fa-save"></i> Sauvegarder</button>
+</div>
+</div>
+<div class="testament-container card">
+<div class="identity-form">
+<div class="input-group"><input type="text" id="testament-nom" placeholder="Nom"></div>
+<div class="input-group"><input type="text" id="testament-prenom" placeholder="Prénom"></div>
+<div class="input-group"><input type="text" id="testament-date-naissance" placeholder="Date de naissance (JJ/MM/AAAA)"></div>
+<div class="input-group"><input type="text" id="testament-lieu-naissance" placeholder="Lieu de naissance"></div>
+<div class="input-group"><input type="text" id="testament-nationalite" placeholder="Nationalité"></div>
+<div class="input-group"><input type="text" id="testament-adresse" placeholder="Adresse complète"></div>
+</div>
+<div id="quill-editor-container">
+<div id="quill-editor"></div>
+</div>
+</div>
+</section>
+<section id="tab-settings" class="tab-content">
+<div class="content-header">
+<h2><i class="fas fa-cog"></i> Paramètres</h2>
+</div>
+<div class="settings-grid">
+<div class="card">
+<h3>Modifier les codes</h3>
+<form id="change-codes-form">
+<div class="settings-section">
+<h4>Code Admin</h4>
+<input type="password" id="change-admin-old" placeholder="Ancien code">
+<input type="password" id="change-admin-new" placeholder="Nouveau code">
+<input type="password" id="change-admin-confirm" placeholder="Confirmer nouveau">
+</div>
+<div class="settings-section">
+<h4>Code Urgence</h4>
+<input type="password" id="change-emergency-old" placeholder="Ancien code">
+<input type="password" id="change-emergency-new" placeholder="Nouveau code">
+<input type="password" id="change-emergency-confirm" placeholder="Confirmer nouveau">
+</div>
+<div class="settings-section">
+<h4>Code Vault</h4>
+<input type="password" id="change-vault-old" placeholder="Ancien code">
+<input type="password" id="change-vault-new" placeholder="Nouveau code">
+<input type="password" id="change-vault-confirm" placeholder="Confirmer nouveau">
+</div>
+<div class="settings-section">
+<h4>Code Testament</h4>
+<input type="password" id="change-testament-old" placeholder="Ancien code">
+<input type="password" id="change-testament-new" placeholder="Nouveau code">
+<input type="password" id="change-testament-confirm" placeholder="Confirmer nouveau">
+</div>
+<button type="submit" class="btn-primary">Mettre à jour les codes</button>
+</form>
+</div>
+<div class="card">
+<h3>Message d'urgence</h3>
+<textarea id="settings-emergency-message" rows="4" placeholder="Message visible en mode urgence"></textarea>
+<button id="btn-save-emergency-message" class="btn-primary mt-3">Sauvegarder</button>
+</div>
+<div class="card">
+<h3>Danger Zone</h3>
+<button id="btn-test-log" class="btn-secondary w-100 mb-2">Envoyer Test Log</button>
+<button id="btn-erase-data" class="btn-danger w-100">Effacer TOUTES les données</button>
+</div>
+<div class="card logs-card">
+<div class="logs-header">
+<h3>Historique des accès (50 derniers)</h3>
+<button id="btn-clear-all-logs" class="btn-danger btn-sm">Tout effacer</button>
+</div>
+<div class="table-responsive">
+<table class="logs-table" id="settings-logs-table">
+<thead><tr><th>Type</th><th>Date</th><th>IP</th><th>Nom</th><th>Actions</th></tr></thead>
+<tbody></tbody>
+</table>
+</div>
+</div>
+</div>
+</section>
+<section id="tab-activity" class="tab-content">
+<div class="content-header">
+<h2><i class="fas fa-chart-line"></i> Activité Complète</h2>
+</div>
+<div class="activity-stats card mb-4">
+<div class="stat-box"><h4>Total</h4><span id="stat-total">0</span></div>
+<div class="stat-box"><h4>Vault</h4><span id="stat-vault" class="badge badge-vault">0</span></div>
+<div class="stat-box"><h4>Testament</h4><span id="stat-testament" class="badge badge-testament">0</span></div>
+<div class="stat-box"><h4>Urgence</h4><span id="stat-urgence" class="badge badge-warning">0</span></div>
+<div class="stat-box"><h4>Panique</h4><span id="stat-panique" class="badge badge-danger">0</span></div>
+<div class="stat-box"><h4>Suspect</h4><span id="stat-suspect" class="badge badge-danger">0</span></div>
+</div>
+<div class="card">
+<div class="filters-bar mb-3">
+<select id="activity-filter-type">
+<option value="all">Tous les types</option>
+<option value="Vault">Vault</option>
+<option value="Testament">Testament</option>
+<option value="Urgence">Urgence</option>
+<option value="Panique">Panique</option>
+<option value="Tentative suspecte">Tentative suspecte</option>
+<option value="Test">Test</option>
+</select>
+</div>
+<div class="table-responsive">
+<table class="logs-table" id="activity-logs-table">
+<thead><tr><th>Date</th><th>Type</th><th>Détails</th></tr></thead>
+<tbody></tbody>
+</table>
+</div>
+</div>
+</section>
+</main>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="js/api.js"></script>
+<script src="js/crypto.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>
