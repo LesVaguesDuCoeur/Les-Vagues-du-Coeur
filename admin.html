@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Administration</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="header">
+<div class="header-title"><i class="fas fa-unlock-alt" style="color:#06d6a0"></i> Administration</div>
+<button class="btn-cancel" onclick="logout()" style="min-height:36px;padding:8px 16px"><i class="fas fa-sign-out-alt"></i></button>
+</div>
+<div class="admin-layout">
+<div class="admin-sidebar" id="sidebar">
+<div class="nav-item active" onclick="switchTab('tab-contacts',this)"><i class="fas fa-users"></i> Contacts</div>
+<div class="nav-item" onclick="switchTab('tab-vault',this)"><i class="fas fa-shield-alt"></i> Vault</div>
+<div class="nav-item" onclick="switchTab('tab-testament',this)"><i class="fas fa-scroll"></i> Testament</div>
+<div class="nav-item" onclick="switchTab('tab-settings',this)"><i class="fas fa-cog"></i> Paramètres</div>
+<div class="nav-item" onclick="switchTab('tab-activity',this)"><i class="fas fa-chart-line"></i> Activité</div>
+</div>
+<div class="admin-main">
+<div id="tab-contacts" class="tab-content active">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+<h2 id="contactCount">Contacts</h2>
+<button class="btn-primary" onclick="openContactModal()"><i class="fas fa-plus"></i> Ajouter</button>
+</div>
+<div class="search-bar"><i class="fas fa-search"></i><input type="text" id="contactSearch" placeholder="Rechercher un contact..." oninput="renderContacts()"></div>
+<div id="contactsList"></div>
+</div>
+<div id="tab-vault" class="tab-content">
+<div class="vault-layout">
+<div class="vault-sidebar" id="vaultCats"></div>
+<div class="vault-items">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+<h2 id="vaultCatTitle">Catégorie</h2>
+<button class="btn-primary" id="addVaultBtn" onclick="openVaultModal()"><i class="fas fa-plus"></i> Ajouter</button>
+</div>
+<div id="vaultList"></div>
+</div>
+</div>
+</div>
+<div id="tab-testament" class="tab-content">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+<h2>Testament</h2>
+<div style="display:flex;gap:12px">
+<button class="btn-secondary" onclick="exportTestamentPDF()"><i class="fas fa-file-pdf"></i> Exporter PDF</button>
+<button class="btn-primary" onclick="saveTestament()"><i class="fas fa-save"></i> Sauvegarder</button>
+</div>
+</div>
+<div class="card">
+<h3 style="margin-bottom:16px">Identité</h3>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;margin-bottom:24px">
+<div><label class="form-label">Nom</label><input type="text" id="testNom" oninput="markTestamentChanged()"></div>
+<div><label class="form-label">Prénom</label><input type="text" id="testPrenom" oninput="markTestamentChanged()"></div>
+<div><label class="form-label">Date de naissance</label><input type="date" id="testDate" oninput="markTestamentChanged()"></div>
+<div><label class="form-label">Lieu de naissance</label><input type="text" id="testLieu" oninput="markTestamentChanged()"></div>
+<div><label class="form-label">Nationalité</label><input type="text" id="testNat" oninput="markTestamentChanged()"></div>
+<div><label class="form-label">Adresse</label><input type="text" id="testAddr" oninput="markTestamentChanged()"></div>
+</div>
+<h3 style="margin-bottom:16px">Dernières volontés</h3>
+<div id="quillContainer" class="quill-container"></div>
+<div id="lastSaveText" style="color:#888;font-size:0.9rem;text-align:right">Jamais sauvegardé</div>
+</div>
+</div>
+<div id="tab-settings" class="tab-content">
+<h2>Paramètres</h2>
+<div class="card" style="margin-top:24px">
+<h3 style="margin-bottom:16px">Changer les codes</h3>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:24px">
+<div>
+<h4 style="color:#e63946;margin-bottom:8px">Code Admin</h4>
+<input type="password" id="cAdminOld" placeholder="Ancien code">
+<input type="password" id="cAdminNew" placeholder="Nouveau code">
+<button class="btn-primary" onclick="changeCode('admin')" style="width:100%">Changer</button>
+</div>
+<div>
+<h4 style="color:#fca311;margin-bottom:8px">Code Urgence</h4>
+<input type="password" id="cUrgenceNew" placeholder="Nouveau code">
+<input type="password" id="cUrgenceConfirm" placeholder="Confirmer">
+<button class="btn-primary" onclick="changeCode('urgence')" style="width:100%">Changer</button>
+</div>
+<div>
+<h4 style="color:#457b9d;margin-bottom:8px">Code Vault</h4>
+<input type="password" id="cVaultNew" placeholder="Nouveau code">
+<input type="password" id="cVaultConfirm" placeholder="Confirmer">
+<button class="btn-primary" onclick="changeCode('vault')" style="width:100%">Changer</button>
+</div>
+<div>
+<h4 style="color:#9b5de5;margin-bottom:8px">Code Testament</h4>
+<input type="password" id="cTestNew" placeholder="Nouveau code">
+<input type="password" id="cTestConfirm" placeholder="Confirmer">
+<button class="btn-primary" onclick="changeCode('testament')" style="width:100%">Changer</button>
+</div>
+</div>
+</div>
+<div class="card">
+<h3 style="margin-bottom:16px">Message d'urgence</h3>
+<textarea id="setMsg" rows="4"></textarea>
+<button class="btn-primary" onclick="saveEmergencyMessage()">Sauvegarder message</button>
+</div>
+<div class="card">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap">
+<h3>Historique récent</h3>
+<div style="display:flex;gap:12px">
+<button class="btn-secondary" onclick="testLog()">Test log</button>
+<button class="btn-danger" onclick="clearLogs()">Tout effacer</button>
+</div>
+</div>
+<div class="table-wrapper">
+<table id="logTable">
+<thead><tr><th>Type</th><th>Date</th><th>IP</th><th>Nom</th><th>Actions</th></tr></thead>
+<tbody id="logBody"></tbody>
+</table>
+</div>
+</div>
+<div class="card" style="border:1px solid #e63946">
+<h3 style="color:#e63946;margin-bottom:16px">Zone de danger</h3>
+<p style="color:#ccc;margin-bottom:16px">La suppression des données est irréversible.</p>
+<button class="btn-danger" onclick="wipeData()"><i class="fas fa-trash"></i> Effacer toutes les données</button>
+</div>
+</div>
+<div id="tab-activity" class="tab-content">
+<h2>Activité complète</h2>
+<div class="card" style="margin-top:24px">
+<div style="display:flex;gap:16px;margin-bottom:24px;flex-wrap:wrap">
+<select id="logFilter" style="width:200px" onchange="renderActivity()">
+<option value="all">Tous les types</option>
+<option value="Urgence">Urgence</option>
+<option value="Vault">Vault</option>
+<option value="Testament">Testament</option>
+<option value="Panique">Panique</option>
+<option value="Tentative suspecte">Suspect</option>
+</select>
+<div id="logStats" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"></div>
+</div>
+<div class="table-wrapper">
+<table id="actTable">
+<thead><tr><th>Type</th><th>Date</th><th>IP</th><th>Nom</th></tr></thead>
+<tbody id="actBody"></tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="pdfContent" class="testament-pdf">
+<h1>TESTAMENT — DERNIÈRES VOLONTÉS</h1>
+<div class="identity">
+<p>Je soussigné(e) <strong><span id="pdfNom"></span> <span id="pdfPrenom"></span></strong>,</p>
+<p>Né(e) le <strong><span id="pdfDate"></span></strong> à <strong><span id="pdfLieu"></span></strong>,</p>
+<p>De nationalité <strong><span id="pdfNat"></span></strong>, résidant au <strong><span id="pdfAddr"></span></strong>.</p>
+</div>
+<div class="content" id="pdfHtml"></div>
+<div class="footer">Document généré le <span id="pdfGenDate"></span> — Utilitaire</div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/crypto.js"></script>
+<script src="/js/utils.js"></script>
+<script src="/js/admin.js"></script>
+</body>
+</html>

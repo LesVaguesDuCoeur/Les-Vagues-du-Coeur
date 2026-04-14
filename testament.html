@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Testament</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="header">
+<div class="header-title"><i class="fas fa-scroll" style="color:#9b5de5"></i> Testament</div>
+<button class="btn-cancel" onclick="logout()" style="min-height:36px;padding:8px 16px"><i class="fas fa-sign-out-alt"></i></button>
+</div>
+<div style="max-width:800px;margin:24px auto;padding:0 16px">
+<div style="display:flex;justify-content:flex-end;margin-bottom:24px">
+<button class="btn-secondary" onclick="exportPDF()"><i class="fas fa-file-pdf"></i> Exporter PDF</button>
+</div>
+<div class="card">
+<h3 style="margin-bottom:16px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:8px">Identité</h3>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px;color:#ccc">
+<div><strong style="color:#fff">Nom:</strong> <span id="tNom"></span></div>
+<div><strong style="color:#fff">Prénom:</strong> <span id="tPrenom"></span></div>
+<div><strong style="color:#fff">Né(e) le:</strong> <span id="tDate"></span></div>
+<div><strong style="color:#fff">À:</strong> <span id="tLieu"></span></div>
+<div><strong style="color:#fff">Nationalité:</strong> <span id="tNat"></span></div>
+<div><strong style="color:#fff">Adresse:</strong> <span id="tAddr"></span></div>
+</div>
+<h3 style="margin-bottom:16px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:8px">Dernières volontés</h3>
+<div id="tContent" style="background:#fff;color:#000;padding:24px;border-radius:8px;min-height:200px"></div>
+</div>
+</div>
+<div id="pdfContent" class="testament-pdf">
+<h1>TESTAMENT — DERNIÈRES VOLONTÉS</h1>
+<div class="identity">
+<p>Je soussigné(e) <strong><span id="pdfNom"></span> <span id="pdfPrenom"></span></strong>,</p>
+<p>Né(e) le <strong><span id="pdfDate"></span></strong> à <strong><span id="pdfLieu"></span></strong>,</p>
+<p>De nationalité <strong><span id="pdfNat"></span></strong>, résidant au <strong><span id="pdfAddr"></span></strong>.</p>
+</div>
+<div class="content" id="pdfHtml"></div>
+<div class="footer">Document généré le <span id="pdfGenDate"></span> — Utilitaire</div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/crypto.js"></script>
+<script src="/js/utils.js"></script>
+<script src="/js/testament.js"></script>
+</body>
+</html>

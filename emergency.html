@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Urgence</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="header">
+<div class="header-title"><i class="fas fa-exclamation-triangle" style="color:#fca311"></i> Urgence</div>
+<button class="btn-cancel" onclick="logout()" style="min-height:36px;padding:8px 16px"><i class="fas fa-sign-out-alt"></i></button>
+</div>
+<div style="max-width:800px;margin:24px auto;padding:0 16px">
+<button class="btn-danger" style="width:100%;margin-bottom:24px;font-size:1.2rem;padding:16px" onclick="triggerPanic()"><i class="fas fa-exclamation-circle"></i> Alerte Panique Niveau 1</button>
+<div id="emMsg" style="display:none;background:rgba(252,163,17,0.1);border-left:4px solid #fca311;padding:16px;border-radius:8px;margin-bottom:24px;white-space:pre-wrap"></div>
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+<h2>Contacts à prévenir</h2>
+<span id="cCount" style="color:#888"></span>
+</div>
+<div class="search-bar"><i class="fas fa-search"></i><input type="text" id="emSearch" placeholder="Rechercher..." oninput="renderEmContacts()"></div>
+<div id="emList"></div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/crypto.js"></script>
+<script src="/js/utils.js"></script>
+<script src="/js/emergency.js"></script>
+</body>
+</html>
