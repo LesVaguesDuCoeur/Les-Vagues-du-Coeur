@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Configuration</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div style="max-width:600px;margin:40px auto;padding:0 24px">
+<h1 style="margin-bottom:24px;text-align:center">Configuration initiale</h1>
+<div class="card">
+<form id="setupForm">
+<h3 style="margin-bottom:16px;color:#e63946">1. Code Admin (accès total)</h3>
+<p style="font-size:0.9rem;color:#888;margin-bottom:12px">8 caractères minimum.</p>
+<div class="input-group"><input type="password" id="a1" required minlength="8" oninput="checkStrength(this,'sa')"><button type="button" class="toggle-btn" onclick="toggleVisibility(this,'a1')"><i class="fas fa-eye"></i></button></div>
+<div class="pw-strength"><div id="sa" style="height:100%;width:0;transition:all 0.3s"></div></div>
+<div class="input-group"><input type="password" id="a2" placeholder="Confirmer" required minlength="8"><button type="button" class="toggle-btn" onclick="toggleVisibility(this,'a2')"><i class="fas fa-eye"></i></button></div>
+
+<h3 style="margin-top:32px;margin-bottom:16px;color:#fca311">2. Code Urgence</h3>
+<p style="font-size:0.9rem;color:#888;margin-bottom:12px">6 caractères minimum. Différent de l'Admin.</p>
+<div class="input-group"><input type="password" id="u1" required minlength="6" oninput="checkStrength(this,'su')"><button type="button" class="toggle-btn" onclick="toggleVisibility(this,'u1')"><i class="fas fa-eye"></i></button></div>
+<div class="pw-strength"><div id="su" style="height:100%;width:0;transition:all 0.3s"></div></div>
+<div class="input-group"><input type="password" id="u2" placeholder="Confirmer" required minlength="6"><button type="button" class="toggle-btn" onclick="toggleVisibility(this,'u2')"><i class="fas fa-eye"></i></button></div>
+
+<h3 style="margin-top:32px;margin-bottom:16px;color:#457b9d">3. Code Vault</h3>
+<p style="font-size:0.9rem;color:#888;margin-bottom:12px">6 caractères minimum. Différent des autres.</p>
+<div class="input-group"><input type="password" id="v1" required minlength="6" oninput="checkStrength(this,'sv')"><button type="button" class="toggle-btn" onclick="toggleVisibility(this,'v1')"><i class="fas fa-eye"></i></button></div>
+<div class="pw-strength"><div id="sv" style="height:100%;width:0;transition:all 0.3s"></div></div>
+<div class="input-group"><input type="password" id="v2" placeholder="Confirmer" required minlength="6"><button type="button" class="toggle-btn" onclick="toggleVisibility(this,'v2')"><i class="fas fa-eye"></i></button></div>
+
+<h3 style="margin-top:32px;margin-bottom:16px;color:#9b5de5">4. Code Testament</h3>
+<p style="font-size:0.9rem;color:#888;margin-bottom:12px">6 caractères minimum. Différent des autres.</p>
+<div class="input-group"><input type="password" id="t1" required minlength="6" oninput="checkStrength(this,'st')"><button type="button" class="toggle-btn" onclick="toggleVisibility(this,'t1')"><i class="fas fa-eye"></i></button></div>
+<div class="pw-strength"><div id="st" style="height:100%;width:0;transition:all 0.3s"></div></div>
+<div class="input-group"><input type="password" id="t2" placeholder="Confirmer" required minlength="6"><button type="button" class="toggle-btn" onclick="toggleVisibility(this,'t2')"><i class="fas fa-eye"></i></button></div>
+
+<h3 style="margin-top:32px;margin-bottom:16px">5. Message d'urgence (Optionnel)</h3>
+<textarea id="msg" rows="4" placeholder="Ce message sera affiché sur la page d'urgence..."></textarea>
+
+<button type="submit" class="btn-primary" style="width:100%;margin-top:24px">Configurer</button>
+</form>
+</div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/crypto.js"></script>
+<script src="/js/utils.js"></script>
+<script src="/js/setup.js"></script>
+</body>
+</html>
