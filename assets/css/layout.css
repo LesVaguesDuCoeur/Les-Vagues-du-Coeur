@@ -1,0 +1,128 @@
+#main-content {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.screen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: none;
+  flex-direction: column;
+  padding-bottom: 80px;
+  overflow-y: auto;
+}
+
+.screen.active {
+  display: flex;
+  animation: screenEnter var(--transition-screen);
+}
+
+@keyframes screenEnter {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+#skip-link-container {
+  position: absolute;
+  top: -100px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: var(--z-index-toast);
+}
+
+.skip-link:focus {
+  position: fixed;
+  top: 10px;
+  background: var(--color-brand-primary);
+  color: white;
+  padding: 10px 20px;
+  border-radius: var(--radius-md);
+  outline: none;
+}
+
+#screen-counter {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  font-size: 14px;
+  color: var(--color-text-tertiary);
+  z-index: var(--z-index-nav);
+  background: rgba(255,255,255,0.8);
+  padding: 4px 8px;
+  border-radius: var(--radius-full);
+}
+
+#bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 60px;
+  background: var(--color-bg-primary);
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  z-index: var(--z-index-nav);
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+}
+
+#progress-bar-container {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+  max-width: 600px;
+  margin: 0 16px;
+}
+
+.progress-segment {
+  flex: 1;
+  height: 8px;
+  background: var(--color-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--transition-default);
+  position: relative;
+}
+
+.progress-segment:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-text-primary);
+  color: white;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  white-space: nowrap;
+  margin-bottom: 8px;
+  pointer-events: none;
+}
+
+.progress-segment.active {
+  background: var(--color-brand-primary);
+}
+
+.progress-segment.past {
+  background: var(--color-brand-secondary);
+}
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}

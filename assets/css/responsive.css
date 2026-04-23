@@ -1,0 +1,102 @@
+@media (max-width: 1024px) {
+  .poles-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .cover-features {
+    grid-template-columns: 1fr;
+  }
+
+  .before-after-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .poles-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-stats {
+    grid-template-columns: 1fr;
+  }
+
+  h1 { font-size: 32px; }
+  h2 { font-size: 24px; }
+  h3 { font-size: 18px; }
+
+  #bottom-nav {
+    padding: 0 8px;
+  }
+
+  #progress-bar-container {
+    margin: 0 8px;
+  }
+
+  .btn {
+    width: 100%;
+  }
+
+  #toast-container {
+    right: 16px;
+    left: 16px;
+    bottom: 70px;
+  }
+
+  .drive-sidebar {
+    position: fixed;
+    top: 64px;
+    bottom: 0;
+    left: -256px;
+    background: white;
+    z-index: 100;
+    transition: left 0.3s ease;
+    box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+  }
+
+  .drive-sidebar.open {
+    left: 0;
+  }
+
+  .drive-main {
+    margin: 0;
+    border-radius: 0;
+  }
+
+  .drive-search-area {
+    display: none;
+  }
+
+  .drive-header-actions {
+    margin-left: auto;
+  }
+
+  .drive-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 16px;
+  }
+
+  .chaos-bubble {
+    font-size: 12px;
+    padding: 4px 8px;
+  }
+
+  .drive-card {
+    height: 140px;
+  }
+}
+
+@media (hover: none) {
+  .card:hover, .btn:hover {
+    transform: none;
+  }
+
+  .drive-card:hover {
+    background: var(--color-drive-search-bg);
+  }
+}

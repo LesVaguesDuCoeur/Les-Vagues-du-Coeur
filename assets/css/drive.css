@@ -1,0 +1,271 @@
+.drive-app {
+  font-family: var(--font-family-drive);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--color-drive-bg);
+  color: var(--color-drive-text);
+  margin: -24px;
+}
+
+.drive-header {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  border-bottom: 1px solid var(--color-drive-border);
+}
+
+.drive-logo-area {
+  display: flex;
+  align-items: center;
+  width: 238px;
+  padding-left: 12px;
+  gap: 8px;
+}
+
+.drive-logo-text {
+  font-size: 22px;
+  color: var(--color-drive-icon);
+  margin-left: 4px;
+}
+
+.drive-search-area {
+  flex: 1;
+  max-width: 720px;
+}
+
+.drive-search {
+  background: var(--color-drive-search-bg);
+  border-radius: 24px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 12px;
+}
+
+.drive-search input {
+  border: none;
+  background: transparent;
+  flex: 1;
+  font-size: 16px;
+  outline: none;
+}
+
+.drive-header-actions {
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 16px;
+}
+
+.drive-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.drive-sidebar {
+  width: 256px;
+  padding: 16px 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.drive-new-btn {
+  margin: 0 16px 16px;
+  background: white;
+  border-radius: 16px;
+  height: 56px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 24px 0 16px;
+  gap: 12px;
+  box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
+  font-weight: 500;
+  color: var(--color-drive-text);
+}
+
+.drive-nav-item {
+  display: flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 24px;
+  border-radius: 0 16px 16px 0;
+  margin-right: 16px;
+  gap: 16px;
+  color: var(--color-drive-text);
+  cursor: pointer;
+}
+
+.drive-nav-item.active {
+  background: var(--color-drive-selected);
+  color: var(--color-drive-text-active);
+  font-weight: 500;
+}
+
+.drive-main {
+  flex: 1;
+  background: white;
+  border-radius: 16px;
+  margin: 16px 16px 16px 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3);
+}
+
+.drive-toolbar {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--color-drive-border);
+}
+
+.drive-breadcrumb {
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.drive-breadcrumb-item {
+  cursor: pointer;
+}
+
+.drive-breadcrumb-item:hover {
+  text-decoration: underline;
+}
+
+.drive-breadcrumb-separator {
+  color: var(--color-drive-icon);
+  font-size: 14px;
+}
+
+.drive-content {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.drive-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.drive-card {
+  background: var(--color-drive-search-bg);
+  border-radius: 8px;
+  height: 160px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.drive-card:hover {
+  background: #E8EAED;
+}
+
+.drive-card.selected {
+  background: var(--color-drive-selected);
+  border-color: var(--color-drive-active);
+}
+
+.drive-card-icon {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+}
+
+.drive-card-icon .folder-icon {
+  color: var(--color-drive-icon);
+}
+
+.drive-card-name {
+  font-weight: 500;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.drive-demo-banner {
+  background: #E8F0FE;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--color-drive-border);
+}
+
+.context-menu {
+  position: fixed;
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 6px 2px rgba(60,64,67,0.15);
+  padding: 8px 0;
+  min-width: 200px;
+  z-index: 1000;
+}
+
+.context-menu-item {
+  padding: 8px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  cursor: pointer;
+}
+
+.context-menu-item:hover {
+  background: var(--color-drive-search-bg);
+}
+
+.drive-modal-share .modal-content {
+  max-width: 512px;
+  border-radius: 8px;
+}
+
+.share-input-area {
+  margin-bottom: 24px;
+}
+
+.share-input-box {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--color-drive-border);
+  border-radius: 4px;
+  padding: 8px 12px;
+  gap: 12px;
+}
+
+.share-input-box input {
+  border: none;
+  outline: none;
+  flex: 1;
+}
+
+.share-list-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.share-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-brand-primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
