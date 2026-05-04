@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0a0a0f">
+  <title>PDF Studio</title>
+
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="apple-touch-icon" href="/assets/icon-192.png">
+
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib-fontkit/1.1.1/fontkit.umd.min.js"></script>
+  <script type="module" src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.7.76/pdf.min.mjs"></script>
+
+  <script type="module" src="/js/utils.js"></script>
+  <script type="module" src="/js/ui.js"></script>
+  <script type="module" src="/js/fonts.js"></script>
+  <script type="module" src="/js/pdf-engine.js"></script>
+  <script type="module" src="/js/converter.js"></script>
+  <script type="module" src="/js/watermark.js"></script>
+  <script type="module" src="/js/signature.js"></script>
+  <script type="module" src="/js/editor.js"></script>
+  <script type="module" src="/js/compressor.js"></script>
+  <script type="module" src="/js/app.js"></script>
+  <script type="module" src="/js/sw-register.js"></script>
+</head>
+<body>
+
+  <header class="app-header">
+    <div class="header-left">
+      <img src="/assets/logo.svg" alt="PDF Studio Logo" class="logo">
+      <h1 class="visually-hidden">PDF Studio</h1>
+    </div>
+    <div class="header-center main-toolbar" id="mainToolbar" style="display:none;">
+
+      <div class="toolbar-group" role="group" aria-label="Fichier">
+        <button class="btn-icon" id="btnOpen" aria-label="Ouvrir un autre fichier" title="Ouvrir (Ctrl+O)"><i class="fas fa-folder-open"></i></button>
+        <button class="btn-icon" id="btnMerge" aria-label="Fusionner" title="Fusionner"><i class="fas fa-object-group"></i></button>
+        <button class="btn-icon" id="btnSplit" aria-label="Diviser" title="Diviser"><i class="fas fa-cut"></i></button>
+        <button class="btn-icon" id="btnReset" aria-label="Réinitialiser" title="Réinitialiser"><i class="fas fa-undo"></i></button>
+      </div>
+
+      <div class="toolbar-separator"></div>
+
+      <div class="toolbar-group" role="group" aria-label="Édition">
+        <button class="btn-icon active" id="btnSelect" aria-label="Sélection" title="Sélection"><i class="fas fa-mouse-pointer"></i></button>
+        <button class="btn-icon" id="btnText" aria-label="Ajouter texte" title="Texte"><i class="fas fa-font"></i></button>
+        <button class="btn-icon" id="btnErase" aria-label="Effacer" title="Effacer"><i class="fas fa-eraser"></i></button>
+        <button class="btn-icon" id="btnHighlight" aria-label="Surligner" title="Surligner"><i class="fas fa-highlighter"></i></button>
+        <button class="btn-icon" id="btnAnnotate" aria-label="Annoter" title="Annoter"><i class="fas fa-pen"></i></button>
+      </div>
+
+      <div class="toolbar-separator"></div>
+
+      <div class="toolbar-group" role="group" aria-label="Pages">
+        <button class="btn-icon" id="btnRotate" aria-label="Faire pivoter" title="Pivoter"><i class="fas fa-rotate-right"></i></button>
+        <button class="btn-icon" id="btnDeletePage" aria-label="Supprimer la page" title="Supprimer (Suppr)"><i class="fas fa-trash"></i></button>
+        <button class="btn-icon" id="btnDuplicatePage" aria-label="Dupliquer la page" title="Dupliquer"><i class="fas fa-copy"></i></button>
+        <button class="btn-icon" id="btnAddPage" aria-label="Insérer page blanche" title="Insérer page"><i class="fas fa-file-circle-plus"></i></button>
+      </div>
+
+      <div class="toolbar-separator"></div>
+
+      <div class="toolbar-group" role="group" aria-label="Outils">
+        <button class="btn-icon" id="btnWatermark" aria-label="Filigrane" title="Filigrane"><i class="fas fa-water"></i></button>
+        <button class="btn-icon" id="btnSignature" aria-label="Signature" title="Signature"><i class="fas fa-signature"></i></button>
+        <button class="btn-icon" id="btnCompress" aria-label="Compresser" title="Compresser"><i class="fas fa-compress-arrows-alt"></i></button>
+        <button class="btn-icon" id="btnOCR" aria-label="OCR" title="OCR"><i class="fas fa-language"></i></button>
+      </div>
+
+      <div class="toolbar-separator"></div>
+
+      <div class="toolbar-group" role="group" aria-label="Export">
+        <button class="btn-icon" id="btnDownload" aria-label="Télécharger" title="Télécharger (Ctrl+S)"><i class="fas fa-download"></i></button>
+        <button class="btn-icon" id="btnDownloadCompress" aria-label="Télécharger compressé" title="Télécharger compressé (Ctrl+Shift+S)"><i class="fas fa-file-zipper"></i></button>
+        <button class="btn-icon" id="btnPrint" aria-label="Imprimer" title="Imprimer (Ctrl+P)"><i class="fas fa-print"></i></button>
+      </div>
+
+    </div>
+    <div class="header-right">
+      <button class="btn-icon" id="btnThemeToggle" aria-label="Basculer le thème" title="Thème"><i class="fas fa-sun"></i></button>
+      <button class="btn-icon d-mobile" id="btnMobileMenu" aria-label="Menu" title="Menu"><i class="fas fa-bars"></i></button>
+    </div>
+  </header>
+
+  <main class="app-main">
+
+    <div id="emptyState" class="empty-state">
+      <div class="drop-zone" id="mainDropZone">
+        <i class="fas fa-file-pdf drop-icon"></i>
+        <h2>Glissez-déposez un fichier ici</h2>
+        <p>ou</p>
+        <button class="btn-primary" id="btnBrowseEmpty">Parcourir</button>
+        <input type="file" id="fileInputEmpty" class="visually-hidden" multiple accept=".pdf,.docx,.doc,.odt,.rtf,.txt,.md,.xlsx,.xls,.csv,.pptx,.ppt,.jpg,.jpeg,.png,.webp,.gif,.bmp,.tiff,.heic">
+        <p class="formats-text">Formats supportés : PDF, Word, Excel, PowerPoint, Images, Texte</p>
+        <div class="privacy-notice">
+          <i class="fas fa-shield-alt"></i>
+          Vos fichiers ne quittent jamais votre appareil. Tout est traité localement.
+        </div>
+      </div>
+    </div>
+
+    <div id="editorState" class="editor-state" style="display:none;">
+
+      <aside class="sidebar-left" id="sidebarLeft">
+        <div class="sidebar-header">
+          <h3>Pages</h3>
+          <button class="btn-ghost btn-sm" id="btnSelectAllPages">Tout sélectionner</button>
+        </div>
+        <div class="thumbnails-container" id="thumbnailsContainer"></div>
+      </aside>
+
+      <section class="editor-center" id="editorCenter">
+        <div class="canvas-toolbar">
+          <button class="btn-icon btn-sm" id="btnZoomOut" aria-label="Dézoomer" title="Dézoomer"><i class="fas fa-search-minus"></i></button>
+          <span id="zoomLevel" class="zoom-level">100%</span>
+          <button class="btn-icon btn-sm" id="btnZoomIn" aria-label="Zoomer" title="Zoomer"><i class="fas fa-search-plus"></i></button>
+          <button class="btn-icon btn-sm" id="btnFitWidth" aria-label="Ajuster largeur" title="Ajuster largeur"><i class="fas fa-arrows-alt-h"></i></button>
+          <button class="btn-icon btn-sm" id="btnFitPage" aria-label="Page entière" title="Page entière"><i class="fas fa-expand"></i></button>
+          <div class="spacer"></div>
+          <button class="btn-icon btn-sm" id="btnPrevPage" aria-label="Page précédente" title="Page précédente"><i class="fas fa-chevron-up"></i></button>
+          <span class="page-indicator"><input type="number" id="pageInput" min="1" value="1"> / <span id="pageCount">1</span></span>
+          <button class="btn-icon btn-sm" id="btnNextPage" aria-label="Page suivante" title="Page suivante"><i class="fas fa-chevron-down"></i></button>
+        </div>
+        <div class="canvas-container" id="mainCanvasContainer">
+          <canvas id="pdfCanvas"></canvas>
+          <div id="annotationLayer" class="annotation-layer"></div>
+        </div>
+      </section>
+
+      <aside class="sidebar-right" id="sidebarRight">
+        <div id="contextualTools"></div>
+      </aside>
+
+    </div>
+  </main>
+
+  <nav class="bottom-tab-bar" id="bottomTabBar" style="display:none;">
+    <button class="tab-btn" data-target="sidebarLeft"><i class="fas fa-layer-group"></i><span>Pages</span></button>
+    <button class="tab-btn" data-target="mobileTools"><i class="fas fa-toolbox"></i><span>Outils</span></button>
+    <button class="tab-btn" id="btnMobileWatermark"><i class="fas fa-water"></i><span>Filigrane</span></button>
+    <button class="tab-btn" id="btnMobileSignature"><i class="fas fa-signature"></i><span>Signature</span></button>
+    <button class="tab-btn" data-target="sidebarRight"><i class="fas fa-sliders-h"></i><span>Propriétés</span></button>
+  </nav>
+
+  <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+  <div id="loaderOverlay" class="loader-overlay" style="display:none;" aria-hidden="true">
+    <div class="loader-content">
+      <div class="spinner"></div>
+      <p id="loaderMessage">Chargement...</p>
+      <div class="progress-bar"><div class="progress-fill" id="loaderProgress"></div></div>
+    </div>
+  </div>
+
+  <div id="modalContainer" class="modal-container" style="display:none;">
+      <div class="modal-backdrop"></div>
+      <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+          <div class="modal-header">
+              <h3 id="modalTitle">Titre</h3>
+              <button class="btn-icon btn-close-modal" aria-label="Fermer"><i class="fas fa-times"></i></button>
+          </div>
+          <div class="modal-body" id="modalBody"></div>
+          <div class="modal-footer" id="modalFooter"></div>
+      </div>
+  </div>
+
+  <template id="watermarkModalTemplate">
+      <div class="watermark-form">
+          <div class="tabs">
+              <button class="tab-btn active" data-tab="wm-text">Texte</button>
+              <button class="tab-btn" data-tab="wm-image">Image</button>
+          </div>
+          <div class="tab-content" id="wm-text">
+              <div class="form-group">
+                  <label for="wmTextContent">Texte</label>
+                  <textarea id="wmTextContent" rows="3">CONFIDENTIEL</textarea>
+              </div>
+              <div class="form-row">
+                  <div class="form-group">
+                      <label for="wmFont">Police</label>
+                      <select id="wmFont"></select>
+                  </div>
+                  <div class="form-group">
+                      <label for="wmSize">Taille (px)</label>
+                      <input type="number" id="wmSize" value="48" min="8" max="200">
+                  </div>
+              </div>
+          </div>
+          <div class="tab-content" id="wm-image" style="display:none;">
+              <div class="form-group">
+                  <label>Image</label>
+                  <input type="file" id="wmImageInput" accept="image/png, image/jpeg">
+                  <div class="checkbox-group mt-2">
+                      <input type="checkbox" id="wmRemoveBg">
+                      <label for="wmRemoveBg">Retirer le fond blanc</label>
+                  </div>
+              </div>
+          </div>
+          <div class="form-row mt-3">
+              <div class="form-group">
+                  <label for="wmColor">Couleur</label>
+                  <input type="color" id="wmColor" value="#ff0000">
+              </div>
+              <div class="form-group">
+                  <label for="wmOpacity">Opacité (%)</label>
+                  <input type="range" id="wmOpacity" min="0" max="100" value="30">
+              </div>
+          </div>
+          <div class="form-group mt-3">
+              <label for="wmRotation">Rotation (°)</label>
+              <input type="range" id="wmRotation" min="-180" max="180" value="45">
+              <div class="rotation-presets mt-1">
+                  <button class="btn-badge" data-deg="0">0°</button>
+                  <button class="btn-badge" data-deg="45">45°</button>
+                  <button class="btn-badge" data-deg="90">90°</button>
+                  <button class="btn-badge" data-deg="-45">-45°</button>
+              </div>
+          </div>
+          <div class="form-group mt-3">
+               <label>Position</label>
+               <div class="position-grid">
+                   <button class="grid-cell" data-pos="tl"></button>
+                   <button class="grid-cell" data-pos="tc"></button>
+                   <button class="grid-cell" data-pos="tr"></button>
+                   <button class="grid-cell" data-pos="ml"></button>
+                   <button class="grid-cell active" data-pos="mc"></button>
+                   <button class="grid-cell" data-pos="mr"></button>
+                   <button class="grid-cell" data-pos="bl"></button>
+                   <button class="grid-cell" data-pos="bc"></button>
+                   <button class="grid-cell" data-pos="br"></button>
+               </div>
+          </div>
+          <div class="checkbox-group mt-3">
+              <input type="checkbox" id="wmTiling">
+              <label for="wmTiling">Répéter sur toute la page</label>
+          </div>
+          <div class="form-group mt-3">
+               <label for="wmPages">Pages cibles</label>
+               <select id="wmPages">
+                   <option value="all">Toutes les pages</option>
+                   <option value="current">Page courante</option>
+                   <option value="custom">Plage personnalisée</option>
+                   <option value="even">Pages paires</option>
+                   <option value="odd">Pages impaires</option>
+               </select>
+               <input type="text" id="wmPagesCustom" placeholder="ex: 1-3, 5, 8-10" style="display:none;" class="mt-2">
+          </div>
+          <div class="warning-box mt-3">
+              <i class="fas fa-exclamation-triangle"></i> Filigrane fusionné dans le contenu, non détachable après application.
+          </div>
+      </div>
+  </template>
+
+  <template id="signatureModalTemplate">
+      <div class="signature-form">
+          <div class="tabs">
+              <button class="tab-btn active" data-tab="sig-draw">Dessiner</button>
+              <button class="tab-btn" data-tab="sig-type">Clavier</button>
+              <button class="tab-btn" data-tab="sig-image">Image</button>
+          </div>
+
+          <div class="tab-content" id="sig-draw">
+              <div class="canvas-wrapper">
+                  <canvas id="sigDrawCanvas" width="400" height="200"></canvas>
+              </div>
+              <div class="toolbar mt-2">
+                  <button class="btn-color color-black active" data-color="#000000"></button>
+                  <button class="btn-color color-blue" data-color="#0000FF"></button>
+                  <button class="btn-ghost btn-sm" id="btnSigClear"><i class="fas fa-eraser"></i> Effacer</button>
+              </div>
+          </div>
+
+          <div class="tab-content" id="sig-type" style="display:none;">
+              <input type="text" id="sigTextInput" placeholder="Tapez votre nom..." class="form-control mb-3">
+              <div class="font-selector" id="sigFontSelector">
+              </div>
+          </div>
+
+          <div class="tab-content" id="sig-image" style="display:none;">
+              <input type="file" id="sigImageInput" accept="image/png, image/jpeg" class="form-control mb-3">
+              <div class="checkbox-group mb-2">
+                  <input type="checkbox" id="sigRemoveBg" checked>
+                  <label for="sigRemoveBg">Retirer le fond (blanc/clair)</label>
+              </div>
+              <div class="form-group" id="sigThresholdGroup">
+                  <label for="sigThreshold">Tolérance: <span id="sigThresholdVal">240</span></label>
+                  <input type="range" id="sigThreshold" min="200" max="255" value="240">
+              </div>
+              <div class="preview-box">
+                  <canvas id="sigImagePreview" style="max-width:100%; max-height:200px;"></canvas>
+              </div>
+          </div>
+
+          <div class="checkbox-group mt-3">
+              <input type="checkbox" id="sigSaveLocal" checked>
+              <label for="sigSaveLocal">Sauvegarder pour plus tard (local uniquement)</label>
+          </div>
+      </div>
+  </template>
+
+  <template id="compressModalTemplate">
+      <div class="compress-form">
+          <div class="radio-group">
+              <label class="radio-card">
+                  <input type="radio" name="compPreset" value="max">
+                  <div class="card-content">
+                      <div class="title">Qualité Maximale</div>
+                      <div class="desc">300 DPI, qualité 95%</div>
+                  </div>
+              </label>
+              <label class="radio-card">
+                  <input type="radio" name="compPreset" value="high">
+                  <div class="card-content">
+                      <div class="title">Qualité Élevée</div>
+                      <div class="desc">200 DPI, qualité 85%</div>
+                  </div>
+              </label>
+              <label class="radio-card">
+                  <input type="radio" name="compPreset" value="std" checked>
+                  <div class="card-content">
+                      <div class="title">Standard recommandé</div>
+                      <div class="desc">150 DPI, qualité 75%</div>
+                  </div>
+              </label>
+              <label class="radio-card">
+                  <input type="radio" name="compPreset" value="low">
+                  <div class="card-content">
+                      <div class="title">Mobile / Email</div>
+                      <div class="desc">96 DPI, qualité 60%</div>
+                  </div>
+              </label>
+              <label class="radio-card">
+                  <input type="radio" name="compPreset" value="custom">
+                  <div class="card-content">
+                      <div class="title">Personnalisé</div>
+                      <div class="desc">Ajustement manuel</div>
+                  </div>
+              </label>
+          </div>
+
+          <div id="compCustomSettings" class="mt-3" style="display:none;">
+              <div class="form-group">
+                  <label for="compDpi">Résolution maximale (DPI) : <span id="compDpiVal">150</span></label>
+                  <input type="range" id="compDpi" min="50" max="300" value="150">
+              </div>
+              <div class="form-group mt-2">
+                  <label for="compQuality">Qualité image (%) : <span id="compQualityVal">75</span></label>
+                  <input type="range" id="compQuality" min="30" max="100" value="75">
+              </div>
+          </div>
+
+          <div class="info-box mt-3">
+              Taille originale estimée : <strong id="compOrigSize">Calcul...</strong>
+          </div>
+      </div>
+  </template>
+
+</body>
+</html>
