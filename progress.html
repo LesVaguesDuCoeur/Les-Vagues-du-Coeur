@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Progression - English Mastery</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <style>
+    .stat-card { background: var(--bg-card); padding: var(--spacing-4); border-radius: var(--radius-lg); border: 1px solid var(--border); text-align: center; }
+    .stat-value { font-size: 2rem; font-weight: 700; color: var(--accent-primary); margin-bottom: 4px; }
+    .stat-label { font-size: 0.85rem; color: var(--text-secondary); }
+    .chart-container { background: var(--bg-card); padding: var(--spacing-4); border-radius: var(--radius-lg); border: 1px solid var(--border); margin-bottom: var(--spacing-6); position: relative; height: 300px; width: 100%; }
+    .heatmap { display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px; }
+    .heat-cell { aspect-ratio: 1; border-radius: 2px; background: var(--bg-surface); }
+    .heat-1 { background: rgba(34,211,160,0.3); }
+    .heat-2 { background: rgba(34,211,160,0.6); }
+    .heat-3 { background: rgba(34,211,160,1); }
+  </style>
+</head>
+<body class="page-enter">
+  <div class="app-container">
+    <aside class="sidebar">
+      <div class="sidebar-header"><i class="fas fa-graduation-cap" style="color: var(--accent-primary); font-size: 1.5rem;"></i><h2 style="font-size: 1.2rem; font-weight: 700;">EN Mastery</h2></div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="nav-item"><i class="fas fa-home"></i> Accueil</a>
+        <a href="lessons.html" class="nav-item"><i class="fas fa-book"></i> Leçons</a>
+        <a href="exercises.html" class="nav-item"><i class="fas fa-dumbbell"></i> Exercices</a>
+        <a href="review.html" class="nav-item"><i class="fas fa-brain"></i> Révision</a>
+        <a href="progress.html" class="nav-item active"><i class="fas fa-chart-line"></i> Stats</a>
+        <a href="profile.html" class="nav-item"><i class="fas fa-user"></i> Profil</a>
+      </nav>
+    </aside>
+    <main class="main-content">
+      <header class="page-header"><h1 class="mb-2">Vos Statistiques</h1><p class="text-secondary">Analysez votre progression détaillée.</p></header>
+      <div class="container">
+        <div class="grid-2 lg:grid-4 gap-4 mb-6">
+          <div class="stat-card"><div class="stat-value" id="stat-xp">0</div><div class="stat-label">Total XP</div></div>
+          <div class="stat-card"><div class="stat-value text-warning" id="stat-streak">0</div><div class="stat-label">Jours Consécutifs</div></div>
+          <div class="stat-card"><div class="stat-value text-success" id="stat-words">0</div><div class="stat-label">Mots Appris</div></div>
+          <div class="stat-card"><div class="stat-value text-secondary" id="stat-lessons">0</div><div class="stat-label">Leçons Complétées</div></div>
+        </div>
+        <div class="grid-2 gap-6 mb-6">
+          <div><h3 class="mb-4">Profil de Compétences</h3><div class="chart-container"><canvas id="radarChart"></canvas></div></div>
+          <div><h3 class="mb-4">Activité des 12 dernières semaines</h3><div class="chart-container" style="display:flex;align-items:center;"><div class="heatmap w-full"></div></div></div>
+        </div>
+      </div>
+    </main>
+    <nav class="bottom-bar">
+      <a href="dashboard.html" class="tab-item"><i class="fas fa-home"></i><span>Accueil</span></a>
+      <a href="lessons.html" class="tab-item"><i class="fas fa-book"></i><span>Leçons</span></a>
+      <a href="exercises.html" class="tab-item"><i class="fas fa-dumbbell"></i><span>Exos</span></a>
+      <a href="review.html" class="tab-item"><i class="fas fa-brain"></i><span>Réviser</span></a>
+      <a href="profile.html" class="tab-item"><i class="fas fa-user"></i><span>Profil</span></a>
+    </nav>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="app.js"></script><script src="storage.js"></script><script src="api.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const data = await api.loadProgress() || {}; const vocab = await api.loadVocab() || [];
+      document.getElementById('stat-xp').textContent = data.xp || 0; document.getElementById('stat-streak').textContent = data.streak || 0;
+      document.getElementById('stat-words').textContent = vocab.length; document.getElementById('stat-lessons').textContent = (data.completedLessons || []).length;
+      const ctx = document.getElementById('radarChart').getContext('2d');
+      new Chart(ctx, { type: 'radar', data: { labels: ['Grammaire', 'Vocabulaire', 'Écoute', 'Oral', 'Lecture', 'Écriture'], datasets: [{ label: 'Niveau', data: [65, Math.min(100, vocab.length), 70, 50, 60, 40], fill: true, backgroundColor: 'rgba(34, 211, 160, 0.2)', borderColor: 'rgb(34, 211, 160)', pointBackgroundColor: 'rgb(34, 211, 160)', }] }, options: { responsive: true, maintainAspectRatio: false, scales: { r: { min: 0, max: 100, ticks: { display: false }, grid: { color: '#1e2d45' }, pointLabels: { color: '#8899bb', font:{size:12} } } }, plugins: { legend: { display: false } } } });
+      const heatmap = document.querySelector('.heatmap');
+      for(let i=0; i<12 * 7; i++) { const cell = document.createElement('div'); cell.className = 'heat-cell'; if (Math.random() > 0.7) cell.classList.add('heat-1'); if (Math.random() > 0.85) cell.classList.add('heat-2'); if (Math.random() > 0.95) cell.classList.add('heat-3'); heatmap.appendChild(cell); }
+    });
+  </script>
+</body>
+</html>

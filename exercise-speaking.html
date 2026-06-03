@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Expression Orale - English Mastery</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <style>
+    .prompt-box { background: var(--bg-card); padding: var(--spacing-6); border-radius: var(--radius-lg); text-align: center; margin-bottom: var(--spacing-6); border: 1px solid var(--border); }
+    .target-text { font-size: 1.5rem; font-weight: 600; margin-bottom: var(--spacing-4); }
+    .mic-btn { width: 80px; height: 80px; border-radius: 50%; background: var(--accent-secondary); color: white; font-size: 2rem; display: inline-flex; align-items: center; justify-content: center; border: 4px solid rgba(124,58,237,0.3); transition: all 0.3s; cursor: pointer; margin: 0 auto var(--spacing-4); }
+    .mic-btn.recording { background: var(--accent-danger); border-color: rgba(239,68,68,0.3); animation: pulseAnim 1.5s infinite; }
+    .result-box { display: none; background: var(--bg-surface); padding: var(--spacing-6); border-radius: var(--radius-lg); text-align: center; }
+    .score-circle { width: 100px; height: 100px; border-radius: 50%; border: 4px solid var(--accent-primary); display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: bold; margin: 0 auto var(--spacing-4); color: var(--accent-primary); }
+    .transcript-text { font-size: 1.1rem; color: var(--text-secondary); line-height: 1.6; }
+    .word-correct { color: var(--accent-success); }
+    .word-incorrect { color: var(--accent-danger); text-decoration: line-through; }
+  </style>
+</head>
+<body class="page-enter">
+  <header class="page-header flex items-center justify-between">
+    <a href="exercises.html" class="btn btn-icon btn-ghost" aria-label="Retour aux exercices"><i class="fas fa-arrow-left"></i></a>
+    <div class="font-bold">Expression Orale</div>
+    <div class="badge badge-a1">A1.1</div>
+  </header>
+  <main class="container" style="max-width: 600px;">
+    <div class="prompt-box">
+      <div class="text-secondary mb-2">Lisez la phrase suivante à voix haute :</div>
+      <div class="target-text" id="target-text">Hello, my name is John and I live in London.</div>
+      <button class="btn btn-ghost btn-icon" aria-label="Écouter" onclick="playTarget()"><i class="fas fa-volume-up"></i> Écouter le modèle</button>
+    </div>
+    <div class="text-center" id="record-area">
+      <div class="mic-btn" id="btn-mic" role="button" aria-label="Enregistrer" tabindex="0" onclick="toggleRecord()"><i class="fas fa-microphone"></i></div>
+      <div class="text-muted" id="status-text">Appuyez pour parler</div>
+      <div class="waveform-container justify-center mt-4" id="waveform">
+        <div class="waveform-bar"></div><div class="waveform-bar" style="animation-delay: 0.2s"></div>
+        <div class="waveform-bar" style="animation-delay: 0.4s"></div><div class="waveform-bar" style="animation-delay: 0.1s"></div>
+        <div class="waveform-bar" style="animation-delay: 0.3s"></div>
+      </div>
+    </div>
+    <div class="result-box" id="result-box">
+      <div class="score-circle" id="score-circle">85%</div><h3 class="mb-4">Ce que nous avons entendu :</h3><div class="transcript-text mb-6" id="transcript-display"></div><button class="btn btn-primary" onclick="location.reload()">Phrase suivante</button><button class="btn btn-secondary mt-2" onclick="retry()">Réessayer</button>
+    </div>
+  </main>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script src="app.js"></script><script src="speech.js"></script>
+  <script>
+    let isRecording = false; const targetPhrase = "Hello, my name is John and I live in London";
+    function playTarget() { speech.speak(targetPhrase, 0.9); }
+    async function toggleRecord() {
+      if (isRecording) return;
+      const btn = document.getElementById('btn-mic'); const status = document.getElementById('status-text'); const wave = document.getElementById('waveform');
+      isRecording = true; btn.classList.add('recording'); status.textContent = 'Écoute en cours...'; wave.classList.add('active');
+      const result = await speech.recognize(targetPhrase, (partial) => { status.textContent = partial; });
+      isRecording = false; btn.classList.remove('recording'); wave.classList.remove('active');
+      if (!result.success) {
+        status.textContent = 'Erreur : ' + (result.error === 'not_supported' ? 'Non supporté' : 'Non compris');
+        if (result.error === 'not_supported') { document.getElementById('record-area').style.display = 'none'; app.showToast('Passage en mode écoute seule', 'info'); }
+        return;
+      }
+      showResult(result.transcript);
+    }
+    function showResult(transcript) {
+      document.getElementById('record-area').style.display = 'none'; const resultBox = document.getElementById('result-box'); resultBox.style.display = 'block';
+      const score = speech.calculatePronunciationScore(targetPhrase, transcript); const circle = document.getElementById('score-circle'); circle.textContent = `${score}%`;
+      if (score >= 80) { circle.style.borderColor = 'var(--accent-success)'; circle.style.color = 'var(--accent-success)'; app.playSound('success'); } else if (score >= 50) { circle.style.borderColor = 'var(--accent-warning)'; circle.style.color = 'var(--accent-warning)'; } else { circle.style.borderColor = 'var(--accent-danger)'; circle.style.color = 'var(--accent-danger)'; app.playSound('error'); }
+      const tWords = transcript.split(' '); const formatted = tWords.map(w => { if (targetPhrase.toLowerCase().includes(w.toLowerCase())) { return `<span class="word-correct">${w}</span>`; } return `<span class="word-incorrect">${w}</span>`; }).join(' ');
+      document.getElementById('transcript-display').innerHTML = formatted || '<span class="text-muted">Rien entendu.</span>';
+    }
+    function retry() { document.getElementById('result-box').style.display = 'none'; document.getElementById('record-area').style.display = 'block'; document.getElementById('status-text').textContent = 'Appuyez pour parler'; }
+  </script>
+</body>
+</html>

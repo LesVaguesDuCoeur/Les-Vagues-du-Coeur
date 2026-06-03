@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Expression Écrite - English Mastery</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <style>
+    .prompt-box { background: var(--bg-card); padding: var(--spacing-6); border-radius: var(--radius-lg); text-align: center; border: 1px solid var(--border); margin-bottom: var(--spacing-4); }
+    .editor-box { width: 100%; min-height: 200px; padding: var(--spacing-4); background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--text-primary); font-family: var(--font-ui); font-size: 1.1rem; line-height: 1.6; resize: vertical; }
+    .editor-box:focus { outline: none; border-color: var(--accent-primary); box-shadow: 0 0 0 2px rgba(79, 142, 247, 0.2); }
+    .word-count { font-size: 0.85rem; color: var(--text-secondary); text-align: right; margin-top: var(--spacing-2); }
+  </style>
+</head>
+<body class="page-enter">
+  <header class="page-header flex items-center justify-between">
+    <a href="exercises.html" class="btn btn-icon btn-ghost" aria-label="Retour aux exercices"><i class="fas fa-arrow-left"></i></a>
+    <div class="font-bold">Expression Écrite</div>
+    <div class="badge badge-b1">B1.1</div>
+  </header>
+  <main class="container" style="max-width: 800px;">
+    <div class="prompt-box"><h3 class="mb-2">Write a short email to your boss</h3><p class="text-secondary text-sm">You are sick and cannot come to work today. Ask to take the day off.</p></div>
+    <textarea class="editor-box" id="writer" placeholder="Start typing here..."></textarea>
+    <div class="word-count"><span id="w-count">0</span> / 50 mots recommandés</div>
+    <button class="btn btn-primary w-full mt-6" onclick="analyzeText()">Analyser la rédaction</button>
+  </main>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script src="app.js"></script><script src="storage.js"></script><script src="api.js"></script>
+  <script>
+        let autoSaveTimeout;
+    document.getElementById('writer').addEventListener('input', (e) => {
+      const text = e.target.value;
+      const count = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
+      document.getElementById('w-count').textContent = count;
+
+      clearTimeout(autoSaveTimeout);
+      autoSaveTimeout = setTimeout(() => {
+        storage.saveLocal('draft_writing', text);
+      }, 500);
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const draft = storage.loadLocal('draft_writing');
+        if (draft) {
+            document.getElementById('writer').value = draft;
+            const count = draft.trim() === '' ? 0 : draft.trim().split(/\s+/).length;
+            document.getElementById('w-count').textContent = count;
+        }
+    });
+    async function analyzeText() {
+      const text = document.getElementById('writer').value.trim();
+      if(text.length < 10) return app.showToast('Texte trop court', 'warning');
+      const btn = document.querySelector('button[onclick="analyzeText()"]'); btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyse en cours...';
+      const res = await api.analyzeText(text); btn.disabled = false; btn.textContent = 'Analyser la rédaction';
+      if (res) {
+          let html = `<div class="card mt-6 border-l-4" style="border-left: 4px solid var(--accent-primary);"><h4 class="mb-2">Résultat : Note ${res.score}</h4><p class="text-sm text-secondary mb-2">${res.wordCount} mots analysés.</p><ul style="list-style: disc; padding-left: 20px;" class="text-sm">`;
+          if (res.suggestions.length === 0) { html += `<li class="text-success">Excellent travail, aucune erreur majeure détectée !</li>`; app.triggerConfetti(); app.playSound('success'); } else { res.suggestions.forEach(s => { html += `<li class="text-warning">${s}</li>`; }); app.playSound('levelup'); }
+          html += `</ul></div>`;
+          let existing = document.getElementById('analysis-result'); if (!existing) { existing = document.createElement('div'); existing.id = 'analysis-result'; document.querySelector('main').appendChild(existing); } existing.innerHTML = html;
+      } else { app.showToast('Erreur lors de l\'analyse.', 'error'); }
+    }
+  </script>
+</body>
+</html>

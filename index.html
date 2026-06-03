@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>English Mastery</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#080c14">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <style>
+    .splash-container { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: var(--spacing-6); text-align: center; position: relative; overflow: hidden; }
+    .splash-logo { font-size: 3rem; font-weight: 800; color: var(--accent-primary); margin-bottom: var(--spacing-4); z-index: 10; }
+    .splash-tagline { font-size: 1.25rem; color: var(--text-secondary); margin-bottom: var(--spacing-8); z-index: 10; }
+    .splash-actions { display: flex; flex-direction: column; gap: var(--spacing-4); width: 100%; max-width: 300px; z-index: 10; }
+    .skills-preview { display: flex; justify-content: center; gap: var(--spacing-4); margin-top: var(--spacing-10); z-index: 10; }
+    .skill-icon { width: 48px; height: 48px; border-radius: var(--radius-full); background: var(--bg-surface); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--accent-primary); font-size: 1.25rem; }
+  </style>
+</head>
+<body class="page-enter">
+  <div id="particles"></div>
+  <main class="splash-container">
+    <h1 class="splash-logo" id="logo-text"></h1>
+    <p class="splash-tagline">Maîtrisez l'anglais à votre rythme.</p>
+    <div class="splash-actions">
+      <a href="placement-test.html" class="btn btn-primary">Commencer le test de niveau</a>
+      <a href="dashboard.html" class="btn btn-secondary" id="btn-resume" style="display: none;">Reprendre ma progression</a>
+    </div>
+    <div class="skills-preview">
+      <div class="skill-icon"><i class="fas fa-book-open"></i></div>
+      <div class="skill-icon"><i class="fas fa-headphones"></i></div>
+      <div class="skill-icon"><i class="fas fa-microphone"></i></div>
+      <div class="skill-icon"><i class="fas fa-pen"></i></div>
+    </div>
+  </main>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script src="app.js"></script>
+  <script src="storage.js"></script>
+  <script src="api.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const particlesContainer = document.getElementById('particles');
+      for (let i = 0; i < 20; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle'; p.style.width = Math.random() * 10 + 5 + 'px'; p.style.height = p.style.width;
+        p.style.left = Math.random() * 100 + 'vw'; p.style.top = Math.random() * 100 + 'vh';
+        p.style.animationDuration = Math.random() * 10 + 10 + 's'; p.style.animationDelay = Math.random() * 5 + 's';
+        particlesContainer.appendChild(p);
+      }
+      const title = "English Mastery";
+      const logoEl = document.getElementById('logo-text');
+      title.split('').forEach((char, i) => { const span = document.createElement('span'); span.textContent = char === ' ' ? '\u00A0' : char; span.className = 'splash-title-char'; span.style.animationDelay = (i * 0.05) + 's'; logoEl.appendChild(span); });
+      if (localStorage.getItem('userId')) { document.getElementById('btn-resume').style.display = 'inline-flex'; }
+      if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js'); }); }
+    });
+  </script>
+</body>
+</html>

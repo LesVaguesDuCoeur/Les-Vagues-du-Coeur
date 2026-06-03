@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Grammaire - English Mastery</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <style>
+    .grammar-box { background: var(--bg-card); padding: var(--spacing-6); border-radius: var(--radius-lg); text-align: center; border: 1px solid var(--border); }
+    .fill-input { border: none; border-bottom: 2px solid var(--border); background: transparent; color: var(--text-primary); font-family: var(--font-ui); font-size: 1.5rem; width: 100px; text-align: center; outline: none; transition: border-color 0.3s; }
+    .fill-input:focus { border-color: var(--accent-primary); }
+    .fill-input.correct { border-color: var(--accent-success); color: var(--accent-success); }
+    .fill-input.wrong { border-color: var(--accent-danger); color: var(--accent-danger); }
+  </style>
+</head>
+<body class="page-enter">
+  <header class="page-header flex items-center justify-between">
+    <a href="exercises.html" class="btn btn-icon btn-ghost" aria-label="Retour aux exercices"><i class="fas fa-arrow-left"></i></a>
+    <div class="font-bold">Grammaire</div>
+    <div class="text-secondary">Pratique</div>
+  </header>
+  <main class="container" style="max-width: 600px;">
+    <div class="grammar-box" id="game-area">
+      <div class="text-secondary mb-6 text-sm">Complétez la phrase :</div>
+      <div style="font-size: 1.5rem; line-height: 2;" id="q-text">
+        I <input type="text" class="fill-input" id="answer-input" autocomplete="off" autocorrect="off"> a student.
+      </div>
+      <button class="btn btn-primary mt-8" id="btn-check" onclick="checkAnswer()">Vérifier</button>
+    </div>
+    <div id="feedback-area" style="display:none;" class="mt-4 p-4 rounded-lg"></div>
+  </main>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script src="app.js"></script><script src="speech.js"></script>
+  <script>
+    let expected = 'am';
+    function checkAnswer() {
+      const input = document.getElementById('answer-input'); const val = input.value.trim().toLowerCase();
+      const fArea = document.getElementById('feedback-area'); fArea.style.display = 'block';
+      if (val === expected) {
+        input.classList.add('correct'); app.playSound('success');
+        fArea.innerHTML = `<div style="background: rgba(34,211,160,0.1); border: 1px solid var(--accent-success); color: var(--accent-success); padding: var(--spacing-4); border-radius: var(--radius-md);"><strong>Correct !</strong><p class="mt-2 text-sm">Le verbe "to be" à la première personne du singulier est "am".</p><button class="btn btn-secondary mt-4" onclick="location.reload()" style="border-color:var(--accent-success); color:var(--accent-success);">Suivant</button></div>`;
+      } else {
+        input.classList.add('wrong'); app.playSound('error');
+        fArea.innerHTML = `<div style="background: rgba(239,68,68,0.1); border: 1px solid var(--accent-danger); color: var(--accent-danger); padding: var(--spacing-4); border-radius: var(--radius-md);"><strong>Incorrect.</strong><p class="mt-2 text-sm">La bonne réponse était "am".</p><button class="btn btn-secondary mt-4" onclick="document.getElementById('answer-input').value=''; document.getElementById('answer-input').classList.remove('wrong'); this.parentElement.parentElement.style.display='none';" style="border-color:var(--accent-danger); color:var(--accent-danger);">Réessayer</button></div>`;
+      }
+    }
+  </script>
+</body>
+</html>

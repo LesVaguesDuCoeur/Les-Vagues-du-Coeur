@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Révision SRS - English Mastery</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <style>
+    .review-container { max-width: 600px; margin: 0 auto; height: calc(100vh - 160px); display: flex; flex-direction: column; }
+    .flashcard-area { flex: 1; cursor: pointer; position: relative; margin-bottom: var(--spacing-6); }
+    .fc-word { font-size: 2.5rem; font-weight: bold; margin-bottom: var(--spacing-2); }
+    .fc-ipa { font-family: var(--font-mono); color: var(--text-secondary); margin-bottom: var(--spacing-4); }
+    .rating-buttons { display: flex; gap: var(--spacing-2); opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+    .rating-buttons.active { opacity: 1; pointer-events: auto; }
+    .btn-rate { flex: 1; padding: var(--spacing-3) var(--spacing-2); font-size: 0.9rem; }
+    .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; }
+  </style>
+</head>
+<body class="page-enter">
+  <div class="app-container">
+    <aside class="sidebar">
+      <div class="sidebar-header"><i class="fas fa-graduation-cap" style="color: var(--accent-primary); font-size: 1.5rem;"></i><h2 style="font-size: 1.2rem; font-weight: 700;">EN Mastery</h2></div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="nav-item"><i class="fas fa-home"></i> Accueil</a>
+        <a href="lessons.html" class="nav-item"><i class="fas fa-book"></i> Leçons</a>
+        <a href="exercises.html" class="nav-item"><i class="fas fa-dumbbell"></i> Exercices</a>
+        <a href="review.html" class="nav-item active"><i class="fas fa-brain"></i> Révision</a>
+        <a href="progress.html" class="nav-item"><i class="fas fa-chart-line"></i> Stats</a>
+        <a href="profile.html" class="nav-item"><i class="fas fa-user"></i> Profil</a>
+      </nav>
+    </aside>
+    <main class="main-content">
+      <header class="page-header flex justify-between items-center pb-2"><h2>Révision Espacée</h2><div class="badge badge-c2" id="due-counter">0 dues</div></header>
+      <div class="container review-container" id="review-container"></div>
+    </main>
+    <nav class="bottom-bar">
+      <a href="dashboard.html" class="tab-item"><i class="fas fa-home"></i><span>Accueil</span></a>
+      <a href="lessons.html" class="tab-item"><i class="fas fa-book"></i><span>Leçons</span></a>
+      <a href="exercises.html" class="tab-item"><i class="fas fa-dumbbell"></i><span>Exos</span></a>
+      <a href="review.html" class="tab-item active"><i class="fas fa-brain"></i><span>Réviser</span></a>
+      <a href="profile.html" class="tab-item"><i class="fas fa-user"></i><span>Profil</span></a>
+    </nav>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+  <script src="app.js"></script><script src="storage.js"></script><script src="api.js"></script><script src="srs.js"></script><script src="speech.js"></script>
+  <script>
+    let allVocab = []; let dueCards = []; let currentIdx = 0; let isFlipped = false;
+    async function init() {
+      allVocab = await api.loadVocab() || []; dueCards = srs.getDueCards(allVocab);
+      document.getElementById('due-counter').textContent = `${dueCards.length} dues`;
+      if (dueCards.length === 0) { showEmpty(); } else { renderCard(); }
+    }
+    function showEmpty() {
+      document.getElementById('review-container').innerHTML = `
+        <div class="empty-state">
+          <i class="fas fa-check-circle text-success" style="font-size: 4rem; margin-bottom: 20px;"></i>
+          <h2>Vous êtes à jour !</h2><p class="text-secondary mt-2 mb-6">Revenez plus tard pour de nouvelles révisions.</p><a href="dashboard.html" class="btn btn-primary">Retour à l'accueil</a>
+        </div>
+      `;
+    }
+    function renderCard() {
+      if (currentIdx >= dueCards.length) { app.triggerConfetti(); api.saveVocab(allVocab); showEmpty(); return; }
+      isFlipped = false; const w = dueCards[currentIdx];
+      document.getElementById('review-container').innerHTML = `
+        <div class="flashcard-area" onclick="flipCard()"><div class="flashcard-container" style="height: 100%;"><div class="flashcard" id="flashcard">
+          <div class="flashcard-front"><div class="text-sm text-secondary mb-4">Tapez pour révéler</div><div class="fc-word">${w.word}</div></div>
+          <div class="flashcard-back"><div class="fc-word text-primary">${w.translation}</div><div class="fc-ipa">${w.ipa}</div><div class="text-muted mt-4">Niveau: <span class="badge badge-a1">${w.interval ? 'Révision' : 'Nouveau'}</span></div><button class="btn btn-icon btn-ghost mt-4" aria-label="Écouter" onclick="event.stopPropagation(); speech.speak('${w.word.replace(/'/g, "\'")}')"><i class="fas fa-volume-up"></i></button></div>
+        </div></div></div>
+        <div class="rating-buttons" id="rating-btns"><button class="btn btn-destructive btn-rate" onclick="rateCard(1)">Oublié (1)</button><button class="btn btn-secondary btn-rate" style="border-color: var(--accent-warning); color: var(--accent-warning);" onclick="rateCard(3)">Difficile (3)</button><button class="btn btn-primary btn-rate" onclick="rateCard(4)">Correct (4)</button><button class="btn btn-secondary btn-rate" style="background: rgba(34,211,160,0.1); border-color: var(--accent-success); color: var(--accent-success);" onclick="rateCard(5)">Parfait (5)</button></div>
+      `;
+    }
+    function flipCard() { if (isFlipped) return; isFlipped = true; document.getElementById('flashcard').classList.add('flipped'); document.getElementById('rating-btns').classList.add('active'); speech.speak(dueCards[currentIdx].word); }
+    window.rateCard = function(grade) {
+      const card = dueCards[currentIdx]; const updated = srs.processAnswer(card, grade);
+      const idx = allVocab.findIndex(v => v.id === card.id); if (idx !== -1) { allVocab[idx] = updated; } else { allVocab.push(updated); }
+      currentIdx++; document.getElementById('due-counter').textContent = `${Math.max(0, dueCards.length - currentIdx)} dues`; renderCard();
+    };
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>

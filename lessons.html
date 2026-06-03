@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Leçons - English Mastery</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <style>
+    .search-bar { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-full); padding: var(--spacing-3) var(--spacing-5); display: flex; align-items: center; gap: var(--spacing-3); margin-bottom: var(--spacing-6); }
+    .search-input { flex: 1; border: none; background: transparent; outline: none; color: var(--text-primary); font-family: var(--font-ui); }
+    .lesson-list { display: flex; flex-direction: column; gap: var(--spacing-4); }
+    .lesson-item { display: flex; align-items: center; gap: var(--spacing-4); padding: var(--spacing-4); background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); transition: all var(--transition-fast); }
+    .lesson-item:hover { border-color: var(--accent-primary); transform: translateY(-2px); }
+    .lesson-icon { width: 48px; height: 48px; border-radius: 50%; background: var(--bg-surface); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; color: var(--accent-primary); }
+    .lesson-content { flex: 1; }
+    .lesson-title { font-weight: 600; margin-bottom: 4px; }
+    .lesson-meta { font-size: 0.85rem; color: var(--text-secondary); display: flex; gap: var(--spacing-3); align-items: center; }
+  </style>
+</head>
+<body class="page-enter">
+  <div class="app-container">
+    <aside class="sidebar">
+      <div class="sidebar-header"><i class="fas fa-graduation-cap" style="color: var(--accent-primary); font-size: 1.5rem;"></i><h2 style="font-size: 1.2rem; font-weight: 700;">EN Mastery</h2></div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="nav-item"><i class="fas fa-home"></i> Accueil</a>
+        <a href="lessons.html" class="nav-item active"><i class="fas fa-book"></i> Leçons</a>
+        <a href="exercises.html" class="nav-item"><i class="fas fa-dumbbell"></i> Exercices</a>
+        <a href="review.html" class="nav-item"><i class="fas fa-brain"></i> Révision</a>
+        <a href="progress.html" class="nav-item"><i class="fas fa-chart-line"></i> Stats</a>
+        <a href="profile.html" class="nav-item"><i class="fas fa-user"></i> Profil</a>
+      </nav>
+    </aside>
+    <main class="main-content">
+      <header class="page-header"><h1 class="mb-2">Parcours d'apprentissage</h1><p class="text-secondary">Suivez le curriculum ou choisissez un thème.</p></header>
+      <div class="container">
+        <div class="search-bar"><i class="fas fa-search text-muted"></i><input type="text" class="search-input" id="search-input" placeholder="Chercher une leçon..."></div>
+        <div id="curriculum-container"><div class="text-center py-6 text-muted"><i class="fas fa-spinner fa-spin text-2xl"></i><br>Chargement...</div></div>
+      </div>
+    </main>
+    <nav class="bottom-bar">
+      <a href="dashboard.html" class="tab-item"><i class="fas fa-home"></i><span>Accueil</span></a>
+      <a href="lessons.html" class="tab-item active"><i class="fas fa-book"></i><span>Leçons</span></a>
+      <a href="exercises.html" class="tab-item"><i class="fas fa-dumbbell"></i><span>Exos</span></a>
+      <a href="review.html" class="tab-item"><i class="fas fa-brain"></i><span>Réviser</span></a>
+      <a href="profile.html" class="tab-item"><i class="fas fa-user"></i><span>Profil</span></a>
+    </nav>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script src="app.js"></script><script src="storage.js"></script><script src="api.js"></script>
+  <script>
+    let curriculum = [];
+    async function loadCurriculum() {
+      try {
+        const res = await fetch('/data/curriculum.json'); curriculum = await res.json(); renderCurriculum(curriculum);
+      } catch (e) { document.getElementById('curriculum-container').innerHTML = '<div class="text-center text-danger">Erreur de chargement.</div>'; }
+    }
+    function renderCurriculum(data) {
+      const container = document.getElementById('curriculum-container'); container.innerHTML = '';
+      data.forEach(module => {
+        const section = document.createElement('div'); section.className = 'mb-8';
+        section.innerHTML = `<div class="flex justify-between items-center mb-4"><h3 class="flex items-center gap-2"><span class="badge badge-${module.level.split('.')[0].toLowerCase()}">${module.level}</span> ${module.title}</h3></div>
+          <div class="lesson-list">
+            ${module.lessons.map(l => `<a href="lesson-viewer.html?id=${l.id}" class="lesson-item"><div class="lesson-icon"><i class="fas fa-${getIconForType(l.type)}"></i></div><div class="lesson-content"><div class="lesson-title">${app.sanitizeHTML(l.title)}</div><div class="lesson-meta"><span><i class="far fa-clock"></i> ${l.estimatedTime} min</span><span>${l.type === 'grammar' ? 'Grammaire' : l.type === 'vocabulary' ? 'Vocabulaire' : 'Compréhension'}</span></div></div><i class="fas fa-chevron-right text-muted"></i></a>`).join('')}
+          </div>`;
+        container.appendChild(section);
+      });
+    }
+    function getIconForType(type) { if (type === 'grammar') return 'pen-nib'; if (type === 'vocabulary') return 'layer-group'; if (type === 'reading') return 'book-open'; if (type === 'listening') return 'headphones'; return 'star'; }
+    document.getElementById('search-input').addEventListener('input', app.debounce((e) => {
+      const term = e.target.value.toLowerCase(); if (!term) return renderCurriculum(curriculum);
+      const filtered = curriculum.map(m => { const filteredLessons = m.lessons.filter(l => l.title.toLowerCase().includes(term)); return { ...m, lessons: filteredLessons }; }).filter(m => m.lessons.length > 0);
+      renderCurriculum(filtered);
+    }, 300));
+    document.addEventListener('DOMContentLoaded', loadCurriculum);
+  </script>
+</body>
+</html>
