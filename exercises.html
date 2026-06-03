@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Exercices - English Mastery</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <style>
+    .ex-card { display: flex; flex-direction: column; align-items: center; text-align: center; padding: var(--spacing-6); }
+    .ex-icon { width: 64px; height: 64px; border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-size: 2rem; margin-bottom: var(--spacing-4); }
+  </style>
+</head>
+<body class="page-enter">
+  <div class="app-container">
+    <aside class="sidebar">
+      <div class="sidebar-header"><i class="fas fa-graduation-cap" style="color: var(--accent-primary); font-size: 1.5rem;"></i><h2 style="font-size: 1.2rem; font-weight: 700;">EN Mastery</h2></div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="nav-item"><i class="fas fa-home"></i> Accueil</a>
+        <a href="lessons.html" class="nav-item"><i class="fas fa-book"></i> Leçons</a>
+        <a href="exercises.html" class="nav-item active"><i class="fas fa-dumbbell"></i> Exercices</a>
+        <a href="review.html" class="nav-item"><i class="fas fa-brain"></i> Révision</a>
+        <a href="progress.html" class="nav-item"><i class="fas fa-chart-line"></i> Stats</a>
+        <a href="profile.html" class="nav-item"><i class="fas fa-user"></i> Profil</a>
+      </nav>
+    </aside>
+    <main class="main-content">
+      <header class="page-header"><h1 class="mb-2">Centre d'entraînement</h1><p class="text-secondary">Pratiquez des compétences spécifiques.</p></header>
+      <div class="container">
+        <div class="grid-2 lg:grid-3 gap-6">
+          <a href="exercise-vocab.html" class="card ex-card"><div class="ex-icon" style="background: rgba(34,211,160,0.1); color: var(--accent-success);"><i class="fas fa-layer-group"></i></div><h3>Vocabulaire</h3><p class="text-secondary mt-2 text-sm">Flashcards et mini-jeux pour enrichir votre lexique.</p></a>
+          <a href="exercise-grammar.html" class="card ex-card"><div class="ex-icon" style="background: rgba(79,142,247,0.1); color: var(--accent-primary);"><i class="fas fa-pen-nib"></i></div><h3>Grammaire</h3><p class="text-secondary mt-2 text-sm">Pratiquez les règles avec des QCM et des phrases à trous.</p></a>
+          <a href="exercise-listening.html" class="card ex-card"><div class="ex-icon" style="background: rgba(245,158,11,0.1); color: var(--accent-warning);"><i class="fas fa-headphones"></i></div><h3>Compréhension Orale</h3><p class="text-secondary mt-2 text-sm">Écoutez et répondez aux questions.</p></a>
+          <a href="exercise-speaking.html" class="card ex-card"><div class="ex-icon" style="background: rgba(124,58,237,0.1); color: var(--accent-secondary);"><i class="fas fa-microphone"></i></div><h3>Expression Orale</h3><p class="text-secondary mt-2 text-sm">Parlez et recevez un feedback immédiat.</p></a>
+          <a href="exercise-reading.html" class="card ex-card"><div class="ex-icon" style="background: rgba(239,68,68,0.1); color: var(--accent-danger);"><i class="fas fa-book-open"></i></div><h3>Compréhension Écrite</h3><p class="text-secondary mt-2 text-sm">Lisez des textes adaptés à votre niveau.</p></a>
+          <a href="exercise-writing.html" class="card ex-card" style="border-color: #64748b;"><div class="ex-icon" style="background: rgba(100,116,139,0.1); color: #64748b;"><i class="fas fa-keyboard"></i></div><h3>Expression Écrite</h3><p class="text-secondary mt-2 text-sm">Rédigez et faites corriger vos textes.</p></a>
+          <a href="exercise-pronunciation.html" class="card ex-card" style="border-color: #06b6d4;"><div class="ex-icon" style="background: rgba(6,182,212,0.1); color: #06b6d4;"><i class="fas fa-comment-dots"></i></div><h3>Prononciation</h3><p class="text-secondary mt-2 text-sm">Entraînez-vous sur les sons difficiles.</p></a>
+          <a href="quiz.html" class="card ex-card" style="border-color: var(--accent-gold);"><div class="ex-icon" style="background: rgba(251,191,36,0.1); color: var(--accent-gold);"><i class="fas fa-stopwatch"></i></div><h3>Quiz Chronométrés</h3><p class="text-secondary mt-2 text-sm">Testez vos réflexes avec le mode Sprint.</p></a>
+        </div>
+      </div>
+    </main>
+    <nav class="bottom-bar">
+      <a href="dashboard.html" class="tab-item"><i class="fas fa-home"></i><span>Accueil</span></a>
+      <a href="lessons.html" class="tab-item"><i class="fas fa-book"></i><span>Leçons</span></a>
+      <a href="exercises.html" class="tab-item active"><i class="fas fa-dumbbell"></i><span>Exos</span></a>
+      <a href="review.html" class="tab-item"><i class="fas fa-brain"></i><span>Réviser</span></a>
+      <a href="profile.html" class="tab-item"><i class="fas fa-user"></i><span>Profil</span></a>
+    </nav>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

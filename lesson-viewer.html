@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Leçon - English Mastery</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <style>
+    .viewer-header { position: sticky; top: 0; background: var(--bg-surface); border-bottom: 1px solid var(--border); z-index: 50; padding: var(--spacing-4); display: flex; align-items: center; justify-content: space-between; }
+    .viewer-content { max-width: 800px; margin: 0 auto; padding: var(--spacing-6); font-size: 1.1rem; line-height: 1.8; }
+    .viewer-content h2 { color: var(--accent-primary); margin-top: var(--spacing-6); margin-bottom: var(--spacing-4); }
+    .example-box { background: var(--bg-card); border-left: 4px solid var(--accent-secondary); padding: var(--spacing-4); margin: var(--spacing-4) 0; border-radius: 0 var(--radius-md) var(--radius-md) 0; }
+    .tts-btn { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; background: var(--bg-elevated); cursor: pointer; color: var(--accent-primary); margin-left: var(--spacing-2); }
+    .tts-btn:hover { background: var(--accent-primary); color: white; }
+    .bottom-actions { position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg-surface); padding: var(--spacing-4); border-top: 1px solid var(--border); display: flex; justify-content: center; z-index: 50; }
+  </style>
+</head>
+<body class="page-enter">
+  <header class="viewer-header">
+    <a href="lessons.html" class="btn btn-icon btn-ghost" aria-label="Retour aux leçons"><i class="fas fa-arrow-left"></i></a>
+    <div id="lesson-title" class="font-bold">Chargement...</div>
+    <div class="badge badge-a1" id="lesson-badge">...</div>
+  </header>
+  <main class="viewer-content" style="padding-bottom: 100px;">
+    <div id="lesson-body"><div class="skeleton" style="height: 300px; width: 100%;"></div></div>
+  </main>
+  <div class="bottom-actions">
+    <button class="btn btn-primary" id="btn-complete" style="width: 100%; max-width: 400px;">Marquer comme appris (+50 XP)</button>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+  <script src="app.js"></script><script src="storage.js"></script><script src="api.js"></script><script src="speech.js"></script>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const lessonId = urlParams.get('id') || 'les_a1_1_1';
+    async function loadLesson() {
+      try {
+        const res = await fetch('/data/grammar-rules.json'); const rules = await res.json();
+        const rule = rules.find(r => r.id === lessonId) || rules[0];
+        document.getElementById('lesson-title').textContent = rule.title; document.getElementById('lesson-badge').textContent = rule.level;
+        let html = `<h2>Règle</h2><p>${rule.ruleFR}</p><div class="example-box text-muted text-sm">${rule.ruleEN}</div><h2>Exemples</h2>`;
+        rule.examples.forEach(ex => { html += `<div class="example-box flex items-center justify-between"><span>${ex}</span><button class="tts-btn" aria-label="Écouter" onclick="speech.speak('${ex.replace(/'/g, "\'")}')"><i class="fas fa-volume-up"></i></button></div>`; });
+        document.getElementById('lesson-body').innerHTML = html;
+      } catch (e) { app.showToast('Erreur de chargement', 'error'); }
+    }
+    document.getElementById('btn-complete').addEventListener('click', async () => {
+      document.getElementById('btn-complete').disabled = true; app.triggerConfetti(); app.playSound('success');
+      const prog = await api.loadProgress(); prog.xp = (prog.xp || 0) + 50; if(!prog.completedLessons) prog.completedLessons = []; if(!prog.completedLessons.includes(lessonId)) prog.completedLessons.push(lessonId); prog.lastModified = Date.now();
+      await api.saveProgress(prog); setTimeout(() => { window.location.href = 'lessons.html'; }, 2000);
+    });
+    document.addEventListener('DOMContentLoaded', loadLesson);
+  </script>
+</body>
+</html>

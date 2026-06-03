@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Quiz Sprint - English Mastery</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <style>
+    .quiz-header { display: flex; justify-content: space-between; align-items: center; padding: var(--spacing-4) var(--spacing-6); background: var(--bg-surface); border-bottom: 1px solid var(--border); }
+    .score-display { font-size: 1.5rem; font-weight: bold; color: var(--accent-gold); }
+    .timer-circle { width: 60px; height: 60px; border-radius: 50%; border: 4px solid var(--accent-primary); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.25rem; }
+    .timer-circle.danger { border-color: var(--accent-danger); color: var(--accent-danger); animation: pulseAnim 1s infinite; }
+    .q-container { max-width: 600px; margin: var(--spacing-8) auto; padding: 0 var(--spacing-4); text-align: center; }
+    .q-text { font-size: 1.5rem; margin-bottom: var(--spacing-8); }
+    .btn-quiz { width: 100%; text-align: center; padding: var(--spacing-4); background: var(--bg-card); border: 2px solid var(--border); border-radius: var(--radius-lg); margin-bottom: var(--spacing-4); font-size: 1.1rem; cursor: pointer; transition: all 0.2s; }
+    .btn-quiz:hover { background: rgba(79,142,247,0.1); border-color: var(--accent-primary); transform: translateY(-2px); }
+    .btn-quiz.correct { background: rgba(34,211,160,0.2); border-color: var(--accent-success); color: var(--accent-success); transform: scale(1.02); }
+    .btn-quiz.wrong { background: rgba(239,68,68,0.2); border-color: var(--accent-danger); color: var(--accent-danger); transform: scale(0.98); }
+    .result-overlay { position: fixed; inset: 0; background: var(--bg-base); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 100; padding: var(--spacing-6); text-align: center; }
+  </style>
+</head>
+<body class="page-enter">
+  <header class="quiz-header">
+    <a href="exercises.html" class="btn btn-icon btn-ghost" aria-label="Retour aux exercices"><i class="fas fa-times"></i></a>
+    <div class="score-display" id="ui-score">0</div>
+    <div class="timer-circle" id="ui-timer">60</div>
+  </header>
+  <main class="q-container" id="game-area">
+    <div class="q-text" id="q-text">Chargement...</div><div id="options-area"></div>
+  </main>
+  <div class="result-overlay" id="result-area">
+    <h1 class="mb-2 text-gold" style="color: var(--accent-gold); font-size: 3rem;">Terminé !</h1><p class="text-secondary mb-6">Votre score final</p>
+    <div class="score-display" style="font-size: 4rem; margin-bottom: var(--spacing-8);" id="final-score">0</div>
+    <a href="quiz.html" class="btn btn-primary btn-lg mb-4" style="width: 100%; max-width: 300px;">Rejouer</a><a href="exercises.html" class="btn btn-secondary btn-lg" style="width: 100%; max-width: 300px;">Quitter</a>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+  <script src="app.js"></script><script src="storage.js"></script><script src="api.js"></script>
+  <script>
+    let questions = []; let currentQ = null; let score = 0; let timeLeft = 60; let timerInterval;
+    async function init() {
+      try {
+        const res = await fetch('/data/placement-questions.json'); questions = await res.json();
+        questions.sort(() => Math.random() - 0.5); startTimer(); nextQuestion();
+      } catch (e) { app.showToast('Erreur', 'error'); }
+    }
+    function startTimer() {
+      const tEl = document.getElementById('ui-timer');
+      timerInterval = setInterval(() => { timeLeft--; tEl.textContent = timeLeft; if (timeLeft <= 10) tEl.classList.add('danger'); if (timeLeft <= 0) endGame(); }, 1000);
+    }
+    function nextQuestion() {
+      if (questions.length === 0) return endGame();
+      currentQ = questions.pop(); document.getElementById('q-text').textContent = currentQ.question;
+      const optArea = document.getElementById('options-area'); optArea.innerHTML = '';
+      currentQ.options.forEach((opt, idx) => { const btn = document.createElement('button'); btn.className = 'btn-quiz'; btn.textContent = opt; btn.onclick = () => handleAnswer(idx, btn); optArea.appendChild(btn); });
+    }
+    function handleAnswer(idx, btn) {
+      const buttons = document.querySelectorAll('.btn-quiz'); buttons.forEach(b => b.style.pointerEvents = 'none');
+      if (idx === currentQ.answer) {
+        btn.classList.add('correct'); score += 10; document.getElementById('ui-score').textContent = score; app.playSound('success');
+        const float = document.createElement('div'); float.className = 'score-popup'; float.textContent = '+10'; float.style.left = `${btn.offsetLeft + btn.offsetWidth/2}px`; float.style.top = `${btn.offsetTop}px`; document.body.appendChild(float); setTimeout(() => float.remove(), 1000);
+      } else { btn.classList.add('wrong'); buttons[currentQ.answer].classList.add('correct'); app.playSound('error'); timeLeft -= 5; }
+      setTimeout(nextQuestion, 800);
+    }
+    function endGame() {
+      clearInterval(timerInterval); document.getElementById('game-area').style.display = 'none'; document.querySelector('.quiz-header').style.display = 'none';
+      const resArea = document.getElementById('result-area'); resArea.style.display = 'flex'; document.getElementById('final-score').textContent = score;
+      if (score > 50) app.triggerConfetti(); app.playSound('levelup');
+      api.loadProgress().then(prog => { if(prog) { prog.xp = (prog.xp || 0) + score; api.saveProgress(prog); } });
+    }
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Compréhension Écrite - English Mastery</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/animations.css">
+</head>
+<body class="page-enter">
+  <header class="page-header flex items-center justify-between">
+    <a href="exercises.html" class="btn btn-icon btn-ghost" aria-label="Retour aux exercices"><i class="fas fa-arrow-left"></i></a>
+    <div class="font-bold">Lecture</div>
+    <div class="badge badge-b1">B1.1</div>
+  </header>
+  <main class="container" style="max-width: 800px;">
+    <div class="card mb-6" style="font-size: 1.1rem; line-height: 1.8;" id="text-area">
+      <h2 class="mb-4">The History of Tea</h2>
+      <p>Tea is one of the most popular beverages in the world. Its history begins in ancient China over 5,000 years ago. According to legend, Emperor Shen Nong discovered tea when leaves from a wild tree blew into his pot of boiling water. Today, there are many different types of tea, including green, black, and oolong, all coming from the same plant: Camellia sinensis. The differences in flavor are due to how the leaves are processed.</p>
+    </div>
+    <div class="card">
+      <h3 class="mb-4">Questions</h3>
+      <div class="mb-4">
+        <p class="mb-2">1. Where was tea first discovered?</p>
+        <button class="btn btn-secondary w-full mb-2 text-left" onclick="this.style.background='rgba(239,68,68,0.2)'; app.playSound('error')">India</button>
+        <button class="btn btn-secondary w-full mb-2 text-left" onclick="this.style.background='rgba(34,211,160,0.2)'; app.playSound('success')">China</button>
+      </div>
+    </div>
+  </main>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

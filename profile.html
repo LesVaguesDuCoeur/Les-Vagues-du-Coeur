@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Profil - English Mastery</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <style>
+    .avatar-lg { width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)); display: flex; align-items: center; justify-content: center; font-size: 3rem; color: white; margin: 0 auto var(--spacing-4); box-shadow: var(--shadow-glow); }
+    .profile-header { text-align: center; margin-bottom: var(--spacing-8); }
+    .settings-section { background: var(--bg-card); border-radius: var(--radius-lg); border: 1px solid var(--border); overflow: hidden; margin-bottom: var(--spacing-6); }
+    .settings-item { padding: var(--spacing-4); display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
+    .settings-item:last-child { border-bottom: none; }
+    .toggle-switch { width: 44px; height: 24px; background: var(--bg-surface); border-radius: 12px; position: relative; cursor: pointer; border: 1px solid var(--border); transition: all 0.3s; }
+    .toggle-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; background: var(--text-secondary); border-radius: 50%; transition: all 0.3s; }
+    .toggle-switch.active { background: var(--accent-primary); border-color: var(--accent-primary); }
+    .toggle-switch.active::after { transform: translateX(20px); background: white; }
+  </style>
+</head>
+<body class="page-enter">
+  <div class="app-container">
+    <aside class="sidebar">
+      <div class="sidebar-header"><i class="fas fa-graduation-cap" style="color: var(--accent-primary); font-size: 1.5rem;"></i><h2 style="font-size: 1.2rem; font-weight: 700;">EN Mastery</h2></div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="nav-item"><i class="fas fa-home"></i> Accueil</a>
+        <a href="lessons.html" class="nav-item"><i class="fas fa-book"></i> Leçons</a>
+        <a href="exercises.html" class="nav-item"><i class="fas fa-dumbbell"></i> Exercices</a>
+        <a href="review.html" class="nav-item"><i class="fas fa-brain"></i> Révision</a>
+        <a href="progress.html" class="nav-item"><i class="fas fa-chart-line"></i> Stats</a>
+        <a href="profile.html" class="nav-item active"><i class="fas fa-user"></i> Profil</a>
+      </nav>
+    </aside>
+    <main class="main-content">
+      <header class="page-header pb-0"><h1>Mon Profil</h1></header>
+      <div class="container mt-6">
+        <div class="profile-header"><div class="avatar-lg">🎓</div><h2>Étudiant</h2><div class="badge badge-b1 mt-2" id="ui-level">B1.1</div><p class="text-secondary mt-2">ID: <span id="ui-id" class="font-mono text-sm"></span></p></div>
+        <h3 class="mb-4">Préférences</h3>
+        <div class="settings-section">
+          <div class="settings-item"><div><div class="font-bold">Effets sonores</div><div class="text-sm text-secondary">Sons de réussite et d'erreur</div></div><div class="toggle-switch active" onclick="this.classList.toggle('active')"></div></div>
+          <div class="settings-item"><div><div class="font-bold">Notifications locales</div><div class="text-sm text-secondary">Rappels de révision journalière</div></div><div class="toggle-switch active" onclick="this.classList.toggle('active')"></div></div>
+        </div>
+        <h3 class="mb-4">Données</h3>
+        <div class="settings-section">
+          <div class="settings-item cursor-pointer hover:bg-surface transition-fast" onclick="forceSync()"><div class="flex items-center gap-3"><i class="fas fa-sync text-primary"></i><div class="font-bold">Synchroniser avec Drive</div></div><i class="fas fa-chevron-right text-muted"></i></div>
+          <div class="settings-item cursor-pointer hover:bg-surface transition-fast" onclick="exportData()"><div class="flex items-center gap-3"><i class="fas fa-download text-primary"></i><div class="font-bold">Exporter mes données (JSON)</div></div><i class="fas fa-chevron-right text-muted"></i></div>
+          <div class="settings-item cursor-pointer hover:bg-surface transition-fast" onclick="resetApp()"><div class="flex items-center gap-3 text-danger"><i class="fas fa-trash-alt"></i><div class="font-bold">Réinitialiser l'application</div></div></div>
+        </div>
+      </div>
+    </main>
+    <nav class="bottom-bar">
+      <a href="dashboard.html" class="tab-item"><i class="fas fa-home"></i><span>Accueil</span></a>
+      <a href="lessons.html" class="tab-item"><i class="fas fa-book"></i><span>Leçons</span></a>
+      <a href="exercises.html" class="tab-item"><i class="fas fa-dumbbell"></i><span>Exos</span></a>
+      <a href="review.html" class="tab-item"><i class="fas fa-brain"></i><span>Réviser</span></a>
+      <a href="profile.html" class="tab-item active"><i class="fas fa-user"></i><span>Profil</span></a>
+    </nav>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script src="app.js"></script><script src="storage.js"></script><script src="api.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      document.getElementById('ui-id').textContent = localStorage.getItem('userId') || 'Non défini';
+      const data = await api.loadProgress() || {}; const levelId = app.getLevel(data.xp || 0);
+      document.getElementById('ui-level').textContent = levelId; document.getElementById('ui-level').className = `badge badge-${levelId.split('.')[0].toLowerCase()} mt-2`;
+    });
+    async function forceSync() {
+      const btn = event.currentTarget.querySelector('.fa-sync'); btn.classList.add('fa-spin');
+      const data = storage.loadLocal('progress') || { xp: 0, streak: 0 }; const success = await api.saveProgress(data);
+      btn.classList.remove('fa-spin'); if (success) app.showToast('Synchronisation réussie', 'success'); else app.showToast('Échec de la synchronisation', 'error');
+    }
+    function exportData() {
+      const data = { progress: storage.loadLocal('progress'), vocab: storage.loadLocal('vocab'), userId: localStorage.getItem('userId') };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = `english-mastery-backup-${new Date().toISOString().split('T')[0]}.json`; a.click(); URL.revokeObjectURL(url);
+    }
+    function resetApp() {
+      app.confirmDialog('Réinitialiser ?', 'Attention, cela effacera toutes vos données locales. Si elles ne sont pas sur Drive, elles seront perdues.', () => {
+        app.confirmDialog('Êtes-vous vraiment sûr ?', 'Dernière chance. Tout sera effacé.', () => { localStorage.clear(); sessionStorage.clear(); window.location.href = 'index.html'; });
+      });
+    }
+  </script>
+</body>
+</html>

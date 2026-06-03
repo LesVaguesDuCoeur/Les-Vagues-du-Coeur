@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Tableau de Bord - English Mastery</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <style>
+    .dash-header { background: var(--bg-card); border-bottom: 1px solid var(--border); padding: var(--spacing-6) var(--spacing-4); margin-bottom: var(--spacing-6); }
+    .level-badge-large { display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: 50%; background: rgba(79,142,247,0.1); color: var(--accent-primary); font-size: 1.5rem; font-weight: bold; border: 2px solid var(--accent-primary); }
+    .xp-bar { height: 8px; background: var(--bg-surface); border-radius: 4px; overflow: hidden; margin-top: var(--spacing-2); }
+    .xp-fill { height: 100%; background: var(--accent-primary); width: 0%; transition: width 1s ease-out; }
+    .streak-flame { color: var(--accent-warning); animation: pulseAnim 2s infinite; }
+    .module-card { display: flex; flex-direction: column; gap: var(--spacing-3); }
+    .module-icon { width: 40px; height: 40px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; }
+    .bg-blue { background: rgba(79,142,247,0.1); color: var(--accent-primary); }
+    .bg-green { background: rgba(34,211,160,0.1); color: var(--accent-success); }
+    .bg-purple { background: rgba(124,58,237,0.1); color: var(--accent-secondary); }
+    .bg-orange { background: rgba(245,158,11,0.1); color: var(--accent-warning); }
+  </style>
+</head>
+<body class="page-enter">
+  <div class="app-container">
+    <aside class="sidebar">
+      <div class="sidebar-header"><i class="fas fa-graduation-cap" style="color: var(--accent-primary); font-size: 1.5rem;"></i><h2 style="font-size: 1.2rem; font-weight: 700;">EN Mastery</h2></div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html" class="nav-item active"><i class="fas fa-home"></i> Accueil</a>
+        <a href="lessons.html" class="nav-item"><i class="fas fa-book"></i> Leçons</a>
+        <a href="exercises.html" class="nav-item"><i class="fas fa-dumbbell"></i> Exercices</a>
+        <a href="review.html" class="nav-item"><i class="fas fa-brain"></i> Révision</a>
+        <a href="progress.html" class="nav-item"><i class="fas fa-chart-line"></i> Stats</a>
+        <a href="profile.html" class="nav-item"><i class="fas fa-user"></i> Profil</a>
+      </nav>
+    </aside>
+    <main class="main-content">
+      <header class="dash-header">
+        <div class="flex items-center justify-between max-w-1200 mx-auto">
+          <div class="flex items-center gap-4">
+            <div class="level-badge-large" id="ui-level">A1</div>
+            <div><h1 class="mb-2">Bonjour, Étudiant !</h1><div class="text-secondary text-sm">Niveau <span id="ui-level-name">Débutant</span> • <span id="ui-xp">0</span> XP</div><div class="xp-bar" style="width: 200px;"><div class="xp-fill" id="ui-xp-fill"></div></div></div>
+          </div>
+          <div class="text-center"><i class="fas fa-fire streak-flame text-2xl"></i><div class="font-bold mt-1"><span id="ui-streak">0</span> Jours</div></div>
+        </div>
+      </header>
+      <div class="container">
+        <div class="card mb-6" style="border-left: 4px solid var(--accent-primary);">
+          <h3 class="mb-2">Reprendre l'apprentissage</h3><p class="text-secondary mb-4">Leçon : Le verbe Être (A1.1)</p>
+          <a href="lesson-viewer.html?id=les_a1_1_1" class="btn btn-primary">Continuer</a>
+        </div>
+        <h2 class="mb-4">Activités recommandées</h2>
+        <div class="grid-2 mb-6">
+          <a href="lessons.html" class="card module-card"><div class="flex justify-between items-center"><div class="module-icon bg-blue"><i class="fas fa-book-open"></i></div><span class="badge badge-a1">A1.1</span></div><h4>Leçon du jour</h4><p class="text-secondary text-sm">Grammaire et structure</p></a>
+          <a href="review.html" class="card module-card"><div class="flex justify-between items-center"><div class="module-icon bg-green"><i class="fas fa-layer-group"></i></div><span class="badge" style="background:var(--accent-danger);color:white;">À réviser</span></div><h4>Révision SRS</h4><p class="text-secondary text-sm">Renforcez votre vocabulaire</p></a>
+          <a href="exercise-speaking.html" class="card module-card"><div class="flex justify-between items-center"><div class="module-icon bg-purple"><i class="fas fa-microphone"></i></div></div><h4>Pratique orale</h4><p class="text-secondary text-sm">Répétez après le modèle</p></a>
+          <a href="quiz.html" class="card module-card"><div class="flex justify-between items-center"><div class="module-icon bg-orange"><i class="fas fa-stopwatch"></i></div></div><h4>Défi Sprint</h4><p class="text-secondary text-sm">Testez votre rapidité</p></a>
+        </div>
+      </div>
+    </main>
+    <nav class="bottom-bar">
+      <a href="dashboard.html" class="tab-item active"><i class="fas fa-home"></i><span>Accueil</span></a>
+      <a href="lessons.html" class="tab-item"><i class="fas fa-book"></i><span>Leçons</span></a>
+      <a href="exercises.html" class="tab-item"><i class="fas fa-dumbbell"></i><span>Exos</span></a>
+      <a href="review.html" class="tab-item"><i class="fas fa-brain"></i><span>Réviser</span></a>
+      <a href="profile.html" class="tab-item"><i class="fas fa-user"></i><span>Profil</span></a>
+    </nav>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script src="app.js"></script><script src="storage.js"></script><script src="api.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const data = await api.loadProgress() || { xp: 0, streak: 0 };
+      const levelId = app.getLevel(data.xp || 0); const levelInfo = app.getLevelDetails(levelId);
+      document.getElementById('ui-level').textContent = levelId; document.getElementById('ui-level').style.borderColor = levelInfo.color; document.getElementById('ui-level').style.color = levelInfo.color;
+      document.getElementById('ui-level-name').textContent = levelInfo.name; document.getElementById('ui-xp').textContent = data.xp || 0; document.getElementById('ui-streak').textContent = data.streak || 0;
+      const xpInLevel = (data.xp || 0) % 500; const pct = (xpInLevel / 500) * 100;
+      setTimeout(() => { document.getElementById('ui-xp-fill').style.width = `${pct}%`; }, 300);
+    });
+  </script>
+</body>
+</html>

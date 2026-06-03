@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Compréhension Orale - English Mastery</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <style>
+    .audio-player { background: var(--bg-card); padding: var(--spacing-6); border-radius: var(--radius-lg); border: 1px solid var(--border); text-align: center; margin-bottom: var(--spacing-6); }
+    .play-btn { width: 80px; height: 80px; border-radius: 50%; background: var(--accent-primary); color: white; font-size: 2rem; display: inline-flex; align-items: center; justify-content: center; margin-bottom: var(--spacing-4); transition: transform 0.2s; cursor: pointer; }
+    .play-btn:active { transform: scale(0.95); }
+    .play-btn.playing { animation: pulseAnim 2s infinite; }
+    .speed-controls { display: flex; justify-content: center; gap: var(--spacing-2); }
+    .speed-btn { padding: 4px 12px; border-radius: var(--radius-full); background: var(--bg-surface); border: 1px solid var(--border); font-size: 0.85rem; cursor: pointer; }
+    .speed-btn.active { background: var(--accent-primary); color: white; border-color: var(--accent-primary); }
+    .question-box { background: var(--bg-surface); padding: var(--spacing-6); border-radius: var(--radius-lg); display: none; }
+    .option-btn { width: 100%; text-align: left; padding: var(--spacing-4); background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); margin-bottom: var(--spacing-3); cursor: pointer; transition: all 0.2s; }
+    .option-btn:hover { border-color: var(--accent-primary); background: rgba(79,142,247,0.1); }
+    .option-btn.correct { background: rgba(34,211,160,0.2); border-color: var(--accent-success); color: var(--accent-success); }
+    .option-btn.wrong { background: rgba(239,68,68,0.2); border-color: var(--accent-danger); color: var(--accent-danger); }
+    .transcript { margin-top: var(--spacing-6); padding: var(--spacing-4); background: var(--bg-surface); border-radius: var(--radius-md); font-size: 0.9rem; color: var(--text-secondary); display: none; }
+  </style>
+</head>
+<body class="page-enter">
+  <header class="page-header flex items-center justify-between">
+    <a href="exercises.html" class="btn btn-icon btn-ghost" aria-label="Retour aux exercices"><i class="fas fa-arrow-left"></i></a>
+    <div class="font-bold">Compréhension Orale</div>
+    <div class="badge badge-a1" id="ui-level">A1.1</div>
+  </header>
+  <main class="container" style="max-width: 600px;">
+    <div class="audio-player">
+      <h3 class="mb-4" id="ui-title">Chargement...</h3>
+      <div class="play-btn" id="btn-play" role="button" aria-label="Jouer l'audio" tabindex="0" onclick="togglePlay()"><i class="fas fa-play" style="margin-left:5px;"></i></div>
+      <div class="waveform-container justify-center mb-4" id="waveform">
+        <div class="waveform-bar"></div><div class="waveform-bar" style="animation-delay: 0.2s"></div>
+        <div class="waveform-bar" style="animation-delay: 0.4s"></div><div class="waveform-bar" style="animation-delay: 0.1s"></div>
+        <div class="waveform-bar" style="animation-delay: 0.3s"></div>
+      </div>
+      <div class="speed-controls">
+        <button class="speed-btn" onclick="setSpeed(0.75)">0.75x</button><button class="speed-btn active" onclick="setSpeed(1)">1x</button><button class="speed-btn" onclick="setSpeed(1.25)">1.25x</button>
+      </div>
+    </div>
+    <div class="text-center mb-6"><button class="btn btn-secondary" id="btn-show-q" onclick="showQuestions()" disabled>Afficher les questions</button></div>
+    <div class="question-box" id="q-box">
+      <div id="q-container"></div><button class="btn btn-ghost mt-4" onclick="document.getElementById('transcript').style.display='block'">Voir la transcription</button><div class="transcript" id="transcript"></div>
+    </div>
+  </main>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script src="app.js"></script><script src="speech.js"></script>
+  <script>
+    let currentData = null; let isPlaying = false; let currentRate = 1.0;
+    async function init() {
+      try {
+        const res = await fetch('/data/listening-texts.json'); const texts = await res.json();
+        currentData = texts[0];
+        document.getElementById('ui-title').textContent = currentData.title; document.getElementById('ui-level').textContent = currentData.level; document.getElementById('transcript').textContent = currentData.text;
+      } catch (e) { app.showToast('Erreur de chargement', 'error'); }
+    }
+    async function togglePlay() {
+      if (!currentData) return; const btn = document.getElementById('btn-play'); const wave = document.getElementById('waveform');
+      if (isPlaying) {
+        speech.cancel(); isPlaying = false; btn.innerHTML = '<i class="fas fa-play" style="margin-left:5px;"></i>'; btn.classList.remove('playing'); wave.classList.remove('active');
+      } else {
+        isPlaying = true; btn.innerHTML = '<i class="fas fa-stop"></i>'; btn.classList.add('playing'); wave.classList.add('active');
+        const success = await speech.speak(currentData.text, currentRate);
+        isPlaying = false; btn.innerHTML = '<i class="fas fa-play" style="margin-left:5px;"></i>'; btn.classList.remove('playing'); wave.classList.remove('active');
+        if (success) { document.getElementById('btn-show-q').disabled = false; } else { document.getElementById('btn-show-q').disabled = false; document.getElementById('transcript').style.display = 'block'; }
+      }
+    }
+    function setSpeed(rate) { currentRate = rate; document.querySelectorAll('.speed-btn').forEach(b => { b.classList.remove('active'); if (b.textContent.includes(rate)) b.classList.add('active'); }); if (isPlaying) { togglePlay(); setTimeout(togglePlay, 100); } }
+    function showQuestions() {
+      document.getElementById('btn-show-q').style.display = 'none'; const box = document.getElementById('q-box'); box.style.display = 'block';
+      const qContainer = document.getElementById('q-container'); qContainer.innerHTML = '';
+      currentData.questions.forEach((q, qIndex) => {
+        const qDiv = document.createElement('div'); qDiv.className = 'mb-6'; qDiv.innerHTML = `<h4 class="mb-3">${qIndex + 1}. ${q.question}</h4>`;
+        q.options.forEach((opt, oIndex) => { const btn = document.createElement('button'); btn.className = 'option-btn'; btn.textContent = opt; btn.onclick = () => handleAnswer(btn, qDiv, oIndex, q.answer); qDiv.appendChild(btn); });
+        qContainer.appendChild(qDiv);
+      });
+    }
+    function handleAnswer(btn, container, selectedIdx, correctIdx) {
+      const buttons = container.querySelectorAll('.option-btn'); buttons.forEach(b => b.style.pointerEvents = 'none');
+      if (selectedIdx === correctIdx) { btn.classList.add('correct'); app.playSound('success'); } else { btn.classList.add('wrong'); buttons[correctIdx].classList.add('correct'); app.playSound('error'); }
+    }
+    document.addEventListener('DOMContentLoaded', init); window.addEventListener('beforeunload', speech.cancel);
+  </script>
+</body>
+</html>

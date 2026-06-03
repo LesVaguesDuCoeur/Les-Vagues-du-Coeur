@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Vocabulaire - English Mastery</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <style>
+    .flashcard-area { height: 400px; max-width: 500px; margin: 0 auto; margin-bottom: var(--spacing-6); cursor: pointer; }
+    .fc-word { font-size: 2.5rem; font-weight: bold; margin-bottom: var(--spacing-2); }
+    .fc-ipa { font-family: var(--font-mono); color: var(--text-secondary); margin-bottom: var(--spacing-4); }
+    .fc-example { font-style: italic; color: var(--text-muted); text-align: center; }
+    .rating-buttons { display: flex; justify-content: center; gap: var(--spacing-3); opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+    .rating-buttons.active { opacity: 1; pointer-events: auto; }
+    .btn-rate { flex: 1; max-width: 120px; }
+  </style>
+</head>
+<body class="page-enter">
+  <header class="page-header flex items-center justify-between">
+    <a href="exercises.html" class="btn btn-icon btn-ghost" aria-label="Retour aux exercices"><i class="fas fa-arrow-left"></i></a>
+    <div class="font-bold">Flashcards</div>
+    <div class="text-secondary" id="counter">1/10</div>
+  </header>
+  <main class="container">
+    <div class="flashcard-area" id="fc-area" onclick="flipCard()">
+      <div class="flashcard-container" style="height: 100%;">
+        <div class="flashcard" id="flashcard">
+          <div class="flashcard-front"><div class="text-sm text-secondary mb-4">Tapez pour révéler</div><div class="fc-word" id="fc-front-word">...</div></div>
+          <div class="flashcard-back"><div class="fc-word text-primary" id="fc-back-trans">...</div><div class="fc-ipa" id="fc-back-ipa">...</div><div class="fc-example" id="fc-back-ex">...</div><button class="btn btn-icon btn-ghost mt-4" aria-label="Écouter" onclick="event.stopPropagation(); playTTS()"><i class="fas fa-volume-up"></i></button></div>
+        </div>
+      </div>
+    </div>
+    <div class="rating-buttons" id="rating-btns">
+      <button class="btn btn-secondary btn-rate" onclick="rateCard(1)">Difficile</button>
+      <button class="btn btn-primary btn-rate" onclick="rateCard(3)">Correct</button>
+      <button class="btn btn-secondary btn-rate" style="background: rgba(34,211,160,0.1); border-color: var(--accent-success); color: var(--accent-success);" onclick="rateCard(5)">Facile</button>
+    </div>
+  </main>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script src="app.js"></script><script src="storage.js"></script><script src="api.js"></script><script src="srs.js"></script><script src="speech.js"></script>
+  <script>
+    let words = []; let currentIdx = 0; let isFlipped = false; let sessionVocab = [];
+    async function init() {
+      try {
+        const res = await fetch('/data/vocab-a1.json'); const raw = await res.json();
+        const savedVocab = await api.loadVocab() || [];
+        words = raw.map(w => { const saved = savedVocab.find(sv => sv.id === w.id); return saved ? { ...w, ...saved } : w; }).slice(0, 10);
+        showCard();
+      } catch (e) { app.showToast('Erreur de chargement', 'error'); }
+    }
+    function showCard() {
+      if (currentIdx >= words.length) {
+        app.triggerConfetti(); app.showToast('Session terminée !', 'success'); api.saveVocab(sessionVocab);
+        setTimeout(() => window.location.href = 'exercises.html', 2000); return;
+      }
+      isFlipped = false; document.getElementById('flashcard').classList.remove('flipped'); document.getElementById('rating-btns').classList.remove('active');
+      const w = words[currentIdx];
+      document.getElementById('fc-front-word').textContent = w.word; document.getElementById('fc-back-trans').textContent = w.translation;
+      document.getElementById('fc-back-ipa').textContent = w.ipa; document.getElementById('fc-back-ex').textContent = w.example;
+      document.getElementById('counter').textContent = `${currentIdx + 1}/${words.length}`;
+    }
+    function flipCard() { if (isFlipped) return; isFlipped = true; document.getElementById('flashcard').classList.add('flipped'); document.getElementById('rating-btns').classList.add('active'); playTTS(); }
+    function playTTS() { speech.speak(words[currentIdx].word); }
+    function rateCard(grade) { const w = words[currentIdx]; const updatedCard = srs.processAnswer(w, grade); sessionVocab.push(updatedCard); currentIdx++; showCard(); }
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>

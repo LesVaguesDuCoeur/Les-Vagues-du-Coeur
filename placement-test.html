@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Test de Placement - English Mastery</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <style>
+    .quiz-container { max-width: 800px; margin: 0 auto; padding: var(--spacing-6); }
+    .timer-bar { width: 100%; height: 8px; background: var(--bg-surface); border-radius: 4px; margin-bottom: var(--spacing-6); overflow: hidden; }
+    .timer-fill { height: 100%; background: var(--accent-primary); width: 100%; transition: width 1s linear, background-color 0.3s; }
+    .question-box { background: var(--bg-card); padding: var(--spacing-6); border-radius: var(--radius-lg); margin-bottom: var(--spacing-6); border: 1px solid var(--border); }
+    .question-text { font-size: 1.5rem; margin-bottom: var(--spacing-6); text-align: center; }
+    .options-grid { display: grid; grid-template-columns: 1fr; gap: var(--spacing-4); }
+    @media (min-width: 600px) { .options-grid { grid-template-columns: 1fr 1fr; } }
+    .option-btn { background: var(--bg-surface); border: 1px solid var(--border); padding: var(--spacing-4); border-radius: var(--radius-md); font-size: 1.1rem; cursor: pointer; transition: all 0.2s; }
+    .option-btn:hover { background: rgba(79, 142, 247, 0.1); border-color: var(--accent-primary); }
+    .option-btn.correct { background: rgba(34, 211, 160, 0.2); border-color: var(--accent-success); color: var(--accent-success); }
+    .option-btn.wrong { background: rgba(239, 68, 68, 0.2); border-color: var(--accent-danger); color: var(--accent-danger); }
+    .result-container { display: none; text-align: center; }
+    .radar-container { width: 100%; max-width: 400px; margin: var(--spacing-6) auto; }
+    .explanation { display: none; margin-top: var(--spacing-4); padding: var(--spacing-4); border-radius: var(--radius-md); background: var(--bg-surface); font-size: 0.9rem; }
+  </style>
+</head>
+<body class="page-enter">
+  <div class="quiz-container" id="quiz-area">
+    <div class="timer-bar"><div class="timer-fill" id="timer-fill"></div></div>
+    <div class="flex justify-between mb-4 text-muted"><span id="question-counter">Question 1/50</span><span id="level-indicator" class="badge badge-a1">A1.1</span></div>
+    <div class="question-box"><h2 class="question-text" id="question-text">Chargement...</h2><div class="options-grid" id="options-grid"></div><div class="explanation" id="explanation"></div></div>
+  </div>
+  <div class="quiz-container result-container" id="result-area">
+    <h1 class="mb-4">Test Terminé</h1><p class="text-secondary mb-6">Votre niveau estimé est :</p>
+    <div class="badge badge-b1 pulse" style="font-size: 2rem; padding: 10px 20px;" id="final-level">B1.1</div>
+    <div class="radar-container"><canvas id="radarChart"></canvas></div>
+    <a href="dashboard.html" class="btn btn-primary" style="width: 100%">Commencer mon parcours</a>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="app.js"></script><script src="storage.js"></script><script src="api.js"></script><script src="speech.js"></script>
+  <script>
+    const LEVELS = ["A1.1", "A1.2", "A2.1", "A2.2", "B1.1", "B1.2", "B2.1", "B2.2", "C1.1", "C1.2", "C2.1", "C2.2"];
+    let allQuestions = {}; let currentLevelIdx = 0; let questionsAsked = 0; let recentResults = []; let history = []; let currentQ = null; let timerInterval; let timeLeft = 20;
+    const levelTimers = { 'A1': 20, 'A2': 18, 'B1': 15, 'B2': 12, 'C1': 10, 'C2': 10 };
+    async function loadQuestions() {
+      try {
+        const res = await fetch('/data/placement-questions.json'); const list = await res.json();
+        LEVELS.forEach(l => allQuestions[l] = []);
+        list.forEach(q => { if (allQuestions[q.level]) allQuestions[q.level].push(q); });
+        LEVELS.forEach(l => allQuestions[l].sort(() => Math.random() - 0.5));
+        showQuestion();
+      } catch (e) { app.showToast('Erreur de chargement des questions', 'error'); }
+    }
+    function getNextQuestion() {
+      const levelString = LEVELS[currentLevelIdx]; const qList = allQuestions[levelString];
+      if (!qList || qList.length === 0) { for (let i = 0; i < LEVELS.length; i++) { if(allQuestions[LEVELS[i]].length > 0) return allQuestions[LEVELS[i]].pop(); } return null; }
+      return qList.pop();
+    }
+    function checkLevelShift() {
+      if (recentResults.length >= 5) {
+        const recent5 = recentResults.slice(-5); const correctCount = recent5.filter(r => r).length;
+        if (correctCount >= 4 && currentLevelIdx < LEVELS.length - 1) { currentLevelIdx++; recentResults = []; }
+        else if (correctCount <= 2 && currentLevelIdx > 0) { currentLevelIdx--; recentResults = []; }
+      }
+    }
+    function checkStabilization() {
+      if(history.length < 15) return false;
+      // Stabilization: if the last 3 level shifts were 0 (stayed on same level) over the last 15 questions
+      const recentH = history.slice(-15);
+      const levels = recentH.map(h => h.level);
+      const uniqueLevels = new Set(levels);
+      if (uniqueLevels.size === 1) return true; // Stayed on same level for 15 questions
+      return false;
+    }
+    function showQuestion() {
+      if (questionsAsked >= 50 || checkStabilization()) return finishTest();
+      checkLevelShift(); currentQ = getNextQuestion(); if (!currentQ) return finishTest();
+      questionsAsked++; const levelBase = currentQ.level.substring(0, 2); timeLeft = levelTimers[levelBase] || 20;
+      document.getElementById('question-text').textContent = currentQ.question;
+      document.getElementById('question-counter').textContent = `Question ${questionsAsked}/50`;
+      document.getElementById('level-indicator').textContent = currentQ.level;
+      document.getElementById('level-indicator').className = `badge badge-${levelBase.toLowerCase()}`;
+      const grid = document.getElementById('options-grid'); grid.innerHTML = '';
+      currentQ.options.forEach((opt, i) => { const btn = document.createElement('button'); btn.className = 'option-btn'; btn.textContent = opt; btn.onclick = () => handleAnswer(i, btn); grid.appendChild(btn); });
+      document.getElementById('explanation').style.display = 'none';
+      if(currentQ.type === 'listening') { speech.speak(currentQ.text_to_speak || currentQ.question); }
+      startTimer();
+    }
+    function startTimer() {
+      clearInterval(timerInterval); const fill = document.getElementById('timer-fill'); fill.style.width = '100%'; fill.style.backgroundColor = 'var(--accent-primary)';
+      const totalTime = timeLeft;
+      timerInterval = setInterval(() => {
+        timeLeft--; const pct = (timeLeft / totalTime) * 100; fill.style.width = `${pct}%`;
+        if (timeLeft <= 3) fill.style.backgroundColor = 'var(--accent-danger)';
+        if (timeLeft <= 0) { clearInterval(timerInterval); app.playSound('error'); recentResults.push(false); history.push({ level: currentLevelIdx, correct: false }); setTimeout(() => { showQuestion(); }, 1000); }
+      }, 1000);
+    }
+    function handleAnswer(idx, btnEl) {
+      clearInterval(timerInterval); const buttons = document.querySelectorAll('.option-btn'); buttons.forEach(b => b.style.pointerEvents = 'none');
+      const isCorrect = (idx === currentQ.answer); recentResults.push(isCorrect); history.push({ level: currentLevelIdx, correct: isCorrect });
+      if (isCorrect) { btnEl.classList.add('correct'); app.playSound('success'); } else { btnEl.classList.add('wrong'); buttons[currentQ.answer].classList.add('correct'); app.playSound('error'); if(currentQ.explanation) { const exp = document.getElementById('explanation'); exp.style.display = 'block'; exp.textContent = currentQ.explanation; } }
+      setTimeout(() => { showQuestion(); }, isCorrect ? 1000 : 2500);
+    }
+    async function finishTest() {
+      document.getElementById('quiz-area').style.display = 'none'; document.getElementById('result-area').style.display = 'block';
+      const finalLevel = LEVELS[currentLevelIdx];
+      document.getElementById('final-level').textContent = finalLevel; document.getElementById('final-level').className = `badge badge-${finalLevel.substring(0, 2).toLowerCase()} pulse`;
+      app.triggerConfetti(); app.playSound('levelup');
+      const ctx = document.getElementById('radarChart').getContext('2d');
+      new Chart(ctx, { type: 'radar', data: { labels: ['Grammaire', 'Vocabulaire', 'Écoute', 'Oral', 'Lecture', 'Écriture'], datasets: [{ label: 'Compétences', data: [ Math.min(100, (currentLevelIdx+1) * 8.3), Math.min(100, (currentLevelIdx+1) * 8.0), Math.min(100, (currentLevelIdx+1) * 9.0), Math.min(100, (currentLevelIdx+1) * 7.5), Math.min(100, (currentLevelIdx+1) * 8.5), Math.min(100, (currentLevelIdx+1) * 7.0) ], fill: true, backgroundColor: 'rgba(79, 142, 247, 0.2)', borderColor: 'rgb(79, 142, 247)', pointBackgroundColor: 'rgb(79, 142, 247)', }] }, options: { scales: { r: { min: 0, max: 100, ticks: { display: false }, grid: { color: '#1e2d45' }, pointLabels: { color: '#8899bb' } } }, plugins: { legend: { display: false } } } });
+      await api.savePlacementResult({ level: finalLevel, history: history, timestamp: Date.now() }); await api.saveProgress({ xp: (currentLevelIdx+1) * 500, level: finalLevel, streak: 1, completedLessons: [], lastModified: Date.now() });
+    }
+    document.addEventListener('DOMContentLoaded', loadQuestions);
+  </script>
+</body>
+</html>
